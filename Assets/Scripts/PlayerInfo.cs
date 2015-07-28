@@ -6,7 +6,7 @@ public class PlayerInfo
 	public string password;
 
 	public Vector2 lastPosition;
-	public Vessel lastVessel;
+	public ServerVessel lastVessel;
 
 	public PlayerInfo ()
 	{

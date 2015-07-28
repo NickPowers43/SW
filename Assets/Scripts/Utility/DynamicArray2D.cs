@@ -236,6 +236,15 @@ namespace Utility
 			return data [indexOf(x,y)];
 		}
 		
+		public T TryGet (Vec2i index)
+		{
+			if (!Contains(index.x, index.y))
+				return null;
+			
+			index -= origin;
+			return data [indexOf(index)];
+		}
+		
 		public T Get (int x, int y)
 		{
 			x -= origin.x;

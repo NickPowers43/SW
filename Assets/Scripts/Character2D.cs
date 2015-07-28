@@ -12,6 +12,8 @@ public class MyMsgType {
 
 public class Character2D : NetworkBehaviour
 {
+	public static float NETWORK_VIS_RANGE = 15.0f;
+
 	public float maxSpeed = 5.5f;
 	
 	//private Animator m_Anim;            // Reference to the player's animator component.
@@ -19,6 +21,10 @@ public class Character2D : NetworkBehaviour
 	private float baseRot;
 	private PlayerInfo pi;
 	private NetworkClient nc;
+
+	private bool hidden = true;
+	private NetworkIdentity netID;
+	private Vessel currentVessel;
 
 	private Vec2i chunkI;
 	public Vec2i ChunkI
@@ -33,6 +39,7 @@ public class Character2D : NetworkBehaviour
 	
 	public void Start()
 	{
+		netID = base.GetComponent<NetworkIdentity> ();
 		m_Rigidbody2D = GetComponent<Rigidbody2D>();
 		baseRot = transform.rotation.eulerAngles.z;
 
@@ -104,7 +111,7 @@ public class Character2D : NetworkBehaviour
 		PlayerAccounts.Add(pi);
 		
 		//start this player off from the beginning
-		Vessel startVessel = Vessel.GetStartingVessel();
+		StartingVessel startVessel = StartingVessel.GetStartingVessel();
 		startVessel.AddPlayer(this);
 		
 		RpcLoginSuccessfull(username);
@@ -170,6 +177,53 @@ public class Character2D : NetworkBehaviour
 		// Move the character
 		m_Rigidbody2D.velocity = move * maxSpeed;
 		
+	}
+
+	public override bool OnCheckObserver (NetworkConnection newObserver)
+	{
+		if (hidden)
+		{
+			return false;
+		}
+		else {
+			return false;
+		}
+	}
+
+	public override bool OnRebuildObservers (HashSet<NetworkConnection> observers, bool initial)
+	{
+		if (netID.connectionToClient != null)
+		{
+			observers.Add (netID.connectionToClient);
+		}
+		
+		if (!hidden) {
+
+			if (currentVessel != null) {
+
+				List<NetworkIdentity> localIdentities = ServerVessel.VesselIdentities[currentVessel];
+
+				if (localIdentities != null) {
+
+					for (int i = 0; i < localIdentities.Count; i++) {
+
+						if (localIdentities[i].connectionToClient != null) {
+
+							Vector2 diff = (Vector2)localIdentities[i].transform.position - (Vector2)transform.position;
+							
+							if (diff.magnitude < NETWORK_VIS_RANGE) {
+								
+								observers.Add (localIdentities[i].connectionToClient);
+								
+							}
+
+						}
+					}
+				}
+			}
+		}
+
+		return true;
 	}
 
 	private static List<PlayerInfo> playerAccounts = new List<PlayerInfo>(512);
