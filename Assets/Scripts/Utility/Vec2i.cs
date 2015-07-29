@@ -89,6 +89,11 @@ namespace Utility
 		{
 			return new Vector2((float)a.x, (float)a.y);
 		}
+
+		public string ToString()
+		{
+			return "(" + this.x + ", " + this.y + ")";
+		}
 	}
 }
 

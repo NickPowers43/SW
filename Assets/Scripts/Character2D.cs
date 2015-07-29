@@ -140,10 +140,11 @@ public class Character2D : NetworkBehaviour
 		ClientVessel cv;
 		if (!ClientVessel.Vessels.TryGetValue(vesselIndex, out cv)) {
 			Debug.Log ("Missing Vessel");
+			return;
 		}
 
 		Debug.Log("Receiving chunk");
-		VesselChunk vc = new VesselChunk(message);
+		ClientVC vc = new ClientVC(message);
 
 		cv.SetChunk(vc);
 	}

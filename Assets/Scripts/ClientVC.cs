@@ -6,13 +6,14 @@ using Utility;
 
 public class ClientVC : VesselChunk
 {
-	public ClientVC ()
+	public ClientVC (byte[] messageBytes) :
+		base(messageBytes)
 	{
 	}
 	
 	public override void Instantiate(VesselChunk t, VesselChunk l, VesselChunk r, VesselChunk b, VesselChunk br, Vector2 position)
 	{
-		base.Instantiate(t, l, r, b, br);
+		base.Instantiate(t, l, r, b, br, position);
 
 		MeshFilter mf = instance.AddComponent<MeshFilter>();
 		mf.mesh = GenerateFloorMesh(t, l, r, b, br);

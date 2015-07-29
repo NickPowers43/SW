@@ -49,29 +49,29 @@ public class VesselTile
 	public FloorType floor0;
 	public FloorType floor1;
 	
-	private static SpriteRenderer GetWall(WallType type)
+	public static GameObject GetWall(WallType type)
 	{
-//		switch (type) {
-//		case WallType.OneByZero:
-//			return GameObject.Instantiate(Editor.WallSmall, Vector3.zero, Quaternion.identity) as SpriteRenderer;
-//		case WallType.TwoByOne:
-//			return GameObject.Instantiate(Editor.WallLarge, Vector3.zero, TWO_BY_ONE_QUAT) as SpriteRenderer;
-//		case WallType.OneByOne:
-//			return GameObject.Instantiate(Editor.WallMedium, Vector3.zero, ONE_BY_ONE_QUAT) as SpriteRenderer;
-//		case WallType.OneByTwo:
-//			return GameObject.Instantiate(Editor.WallLarge, Vector3.zero, ONE_BY_TWO_QUAT) as SpriteRenderer;
-//		case WallType.ZeroByOne:
-//			return GameObject.Instantiate(Editor.WallSmall, Vector3.zero, ZERO_BY_ONE_QUAT) as SpriteRenderer;
-//		case WallType.OneByTwoFlipped:
-//			return GameObject.Instantiate(Editor.WallSmall, Vector3.zero, ONE_BY_TWO_FLIPPED_QUAT) as SpriteRenderer;
-//		case WallType.OneByOneFlipped:
-//			return GameObject.Instantiate(Editor.WallSmall, Vector3.zero, ONE_BY_ONE_FLIPPED_QUAT) as SpriteRenderer;
-//		case WallType.TwoByOneFlipped:
-//			return GameObject.Instantiate(Editor.WallSmall, Vector3.zero, TWO_BY_ONE_FLIPPED_QUAT) as SpriteRenderer;
-//		default:
+		switch (type) {
+		case WallType.OneByZero:
+			return GameObject.Instantiate(GameManager.Instance.wallSmallPrefab, Vector3.zero, Quaternion.identity) as GameObject;
+		case WallType.TwoByOne:
+			return GameObject.Instantiate(GameManager.Instance.wallLargePrefab, Vector3.zero, TWO_BY_ONE_QUAT) as GameObject;
+		case WallType.OneByOne:
+			return GameObject.Instantiate(GameManager.Instance.wallMediumPrefab, Vector3.zero, ONE_BY_ONE_QUAT) as GameObject;
+		case WallType.OneByTwo:
+			return GameObject.Instantiate(GameManager.Instance.wallLargePrefab, Vector3.zero, ONE_BY_TWO_QUAT) as GameObject;
+		case WallType.ZeroByOne:
+			return GameObject.Instantiate(GameManager.Instance.wallSmallPrefab, Vector3.zero, ZERO_BY_ONE_QUAT) as GameObject;
+		case WallType.OneByTwoFlipped:
+			return GameObject.Instantiate(GameManager.Instance.wallSmallPrefab, Vector3.zero, ONE_BY_TWO_FLIPPED_QUAT) as GameObject;
+		case WallType.OneByOneFlipped:
+			return GameObject.Instantiate(GameManager.Instance.wallSmallPrefab, Vector3.zero, ONE_BY_ONE_FLIPPED_QUAT) as GameObject;
+		case WallType.TwoByOneFlipped:
+			return GameObject.Instantiate(GameManager.Instance.wallSmallPrefab, Vector3.zero, TWO_BY_ONE_FLIPPED_QUAT) as GameObject;
+		default:
 			return null;
-//			break;
-//		}
+			break;
+		}
 	}
 	
 	public VesselTile(WallType wall0, WallType wall1, bool wallNode, FloorType floor0, FloorType floor1)

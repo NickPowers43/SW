@@ -15,6 +15,11 @@ public class GameManager : MonoBehaviour {
 			instance = value;
 		}
 	}
+	
+	public GameObject wallNodePrefab;
+	public GameObject wallSmallPrefab;
+	public GameObject wallMediumPrefab;
+	public GameObject wallLargePrefab;
 
 	void Start () {
 

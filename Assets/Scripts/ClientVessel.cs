@@ -18,15 +18,16 @@ public class ClientVessel : Vessel
 		Vessels.Add(index, this);
 	}
 
-	public void SetChunk(VesselChunk chunk)
+	public void SetChunk(ClientVC chunk)
 	{
 		VesselChunk current = chunks.TryGet(chunk.Index);
 
-		if (current == null) {
-			chunks.Set(chunk.Index, chunk);
-		} else {
+		if (current != null) {
 			Debug.Log ("Need to destroy existing chunk");
 		}
+
+		Debug.Log ("Setting chunk (" + chunk.Index.x + ", " + chunk.Index.y + ")");
+		chunks.Set(chunk.Index, chunk);
 
 		foreach (var c in chunks.WithinRange(chunk.Index, 1)) {
 

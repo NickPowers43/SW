@@ -68,6 +68,6 @@ public class Vessel {
 		VesselChunk bottom = chunks.TryGet(chunk.Index.x,chunk.Index.y-1);
 		VesselChunk bottomRight = chunks.TryGet(chunk.Index.x+1,chunk.Index.y-1);
 		Vector2 chunkOffset = ChunkIToLocal(chunk.Index);
-		chunk.Instantiate(top, left, right, bottom, bottomRight, chunkOffset);
+		chunk.Instantiate(top, left, right, bottom, bottomRight, chunkOffset + interiorPosition);
 	}
 }

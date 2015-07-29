@@ -5,17 +5,13 @@ public class Editor : MonoBehaviour {
 	
 	private static Vector2 cursorWorldPosition = new Vector2(0.0f, 0.0f);
 
-	private static int characterLM;
-	private static int vesselLM;
+	public static int characterLM;
+	public static int vesselLM;
 
 	public GameObject wallNodePrefab;
 	public GameObject wallSmallPrefab;
 	public GameObject wallMediumPrefab;
 	public GameObject wallLargePrefab;
-
-	public GameObject vesselRootPrefab;
-
-	private Camera camera;
 
 	void Start () {
 		camera = GetComponent<Camera>();

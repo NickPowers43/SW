@@ -26,6 +26,7 @@ public class VesselChunk
 	public static int SIZE_POW = 3;
 	public static int SIZE = 1 << SIZE_POW;
 	public static int DATA_COUNT = VesselChunk.SIZE * VesselChunk.SIZE;
+	public static float WALL_RADIUS = 0.15f;
 
 	public VesselTile[] data;
 	public bool Instantiated
@@ -65,19 +66,23 @@ public class VesselChunk
 				nw.Write(index.x);
 				nw.Write(index.y);
 
-				for (int i = 0; i < VesselChunk.SIZE * VesselChunk.SIZE; i++) {
-					
-					VesselTile tile = data[i];
-					
-					if (tile != null) {
-						Vec2i tileI = new Vec2i(i % VesselChunk.SIZE, (i / VesselChunk.SIZE) * VesselChunk.SIZE);
-						nw.Write(tileI.x);
-						nw.Write(tileI.y);
-						nw.Write((byte)tile.floor0);
-						nw.Write((byte)tile.floor1);
-						nw.Write((byte)tile.wall0T);
-						nw.Write((byte)tile.wall1T);
-						nw.Write(tile.wallNode);
+				for (int i = 0; i < VesselChunk.SIZE; i++) {
+
+					for (int j = 0; j < VesselChunk.SIZE; j++) {
+
+						VesselTile tile = TileAt(i, j);
+						
+						if (tile != null) {
+
+							nw.Write(i);
+							nw.Write(j);
+							nw.Write((byte)tile.floor0);
+							nw.Write((byte)tile.floor1);
+							nw.Write((byte)tile.wall0T);
+							nw.Write((byte)tile.wall1T);
+							nw.Write(tile.wallNode);
+
+						}
 					}
 				}
 
@@ -102,6 +107,14 @@ public class VesselChunk
 		updateMessageBytes = true;
 		this.data = new VesselTile[VesselChunk.DATA_COUNT];
 	}
+
+	public static Vector2 TileIToOffset(Vec2i tileI)
+	{
+		return new Vector2(
+			(float)tileI.x,
+			(float)tileI.y);
+	}
+
 	public VesselChunk(byte[] messageBytes)
 	{
 		updateMessageBytes = true;
@@ -116,6 +129,7 @@ public class VesselChunk
 			
 			//read in vessel tile
 			Vec2i tileI;
+
 			tileI.x = nr.ReadInt32();
 			tileI.y = nr.ReadInt32();
 			FloorType floor0 = (FloorType)nr.ReadByte();
@@ -123,6 +137,7 @@ public class VesselChunk
 			WallType wall0T = (WallType)nr.ReadByte();
 			WallType wall1T = (WallType)nr.ReadByte();
 			bool wallNode = nr.ReadBoolean();
+
 			VesselTile tile = new VesselTile(wall0T, wall1T, wallNode, floor0, floor1);
 			
 			SetTile(tileI, tile);
@@ -148,12 +163,43 @@ public class VesselChunk
 
 	public virtual void Instantiate(VesselChunk t, VesselChunk l, VesselChunk r, VesselChunk b, VesselChunk br, Vector2 position)
 	{
-		instance = new GameObject();
-		MeshFilter mf = instance.AddComponent<MeshFilter>();
-		mf.mesh = GenerateFloorMesh(t, l, r, b, br);
+		instance = new GameObject("Chunk" + Index);
+
+		for (int i = 0; i < SIZE; i++) {
+			for (int j = 0; j < SIZE; j++) {
+
+				VesselTile tile = TileAt(i,j);
+
+				if (tile != null) {
+
+					Vector2 offset = TileIToOffset(new Vec2i(i,j));
+					
+					GameObject tileGO = new GameObject("Tile" + new Vec2i(i,j));
+					tileGO.transform.position = (Vector3)offset;
+					
+					if (tile.wallNode) {
+						CircleCollider2D wnCollider = tileGO.AddComponent<CircleCollider2D>();
+						wnCollider.offset = Vector2.zero;
+						wnCollider.radius = WALL_RADIUS;
+					}
+					
+					if (tile.wall0T != WallType.None) {
+
+						GameObject wall0GO = VesselTile.GetWall(tile.wall0T);
+						wall0GO.transform.parent = tileGO.transform;
+
+						if (tile.wall1T != WallType.None) {
+
+							GameObject wall1GO = VesselTile.GetWall(tile.wall1T);
+							wall1GO.transform.parent = tileGO.transform;
+
+						}
+					}
+				}
+			}
+		}
 
 		instance.transform.position = (Vector3)position;
-		//return instance;
 	}
 }
 
