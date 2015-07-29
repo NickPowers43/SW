@@ -75,14 +75,14 @@ namespace Utility
 			}
 		}
 		
-		public IEnumerable<T> WithinRange(Vec2i inside, int range)
+		public IEnumerable<T> WithinRange(Vec2i origin, int range)
 		{
 			int rangeT = (range * 2) + 1;
 			
 			for (int i = 0; i < rangeT; i++) {
 				for (int j = 0; j < rangeT; j++) {
 					
-					Vec2i temp = inside + new Vec2i(i - range, j - range);
+					Vec2i temp = origin + new Vec2i(i - range, j - range);
 					
 					T temp2 = null;
 					if (TryGet (temp.x, temp.y, ref temp2)) {
@@ -152,6 +152,11 @@ namespace Utility
 		public static int indexOf (int x, int y, int columns)
 		{
 			return (y * columns) + x;
+		}
+		
+		public void Set (Vec2i index, T val)
+		{
+			Set(index.x, index.y, val);
 		}
 		
 		public void Set (int x, int y, T val)

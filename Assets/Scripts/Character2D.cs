@@ -17,8 +17,7 @@ public class Character2D : NetworkBehaviour
 
 	public float maxSpeed = 5.5f;
 	public Vessel currentVessel;
-	
-	//private Animator m_Anim;            // Reference to the player's animator component.
+
 	private Rigidbody2D rb;
 	private float baseRot;
 	private PlayerInfo pi;
@@ -127,29 +126,26 @@ public class Character2D : NetworkBehaviour
 	[ClientRpc(channel=0)]
 	public void RpcSyncVessel(uint vesselIndex, byte[] message)
 	{
-		ClientVessel v;
-		if (!ClientVessel.Vessels.TryGetValue(vesselIndex, out v)) {
-			v = new ClientVessel(vesselIndex, message);
+		Debug.Log("Syncing Vessel: " + vesselIndex);
+
+		ClientVessel cv;
+		if (!ClientVessel.Vessels.TryGetValue(vesselIndex, out cv)) {
+			cv = new ClientVessel(vesselIndex, message);
 		}
-		
-		Debug.Log("Receiving chunk");
-		VesselChunk vc = new VesselChunk(message);
-		
-		v.SetChunk(vc);
 	}
 	
 	[ClientRpc(channel=0)]
-	public void RpcCreateChunk(uint vesselIndex, byte[] message)
+	public void RpcSetChunk(uint vesselIndex, byte[] message)
 	{
-		ClientVessel v;
-		if (!ClientVessel.Vessels.TryGetValue(vesselIndex, out v)) {
-			v = new ClientVessel(vesselIndex);
+		ClientVessel cv;
+		if (!ClientVessel.Vessels.TryGetValue(vesselIndex, out cv)) {
+			Debug.Log ("Missing Vessel");
 		}
 
 		Debug.Log("Receiving chunk");
 		VesselChunk vc = new VesselChunk(message);
 
-		v.SetChunk(vc);
+		cv.SetChunk(vc);
 	}
 	
 	[ClientRpc]

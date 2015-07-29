@@ -29,7 +29,14 @@ public class Vessel {
 	{
 		return ChunkI(WorldToLocal(world));
 	}
-
+	
+	public static Vector2 ChunkIToLocal(Vec2i chunkI)
+	{
+		return new Vector2(
+			chunkI.x * (float)VesselChunk.SIZE,
+			chunkI.y * (float)VesselChunk.SIZE);
+	}
+	
 	public Vec2i ChunkI(Vector2 localPosition)
 	{
 		return new Vec2i(
@@ -53,6 +60,14 @@ public class Vessel {
 		return output;
 	}
 	
-
-
+	protected void InstantiateChunk(VesselChunk chunk)
+	{
+		VesselChunk top = chunks.TryGet(chunk.Index.x,chunk.Index.y+1);
+		VesselChunk left = chunks.TryGet(chunk.Index.x-1,chunk.Index.y);
+		VesselChunk right = chunks.TryGet(chunk.Index.x+1,chunk.Index.y);
+		VesselChunk bottom = chunks.TryGet(chunk.Index.x,chunk.Index.y-1);
+		VesselChunk bottomRight = chunks.TryGet(chunk.Index.x+1,chunk.Index.y-1);
+		Vector2 chunkOffset = ChunkIToLocal(chunk.Index);
+		chunk.Instantiate(top, left, right, bottom, bottomRight, chunkOffset);
+	}
 }

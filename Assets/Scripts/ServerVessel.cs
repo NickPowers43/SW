@@ -21,6 +21,26 @@ public class ServerVessel : Vessel
 	private bool noPlayers;
 	private float timeEmpty;
 
+	private bool updateMessageBytes = true;
+	private byte[] messageBytes;
+	public byte[] MessageBytes
+	{
+		get
+		{
+			if (updateMessageBytes) {
+				NetworkWriter nw = new NetworkWriter();
+				
+				nw.Write(interiorPosition);
+
+				messageBytes = nw.ToArray();
+				
+				updateMessageBytes = false;
+			}
+			
+			return messageBytes;
+		}
+	}
+
 	public ServerVessel () :
 		base(NextIndex++)
 	{
@@ -36,42 +56,8 @@ public class ServerVessel : Vessel
 			
 			for (int i = 0; i < playersOnBoard.Count; i++) {
 				
-				Character2D player = playersOnBoard[i];
-				
-				Vec2i pChunkI = WorldToChunkI(player.transform.position);
-				
-				if (pChunkI != player.ChunkI) {
-					
-					foreach (var chunk in chunks.TryGetOutsideInside(player.ChunkI, pChunkI, PLAYER_CHUNK_RANGE)) {
-						
-						player.RpcCreateChunk(Index, chunk.MessageBytes);
-						
-					}
-					player.ChunkI = pChunkI;
-				}
-				
-				foreach (var chunk in chunks.WithinRange(player.ChunkI, PLAYER_CHUNK_RANGE)) {
-					
-					if (chunk != null) {
-						
-						chunk.Seen = true;
-						
-						if (!chunk.Instantiated) {
-							VesselChunk top = chunks.TryGet(chunk.Index.x,chunk.Index.y+1);
-							VesselChunk left = chunks.TryGet(chunk.Index.x-1,chunk.Index.y);
-							VesselChunk right = chunks.TryGet(chunk.Index.x+1,chunk.Index.y);
-							VesselChunk bottom = chunks.TryGet(chunk.Index.x,chunk.Index.y-1);
-							VesselChunk bottomRight = chunks.TryGet(chunk.Index.x+1,chunk.Index.y-1);
-							
-							Vector2 chunkOffset = new Vector2(
-								chunk.Index.x * (float)VesselChunk.SIZE,
-								chunk.Index.y * (float)VesselChunk.SIZE);
-							
-							chunk.Instantiate(top, left, right, bottom, bottomRight, chunkOffset);
-						}
-					}
-					
-				}
+				UpdatePlayer(playersOnBoard[i]);
+
 			}
 			
 			DestroyUnseenChunks();
@@ -80,6 +66,56 @@ public class ServerVessel : Vessel
 		
 		if (noPlayers) {
 			timeEmpty += Time.deltaTime;
+		}
+	}
+
+	private void UpdatePlayer(Character2D player)
+	{
+		Vec2i pChunkI = WorldToChunkI(player.transform.position);
+		
+		if (pChunkI != player.ChunkI) {
+			
+			foreach (var chunk in chunks.TryGetOutsideInside(player.ChunkI, pChunkI, PLAYER_CHUNK_RANGE)) {
+				
+				if (chunk != null) {
+					
+					player.RpcSetChunk(Index, chunk.MessageBytes);
+					
+				}
+				
+			}
+			player.ChunkI = pChunkI;
+		}
+		
+		InstantiateNearbyChunks(player);
+	}
+
+	private void SendNearbyChunks(Character2D player)
+	{
+		foreach (var chunk in chunks.WithinRange(player.ChunkI, PLAYER_CHUNK_RANGE)) {
+
+			if (chunk != null) {
+
+				player.RpcSetChunk(Index, chunk.MessageBytes);
+
+			}
+		}
+	}
+
+	private void InstantiateNearbyChunks(Character2D player)
+	{
+		foreach (var chunk in chunks.WithinRange(player.ChunkI, PLAYER_CHUNK_RANGE)) {
+			
+			if (chunk != null) {
+				
+				chunk.Seen = true;
+				
+				if (!chunk.Instantiated) {
+					
+					InstantiateChunk(chunk);
+					
+				}
+			}
 		}
 	}
 	
@@ -151,7 +187,7 @@ public class ServerVessel : Vessel
 				Vec2i offset = modifiedChunks[i].Index - playerCI;
 				if (offset <= PLAYER_CHUNK_RANGE) {
 					
-					playersOnBoard[j].RpcCreateChunk(Index, modifiedChunks[i].MessageBytes);
+					playersOnBoard[j].RpcSetChunk(Index, modifiedChunks[i].MessageBytes);
 					
 				}
 				
@@ -215,6 +251,9 @@ public class ServerVessel : Vessel
 		netIdentities.Add(player.networkIdentity);
 		player.currentVessel = this;
 		playersOnBoard.Add(player);
+		player.RpcSyncVessel(Index, MessageBytes);
+		player.ChunkI = WorldToChunkI(player.transform.position);
+		SendNearbyChunks(player);
 
 		noPlayers = false;
 		timeEmpty = 0.0f;
@@ -231,6 +270,9 @@ public class ServerVessel : Vessel
 		netIdentities.Add(player.networkIdentity);
 		player.currentVessel = this;
 		playersOnBoard.Add(player);
+		player.RpcSyncVessel(Index, MessageBytes);
+		player.ChunkI = WorldToChunkI(player.transform.position);
+		SendNearbyChunks(player);
 
 		noPlayers = false;
 		timeEmpty = 0.0f;
@@ -239,6 +281,8 @@ public class ServerVessel : Vessel
 	public void RemovePlayer(Character2D player)
 	{
 		playersOnBoard.Remove(player);
+		netIdentities.Remove(player.networkIdentity);
+		player.currentVessel = null;
 		if (playersOnBoard.Count == 0) {
 			noPlayers = true;
 		}
