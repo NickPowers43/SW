@@ -11,6 +11,8 @@ public class StartingVessel : ServerVessel
 	public StartingVessel ()
 	{
 		Initialize();
+
+		ActiveVessels.Add(this);
 	}
 
 	public override void Update()
@@ -42,24 +44,15 @@ public class StartingVessel : ServerVessel
 		StartingVessel output;
 		
 		//find start vessel
-		if (true) {
+		if (ActiveVessels.Count == 0) {
 			//create one
 			
-			output = new StartingVessel();
+			return new StartingVessel();
+		} else {
+			return ActiveVessels[0];
 		}
-		
-		return output;
 	}
 
-	private static List<StartingVessel> activeVessels = new List<StartingVessel>(64);
-	public static List<StartingVessel> ActiveVessels
-	{
-		get{
-			return activeVessels;
-		}
-		set{
-			activeVessels = value;
-		}
-	}
+	private static List<StartingVessel> ActiveVessels = new List<StartingVessel>(64);
 }
 

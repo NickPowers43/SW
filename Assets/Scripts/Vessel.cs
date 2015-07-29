@@ -13,9 +13,11 @@ public class Vessel {
 
 	protected DynamicArray2D<VesselChunk> chunks = new DynamicArray2D<VesselChunk>();
 
-	public Vessel()
-	{
+	public readonly uint Index;
 
+	public Vessel(uint index)
+	{
+		this.Index = index;
 	}
 
 	public Vector2 WorldToLocal(Vector2 world)
@@ -50,5 +52,7 @@ public class Vessel {
 		output.y = (tileI.y >= 0) ? tileI.y - (chunkI.y << VesselChunk.SIZE_POW) : tileI.y - (chunkI.y << VesselChunk.SIZE_POW);
 		return output;
 	}
+	
+
 
 }

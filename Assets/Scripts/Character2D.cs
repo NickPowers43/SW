@@ -12,19 +12,23 @@ public class MyMsgType {
 
 public class Character2D : NetworkBehaviour
 {
-	public static float NETWORK_VIS_RANGE = 15.0f;
+	public static float OBSERVER_UPDATE_INTERVAL = 2.0f;
+	public static float NETWORK_VIS_RANGE_SQR = 15.0f * 15.0f;
 
 	public float maxSpeed = 5.5f;
+	public Vessel currentVessel;
 	
 	//private Animator m_Anim;            // Reference to the player's animator component.
-	private Rigidbody2D m_Rigidbody2D;
+	private Rigidbody2D rb;
 	private float baseRot;
 	private PlayerInfo pi;
 	private NetworkClient nc;
 
-	private bool hidden = true;
-	private NetworkIdentity netID;
-	private Vessel currentVessel;
+	private bool hidden = false;
+	public NetworkIdentity networkIdentity;
+	private bool initialObserverRebuild = true;
+
+	private SimpleTimer observerUpdateTimer;
 
 	private Vec2i chunkI;
 	public Vec2i ChunkI
@@ -39,8 +43,10 @@ public class Character2D : NetworkBehaviour
 	
 	public void Start()
 	{
-		netID = base.GetComponent<NetworkIdentity> ();
-		m_Rigidbody2D = GetComponent<Rigidbody2D>();
+		observerUpdateTimer = new SimpleTimer(OBSERVER_UPDATE_INTERVAL);
+
+		networkIdentity = GetComponent<NetworkIdentity>();
+		rb = GetComponent<Rigidbody2D>();
 		baseRot = transform.rotation.eulerAngles.z;
 
 		if (isLocalPlayer) {
@@ -96,7 +102,7 @@ public class Character2D : NetworkBehaviour
 	{
 		foreach (PlayerInfo item in playerAccounts) {
 
-			if (item.username == username) {
+			if (false && item.username == username) {
 				RpcUsernameTaken(username);
 				Debug.Log ("Rejecting player \"" + username + "\" registration: username taken"); 
 				return;
@@ -106,7 +112,7 @@ public class Character2D : NetworkBehaviour
 
 		//username is unique
 		pi = new PlayerInfo();
-		pi.username = username;
+		pi.username = username + DateTime.Today.ToString();
 		pi.password = password;
 		PlayerAccounts.Add(pi);
 		
@@ -119,11 +125,31 @@ public class Character2D : NetworkBehaviour
 	}
 	
 	[ClientRpc(channel=0)]
-	public void RpcCreateChunk(byte[] message)
+	public void RpcSyncVessel(uint vesselIndex, byte[] message)
 	{
+		ClientVessel v;
+		if (!ClientVessel.Vessels.TryGetValue(vesselIndex, out v)) {
+			v = new ClientVessel(vesselIndex, message);
+		}
+		
+		Debug.Log("Receiving chunk");
+		VesselChunk vc = new VesselChunk(message);
+		
+		v.SetChunk(vc);
+	}
+	
+	[ClientRpc(channel=0)]
+	public void RpcCreateChunk(uint vesselIndex, byte[] message)
+	{
+		ClientVessel v;
+		if (!ClientVessel.Vessels.TryGetValue(vesselIndex, out v)) {
+			v = new ClientVessel(vesselIndex);
+		}
+
 		Debug.Log("Receiving chunk");
 		VesselChunk vc = new VesselChunk(message);
 
+		v.SetChunk(vc);
 	}
 	
 	[ClientRpc]
@@ -150,20 +176,31 @@ public class Character2D : NetworkBehaviour
 		Debug.Log("incorrect password");
 	}
 
-	[ClientCallback]
 	private void Update()
 	{
-		if (isLocalPlayer) {
-
-			Vector2 cursorPosition = (Vector2)MainCamera.Instance.camera.ScreenToWorldPoint(Input.mousePosition);
-
-			CmdHandleInputs(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"), cursorPosition);
-
-			if (Input.GetKey(KeyCode.LeftShift) && Input.GetMouseButtonDown(0)) {
-				CmdHandleShiftClick(cursorPosition);
+		if (isServer){
+			
+			if (observerUpdateTimer.Update()) {
+				networkIdentity.RebuildObservers(initialObserverRebuild);
+				initialObserverRebuild = false;
+				observerUpdateTimer.Set(OBSERVER_UPDATE_INTERVAL);
 			}
+			
+		} else {
 
-			MainCamera.Instance.SetTarget(transform.position);
+			if (isLocalPlayer) {
+
+				Vector2 cursorPosition = (Vector2)MainCamera.Instance.camera.ScreenToWorldPoint(Input.mousePosition);
+				
+				CmdHandleInputs(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical"), cursorPosition);
+				
+				if (Input.GetKey(KeyCode.LeftShift) && Input.GetMouseButtonDown(0)) {
+					CmdHandleShiftClick(cursorPosition);
+				}
+				
+				MainCamera.Instance.SetTarget(transform.position);
+
+			}
 		}
 	}
 	
@@ -175,55 +212,68 @@ public class Character2D : NetworkBehaviour
 		transform.rotation = q;
 		
 		// Move the character
-		m_Rigidbody2D.velocity = move * maxSpeed;
+		rb.velocity = move * maxSpeed;
 		
 	}
 
 	public override bool OnCheckObserver (NetworkConnection newObserver)
 	{
-		if (hidden)
-		{
-			return false;
+		Debug.Log("OnCheckObserver");
+
+		for (int i = 0; i < newObserver.playerControllers.Count; i++) {
+
+			Vector2 diff = (Vector2)newObserver.playerControllers[i].gameObject.transform.position - (Vector2)transform.position;
+			
+			if (diff.sqrMagnitude < NETWORK_VIS_RANGE_SQR) {
+				
+				Debug.Log("Adding observer");
+				return true;
+			}
+			
 		}
-		else {
-			return false;
-		}
+
+		return false;
 	}
 
 	public override bool OnRebuildObservers (HashSet<NetworkConnection> observers, bool initial)
 	{
-		if (netID.connectionToClient != null)
-		{
-			observers.Add (netID.connectionToClient);
+		Debug.Log("OnRebuildObservers");
+
+		bool output = false;
+
+		if (networkIdentity != null) {
+			if (networkIdentity.connectionToClient != null)
+			{
+				observers.Add (networkIdentity.connectionToClient);
+				output |= true;
+			}
 		}
-		
+
 		if (!hidden) {
-
+			
 			if (currentVessel != null) {
-
-				List<NetworkIdentity> localIdentities = ServerVessel.VesselIdentities[currentVessel];
-
-				if (localIdentities != null) {
-
-					for (int i = 0; i < localIdentities.Count; i++) {
-
-						if (localIdentities[i].connectionToClient != null) {
-
-							Vector2 diff = (Vector2)localIdentities[i].transform.position - (Vector2)transform.position;
+				
+				ServerVessel cv = (ServerVessel)currentVessel;
+				
+				for (int i = 0; i < cv.netIdentities.Count; i++) {
+					
+					if (cv.netIdentities[i].connectionToClient != null) {
+						
+						Vector2 diff = (Vector2)cv.netIdentities[i].transform.position - (Vector2)transform.position;
+						
+						if (diff.sqrMagnitude < NETWORK_VIS_RANGE_SQR) {
 							
-							if (diff.magnitude < NETWORK_VIS_RANGE) {
-								
-								observers.Add (localIdentities[i].connectionToClient);
-								
-							}
-
+							Debug.Log("Adding observer");
+							observers.Add (cv.netIdentities[i].connectionToClient);
+							output |= true;
+							
 						}
 					}
 				}
 			}
 		}
 
-		return true;
+		return output;
 	}
 
 	private static List<PlayerInfo> playerAccounts = new List<PlayerInfo>(512);

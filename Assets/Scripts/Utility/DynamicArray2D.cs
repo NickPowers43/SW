@@ -97,18 +97,9 @@ namespace Utility
 			Vec2i newDim = dim + amount;
 			T[] newData = new T[newDim.x * newDim.y];
 
-			for (int i = 0; i < amount.y; i++) {
-				for (int j = 0; j < newDim.x; j++) {
-					newData[indexOf(j,newDim.y - i, newDim.x)] = null;
-				}
-			}
-
 			for (int i = 0; i < dim.y; i++) {
 				for (int j = 0; j < dim.x; j++) {
 					newData[indexOf(j,i, newDim.x)] = data[indexOf(j,i, dim.x)];
-				}
-				for (int j = dim.x; j < newDim.x; j++) {
-					newData[indexOf(j,i, newDim.x)] = null;
 				}
 			}
 
@@ -123,17 +114,8 @@ namespace Utility
 			T[] newData = new T[newDim.x * newDim.y];
 			
 			for (int i = amount.y; i < newDim.y; i++) {
-				for (int j = 0; j < amount.x; j++) {
-					newData[indexOf(j,i, newDim.x)] = null;
-				}
 				for (int j = amount.x; j < newDim.x; j++) {
 					newData[indexOf(j,i, newDim.x)] = data[indexOf(j - amount.x,i - amount.y, dim.x)];
-				}
-			}
-			
-			for (int i = 0; i < amount.y; i++) {
-				for (int j = 0; j < newDim.x; j++) {
-					newData[indexOf(j,i, newDim.x)] = null;
 				}
 			}
 

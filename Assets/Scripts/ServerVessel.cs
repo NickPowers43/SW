@@ -14,13 +14,15 @@ public class ServerVessel : Vessel
 	private ulong spaceAddress;
 
 	private List<VesselChunk> modifiedChunks = new List<VesselChunk>(5);
+	public List<NetworkIdentity> netIdentities = new List<NetworkIdentity>();
+
 	private List<Character2D> playersOnBoard = new List<Character2D>(5);
 
 	private bool noPlayers;
 	private float timeEmpty;
 
 	public ServerVessel () :
-		base()
+		base(NextIndex++)
 	{
 		interiorExists = false;
 		spaceAddress = 0;
@@ -42,7 +44,7 @@ public class ServerVessel : Vessel
 					
 					foreach (var chunk in chunks.TryGetOutsideInside(player.ChunkI, pChunkI, PLAYER_CHUNK_RANGE)) {
 						
-						player.RpcCreateChunk(chunk.MessageBytes);
+						player.RpcCreateChunk(Index, chunk.MessageBytes);
 						
 					}
 					player.ChunkI = pChunkI;
@@ -149,7 +151,7 @@ public class ServerVessel : Vessel
 				Vec2i offset = modifiedChunks[i].Index - playerCI;
 				if (offset <= PLAYER_CHUNK_RANGE) {
 					
-					playersOnBoard[j].RpcCreateChunk(modifiedChunks[i].MessageBytes);
+					playersOnBoard[j].RpcCreateChunk(Index, modifiedChunks[i].MessageBytes);
 					
 				}
 				
@@ -209,7 +211,11 @@ public class ServerVessel : Vessel
 		Vector2 position = Vector2.zero;
 		
 		player.transform.position = (Vector3)(interiorPosition + position);
+
+		netIdentities.Add(player.networkIdentity);
+		player.currentVessel = this;
 		playersOnBoard.Add(player);
+
 		noPlayers = false;
 		timeEmpty = 0.0f;
 	}
@@ -221,7 +227,11 @@ public class ServerVessel : Vessel
 		}
 		
 		player.transform.position = (Vector3)(interiorPosition + position);
+
+		netIdentities.Add(player.networkIdentity);
+		player.currentVessel = this;
 		playersOnBoard.Add(player);
+
 		noPlayers = false;
 		timeEmpty = 0.0f;
 	}
@@ -233,37 +243,18 @@ public class ServerVessel : Vessel
 			noPlayers = true;
 		}
 	}
-	
-	private static Dictionary<Vessel, List<NetworkIdentity>> vesselIdentities = new Dictionary<Vessel, List<NetworkIdentity>>();
-	public static Dictionary<Vessel, List<NetworkIdentity>> VesselIdentities
+
+	public static QTSpaceAllocator SpaceAllocator = new QTSpaceAllocator(13);
+	public static List<ServerVessel> Vessels = new List<ServerVessel>(512);
+
+	private static uint nextIndex = 0;
+	private static uint NextIndex
 	{
 		get{
-			return vesselIdentities;
+			return nextIndex;
 		}
 		set{
-			vesselIdentities = value;
-		}
-	}
-	
-	private static QTSpaceAllocator spaceAllocator = new QTSpaceAllocator(13);
-	public static QTSpaceAllocator SpaceAllocator
-	{
-		get{
-			return spaceAllocator;
-		}
-		set{
-			spaceAllocator = value;
-		}
-	}
-	
-	private static List<Vessel> activeVessels = new List<Vessel>(512);
-	public static List<Vessel> ActiveVessels
-	{
-		get{
-			return activeVessels;
-		}
-		set{
-			activeVessels = value;
+			nextIndex = value;
 		}
 	}
 }
