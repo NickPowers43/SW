@@ -288,7 +288,7 @@ public class ServerVessel : Vessel
 		}
 	}
 
-	public static QTSpaceAllocator SpaceAllocator = new QTSpaceAllocator(13);
+	public static QTSpaceAllocator SpaceAllocator = new QTSpaceAllocator(8);
 	public static List<ServerVessel> Vessels = new List<ServerVessel>(512);
 
 	private static uint nextIndex = 0;

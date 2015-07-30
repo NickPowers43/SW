@@ -22,18 +22,22 @@ public class StartingVessel : ServerVessel
 
 	private void Initialize()
 	{
-		Vec2i tempI = new Vec2i(VesselChunk.SIZE >> 1, VesselChunk.SIZE >> 1);
+
 		
 		VesselTile tempTile;
-		
+
+		Vec2i tempI = new Vec2i(VesselChunk.SIZE >> 1, VesselChunk.SIZE >> 1);
 		tempTile = new VesselTile(WallType.OneByZero, WallType.ZeroByOne, true, FloorType.Basic, FloorType.None);
 		SetTile(tempI, tempTile);
+
 		tempI += new Vec2i(0, 1);
 		tempTile = new VesselTile(WallType.OneByZero, WallType.None, true, FloorType.None, FloorType.None);
 		SetTile(tempI, tempTile);
+
 		tempI += new Vec2i(1, 0);
 		tempTile = new VesselTile(WallType.None, WallType.None, true, FloorType.None, FloorType.None);
 		SetTile(tempI, tempTile);
+
 		tempI += new Vec2i(0, -1);
 		tempTile = new VesselTile(WallType.ZeroByOne, WallType.None, true, FloorType.None, FloorType.None);
 		SetTile(tempI, tempTile);

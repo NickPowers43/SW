@@ -20,6 +20,7 @@ public class GameManager : MonoBehaviour {
 	public GameObject wallSmallPrefab;
 	public GameObject wallMediumPrefab;
 	public GameObject wallLargePrefab;
+	public GameObject chunkPrefab;
 
 	void Start () {
 

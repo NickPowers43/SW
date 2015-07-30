@@ -15,11 +15,10 @@ public class ClientVC : VesselChunk
 	{
 		base.Instantiate(t, l, r, b, br, position);
 
-		MeshFilter mf = instance.AddComponent<MeshFilter>();
+		MeshFilter mf = instance.GetComponent<MeshFilter>();
 		mf.mesh = GenerateFloorMesh(t, l, r, b, br);
 		
 		instance.transform.position = (Vector3)position;
-		//return instance;
 	}
 	
 	public Mesh GenerateFloorMesh(VesselChunk t, VesselChunk l, VesselChunk r, VesselChunk b, VesselChunk br)
@@ -34,31 +33,32 @@ public class ClientVC : VesselChunk
 				VesselTile tile = TileAt(i, j);
 				
 				if (tile != null) {
-					
-					Vector3 offset = new Vector3(i, j, 0.0f);
-					
-					VesselTile tTile = (j == SIZE-1) ? (t != null) ? t.TileAt(i,0) : null : TileAt(i,j+1);
-					VesselTile lTile = (i == 0) ? (l != null) ? l.TileAt(SIZE-1,j) : null : TileAt(i-1,j);
-					VesselTile rTile = (i == SIZE-1) ? (r != null) ? r.TileAt(0,j) : null : TileAt(i+1,j);
-					VesselTile r2Tile = (i >= SIZE-2) ? (r != null) ? r.TileAt(i-SIZE-2,j) : null : TileAt(i+2,j);
-					VesselTile bTile = (j == 0) ? (b != null) ? b.TileAt(i,SIZE-1) : null : TileAt(i,j-1);
-					VesselTile brTile = null;
-					if (i == 0)
-						if (j < SIZE-1)
-							brTile = (b != null) ? b.TileAt(i+1,SIZE-1) : null;
-					else
-						brTile = (br != null) ? br.TileAt(0,SIZE-1) : null;
-					else
-						if (j < SIZE-1)
-							brTile = TileAt(i+1,j-1);
-					else
-						brTile = (r != null) ? r.TileAt(0,j-1) : null;
-					
+
 					if (tile.floor0 != FloorType.None || tile.floor1 != FloorType.None) {
-						
+					
+						Vector3 offset = new Vector3(i, j, 0.0f);
+					
+						VesselTile tTile = (j == SIZE-1) ? (t != null) ? t.TileAt(i,0) : null : TileAt(i,j+1);
+						VesselTile lTile = (i == 0) ? (l != null) ? l.TileAt(SIZE-1,j) : null : TileAt(i-1,j);
+						VesselTile rTile = (i == SIZE-1) ? (r != null) ? r.TileAt(0,j) : null : TileAt(i+1,j);
+						VesselTile r2Tile = (i >= SIZE-2) ? (r != null) ? r.TileAt(i-SIZE-2,j) : null : TileAt(i+2,j);
+						VesselTile bTile = (j == 0) ? (b != null) ? b.TileAt(i,SIZE-1) : null : TileAt(i,j-1);
+						VesselTile brTile = null;
+						if (i == 0)
+							if (j < SIZE-1)
+								brTile = (b != null) ? b.TileAt(i+1,SIZE-1) : null;
+						else
+							brTile = (br != null) ? br.TileAt(0,SIZE-1) : null;
+						else
+							if (j < SIZE-1)
+								brTile = TileAt(i+1,j-1);
+						else
+							brTile = (r != null) ? r.TileAt(0,j-1) : null;
+
 						if (tile.floor0 == tile.floor1) {
 							Sprites.AppendMeshData(Sprites.FloorMeshes[(byte)tile.floor0][(byte)FloorType.None][(byte)WallType.None][0],vertices,uv,indices,offset);
 						} else {
+							FloorMesh[][][][] gg = Sprites.FloorMeshes;
 							FloorMesh[][] floorCombMeshes = Sprites.FloorMeshes[(byte)tile.floor0][(byte)tile.floor1];
 							
 							if (tile.Contains((byte)WallType.TwoByOne)) { //this tile contains a TwoByOne
@@ -84,7 +84,7 @@ public class ClientVC : VesselChunk
 								Sprites.AppendMeshData(floorCombMeshes[(byte)WallType.TwoByOneFlipped][1],vertices,uv,indices,offset);
 							} else {
 								//no walls cut this tile
-								Sprites.AppendMeshData(floorCombMeshes[(byte)WallType.None][0],vertices,uv,indices,offset);
+								Sprites.AppendMeshData(Sprites.FloorMeshes[(byte)tile.floor0][(byte)FloorType.None][(byte)WallType.None][0],vertices,uv,indices,offset);
 							}
 						}
 					}

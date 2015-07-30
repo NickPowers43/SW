@@ -193,12 +193,11 @@ namespace Utility
 					//expand top
 					GrowTopRight(new Vec2i(0, y - dim.y + origin.y + 1));
 				}
-				else {
-					x -= origin.x;
-					y -= origin.y;
-					data [indexOf(x,y)] = val;
-				}
 			}
+
+			x -= origin.x;
+			y -= origin.y;
+			data [indexOf(x,y)] = val;
 		}
 		
 		public bool TryGet (int x, int y, ref T val)
