@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.Networking;
 using System.Collections;
 
 public class GameManager : MonoBehaviour {
@@ -37,8 +38,16 @@ public class GameManager : MonoBehaviour {
 		spaceQT = new QTSpaceAllocator(17);
 	}
 
-	void Update () {
-	
+	void Update ()
+	{
+		if (Network.isServer) {
+
+			foreach (var vessel in ServerVessel.Vessels) {
+
+				vessel.Update();
+
+			}
+		}
 	}
 
 	public Vessel CreateVessel()

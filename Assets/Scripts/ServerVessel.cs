@@ -7,6 +7,8 @@ using Utility;
 
 public class ServerVessel : Vessel
 {
+	public static float CHUNK_UPDATE_INTERVAL = 2.0f;
+
 	private Vec2i bl = new Vec2i(0,0);
 	private Vec2i tr = new Vec2i(0,0);
 	private bool interiorExists;
@@ -20,6 +22,8 @@ public class ServerVessel : Vessel
 
 	private bool noPlayers;
 	private float timeEmpty;
+	private SimpleTimer chunkCheckTimer;
+
 
 	private bool updateMessageBytes = true;
 	private byte[] messageBytes;
@@ -46,22 +50,31 @@ public class ServerVessel : Vessel
 	{
 		interiorExists = false;
 		spaceAddress = 0;
+
+		chunkCheckTimer.Set(CHUNK_UPDATE_INTERVAL);
+
+		Vessels.Add(this);
 	}
 	
 	public virtual void Update () {
-		
+
+
 		if (interiorExists) {
 			
-			MarkAllChunksUnseen();
-			
-			for (int i = 0; i < playersOnBoard.Count; i++) {
-				
-				UpdatePlayer(playersOnBoard[i]);
+			if (chunkCheckTimer.Update()) {
 
+				MarkAllChunksUnseen();
+				
+				for (int i = 0; i < playersOnBoard.Count; i++) {
+					
+					UpdatePlayer(playersOnBoard[i]);
+					
+				}
+				
+				DestroyUnseenChunks();
+
+				chunkCheckTimer.Set(CHUNK_UPDATE_INTERVAL);
 			}
-			
-			DestroyUnseenChunks();
-			
 		}
 		
 		if (noPlayers) {
@@ -254,6 +267,7 @@ public class ServerVessel : Vessel
 		player.RpcSyncVessel(Index, MessageBytes);
 		player.ChunkI = WorldToChunkI(player.transform.position);
 		SendNearbyChunks(player);
+		InstantiateNearbyChunks(player);
 
 		noPlayers = false;
 		timeEmpty = 0.0f;
@@ -273,6 +287,7 @@ public class ServerVessel : Vessel
 		player.RpcSyncVessel(Index, MessageBytes);
 		player.ChunkI = WorldToChunkI(player.transform.position);
 		SendNearbyChunks(player);
+		InstantiateNearbyChunks(player);
 
 		noPlayers = false;
 		timeEmpty = 0.0f;

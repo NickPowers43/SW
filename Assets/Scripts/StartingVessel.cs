@@ -8,11 +8,12 @@ using Utility;
 
 public class StartingVessel : ServerVessel
 {
-	public StartingVessel ()
+	public StartingVessel () :
+		base()
 	{
 		Initialize();
 
-		ActiveVessels.Add(this);
+		Vessels.Add(this);
 	}
 
 	public override void Update()
@@ -48,15 +49,15 @@ public class StartingVessel : ServerVessel
 		StartingVessel output;
 		
 		//find start vessel
-		if (ActiveVessels.Count == 0) {
+		if (Vessels.Count == 0) {
 			//create one
 			
 			return new StartingVessel();
 		} else {
-			return ActiveVessels[0];
+			return Vessels[0];
 		}
 	}
 
-	private static List<StartingVessel> ActiveVessels = new List<StartingVessel>(64);
+	private static List<StartingVessel> Vessels = new List<StartingVessel>(64);
 }
 
