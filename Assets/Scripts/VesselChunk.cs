@@ -163,43 +163,46 @@ public class VesselChunk
 
 	public virtual void Instantiate(VesselChunk t, VesselChunk l, VesselChunk r, VesselChunk b, VesselChunk br, Vector2 position)
 	{
-		instance = new GameObject("Chunk" + Index);
+		instance = GameObject.Instantiate(GameManager.Instance.chunkPrefab, (Vector3)position, Quaternion.identity) as GameObject;
+		instance.name = "Chunk" + Index.ToString();
 
 		for (int i = 0; i < SIZE; i++) {
 			for (int j = 0; j < SIZE; j++) {
 
 				VesselTile tile = TileAt(i,j);
 
-				if (tile != null) {
+				if (tile != null && (tile.wallNode || tile.wall0T != WallType.None)) {
 
 					Vector2 offset = TileIToOffset(new Vec2i(i,j));
 					
-					GameObject tileGO = new GameObject("Tile" + new Vec2i(i,j));
-					tileGO.transform.position = (Vector3)offset;
+					GameObject tileGO;
+
 					
 					if (tile.wallNode) {
-						CircleCollider2D wnCollider = tileGO.AddComponent<CircleCollider2D>();
-						wnCollider.offset = Vector2.zero;
-						wnCollider.radius = WALL_RADIUS;
+						tileGO = GameObject.Instantiate(GameManager.Instance.wallNodePrefab, (Vector3)offset, Quaternion.identity) as GameObject;
+					} else {
+						tileGO = new GameObject();
+						tileGO.transform.position = (Vector3)offset;
 					}
+
+					tileGO.name = "Tile" + new Vec2i(i,j).ToString();
+					tileGO.transform.SetParent(instance.transform, false);
 					
 					if (tile.wall0T != WallType.None) {
 
 						GameObject wall0GO = VesselTile.GetWall(tile.wall0T);
-						wall0GO.transform.parent = tileGO.transform;
+						wall0GO.transform.SetParent(tileGO.transform, false);
 
 						if (tile.wall1T != WallType.None) {
 
 							GameObject wall1GO = VesselTile.GetWall(tile.wall1T);
-							wall1GO.transform.parent = tileGO.transform;
+							wall1GO.transform.SetParent(tileGO.transform, false);
 
 						}
 					}
 				}
 			}
 		}
-
-		instance.transform.position = (Vector3)position;
 	}
 }
 
