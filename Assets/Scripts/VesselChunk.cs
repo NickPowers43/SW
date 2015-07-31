@@ -154,6 +154,11 @@ public class VesselChunk
 	{
 		return data[Utility.Utility.MatToVector(x, y, SIZE)];
 	}
+	
+	public VesselTile TileAt(Vec2i index)
+	{
+		return data[Utility.Utility.MatToVector(index.x, index.x, SIZE)];
+	}
 
 	public void Destroy()
 	{

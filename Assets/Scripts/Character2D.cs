@@ -21,7 +21,6 @@ public class Character2D : NetworkBehaviour
 	private Rigidbody2D rb;
 	private float baseRot;
 	private PlayerInfo pi;
-	private NetworkClient nc;
 
 	private bool hidden = false;
 	public NetworkIdentity networkIdentity;

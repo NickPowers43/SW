@@ -3,24 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using Utility;
 
-public enum WallType : byte
-{
-	None = 0,
-	OneByZero = 1,
-	TwoByOne = 2,
-	OneByOne = 3,
-	OneByTwo = 4,
-	ZeroByOne = 5,
-	OneByTwoFlipped = 6,
-	OneByOneFlipped = 7,
-	TwoByOneFlipped = 8,
-}
-public enum FloorType : byte
-{
-	None = 0,
-	Basic = 1
-}
-
 public struct VesselTileData
 {
 	public WallType wall0;
