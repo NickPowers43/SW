@@ -236,9 +236,13 @@ public class ServerVessel : Vessel
 	
 	public void SetTile(Vec2i index, VesselTile val)
 	{
+		string temppp = index.ToString();
+
 		Vec2i chunkI = TileToChunkI(index);
-		index -= chunkI << VesselChunk.SIZE_POW;
-		
+		index = index - (chunkI << VesselChunk.SIZE_POW);
+
+		Debug.Log("Setting tile " + temppp + " with local address " + index.ToString() + " in chunk " + chunkI.ToString());
+
 		VesselChunk vc = chunks.TryGet(chunkI);
 		
 		if (vc == null) {
@@ -248,6 +252,41 @@ public class ServerVessel : Vessel
 		vc.SetTile(index, val);
 		
 		AddModifiedChunk(vc);
+	}
+
+	public void BuildWall(Vec2i index, int count, WallType type)
+	{
+		VesselTile tile;
+
+		for (int i = 0; i < count; i++) {
+
+			if (IsWallLegal(index, type)) {
+
+				tile = TryGetTile(index);
+				if (tile == null) {
+					tile = new VesselTile();
+					SetTile(index, tile);
+				}
+
+				if (tile.wall0T != WallType.None) {
+					tile.wall1T = type;
+				} else {
+					tile.wall0T = type;
+				}
+				tile.wallNode = true;
+
+				index = index + wallOffsets[(byte)type];
+
+				tile = TryGetTile(index);
+				if (tile == null) {
+					tile = new VesselTile();
+					SetTile(index, tile);
+				}
+				tile.wallNode = true;
+			} else {
+				index = index + wallOffsets[(byte)type];
+			}
+		}
 	}
 	
 	public void AddPlayer(Character2D player)

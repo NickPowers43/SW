@@ -94,6 +94,8 @@ namespace Utility
 
 		private void GrowTopRight(Vec2i amount)
 		{
+			//UnityEngine.Debug.Log("GrowTopRight: " + amount.ToString());
+
 			Vec2i newDim = dim + amount;
 			T[] newData = new T[newDim.x * newDim.y];
 
@@ -109,6 +111,7 @@ namespace Utility
 		
 		private void GrowBottomLeft(Vec2i amount)
 		{
+			//UnityEngine.Debug.Log("GrowBottomLeft: " + amount.ToString());
 			
 			Vec2i newDim = dim + amount;
 			T[] newData = new T[newDim.x * newDim.y];
@@ -167,7 +170,7 @@ namespace Utility
 					GrowBottomLeft(new Vec2i(origin.x - x, origin.y - y));
 				} else if (y >= dim.y + origin.y) {
 					//expand top left
-					GrowTopRight(new Vec2i(0, y - dim.y + origin.y + 1));
+					GrowTopRight(new Vec2i(0, y - (dim.y + origin.y) + 1));
 					GrowBottomLeft(new Vec2i(origin.x - x, 0));
 				} else {
 					//expand left
@@ -176,14 +179,14 @@ namespace Utility
 			} else if (x >= dim.x + origin.x) {
 				if (y < origin.y) {
 					//expand bottom right
-					GrowTopRight(new Vec2i(x - dim.x + origin.x + 1, 0));
-					GrowBottomLeft(new Vec2i(0, y - dim.y + origin.y + 1));
+					GrowTopRight(new Vec2i(x - (dim.x + origin.x) + 1, 0));
+					GrowBottomLeft(new Vec2i(0, y - (dim.y + origin.y) + 1));
 				} else if (y >= dim.y + origin.y) {
 					//expand top right
-					GrowTopRight(new Vec2i(x - dim.x + origin.x + 1, y - dim.y + origin.y + 1));
+					GrowTopRight(new Vec2i(x - (dim.x + origin.x) + 1, y - (dim.y + origin.y) + 1));
 				} else {
 					//expand right
-					GrowTopRight(new Vec2i(x - dim.x + origin.x + 1, 0));
+					GrowTopRight(new Vec2i(x - (dim.x + origin.x) + 1, 0));
 				}
 			} else {
 				if (y < origin.y) {
@@ -191,7 +194,7 @@ namespace Utility
 					GrowBottomLeft(new Vec2i(0, origin.y - y));
 				} else if (y >= dim.y + origin.y) {
 					//expand top
-					GrowTopRight(new Vec2i(0, y - dim.y + origin.y + 1));
+					GrowTopRight(new Vec2i(0, y - (dim.y + origin.y) + 1));
 				}
 			}
 

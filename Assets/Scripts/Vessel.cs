@@ -51,60 +51,124 @@ public class Vessel {
 	
 	public bool IsWallLegal(Vec2i index, WallType type)
 	{
-		return LegalCorner(type, true, index) && LegalCorner(type, false, index + wallOffsets[(byte)type]);
+		if (type != WallType.OneByZero && type != WallType.ZeroByOne) {
+
+			int hDir = (type < WallType.ZeroByOne) ? 1 : -1;
+
+			if (ContainsWall(new Vec2i(index.x,index.y+1)) || ContainsWall(new Vec2i(index.x+hDir,index.y))) {
+				Debug.Log("Vessel:59");
+				return false;
+			}
+
+			int diff = Mathf.Abs((byte)type - (byte)WallType.ZeroByOne);
+
+			if (diff != 2) {
+				if (ContainsWall(new Vec2i(index.x+hDir,index.y+1))) {
+					Debug.Log("Vessel:67");
+					return false;
+				}
+				if (diff == 1) {
+					if (ContainsWall(new Vec2i(index.x,index.y+2))) {
+						Debug.Log("Vessel:72");
+						return false;
+					}
+				} else if (diff == 3) {
+					if (ContainsWall(new Vec2i(index.x+hDir+hDir,index.y))) {
+						Debug.Log("Vessel:77");
+						return false;
+					}
+				}
+			}
+
+		}
+
+		return LegalWallStart(type, index) && LegalWallEnd(type, index + wallOffsets[(byte)type]);
 	}
 
-	public bool LegalCorner(WallType type, bool start, Vec2i index)
+	public bool ContainsWall(Vec2i index)
 	{
-		VesselTile tile;
+		VesselTile tile = TryGetTile(index);
+		
+		if (tile != null) {
+			return tile.wallNode;
+//			if (tile.wall0T != WallType.None) {
+//				return true;
+//			}
+		}
 
-		tile = TryGetTile(index);
+		//check other walls that touch index
+//		for (byte i = 1; i < 9; i++) {
+//			VesselTile otherTile = TryGetTile(index - wallOffsets[i]);
+//			if (otherTile != null) {
+//				if (otherTile.Contains(i)) {
+//					return true;
+//				}
+//			}
+//		}
 
+		return false;
+	}
+
+	public bool LegalWallStart(WallType type, Vec2i index)
+	{
+		VesselTile tile = TryGetTile(index);
+		
 		if (tile != null) {
 
-			if (start) {
-				if (tile.wall1T != WallType.None)
+			if (tile.wall1T != WallType.None)
+				Debug.Log("Vessel:119");
+				return false;
+			if (tile.wall0T != WallType.None) {
+				if (Mathf.Abs((byte)tile.wall0T - (byte)type) < 4) {
+					Debug.Log("Vessel:123");
 					return false;
-				if (tile.wall0T != WallType.None) {
-					if (Mathf.Abs((byte)tile.wall0T - (byte)type) < 4) {
-						return false;
-					}
 				}
+			}
+		}
 
-				for (byte i = 1; i < 9; i++) {
-					VesselTile otherTile = TryGetTile(index - wallOffsets[i]);
-					if (otherTile != null) {
-						if (otherTile.Contains(i)) {
-							if (!NonAcuteSequence((WallType)i, type)) {
-								return false;
-							}
-						}
-					}
-				}
-			} else {
-				//check with the walls originating from index
-				if (tile.wall0T != WallType.None) {
-					if (!NonAcuteSequence(type, tile.wall0T)) {
+		for (byte i = 1; i < 9; i++) {
+			VesselTile otherTile = TryGetTile(index - wallOffsets[i]);
+			if (otherTile != null) {
+				if (otherTile.Contains(i)) {
+					if (!NonAcuteSequence((WallType)i, type)) {
+						Debug.Log("Vessel:134");
 						return false;
 					}
-					if (tile.wall1T != WallType.None) {
-						if (!NonAcuteSequence(type, tile.wall1T)) {
-							return false;
-						}
+				}
+			}
+		}
+		
+		return true;
+	}
+
+	public bool LegalWallEnd(WallType type, Vec2i index)
+	{
+		VesselTile tile = TryGetTile(index);
+
+		if (tile != null) {
+			//check with the walls originating from index
+			if (tile.wall0T != WallType.None) {
+				if (!NonAcuteSequence(type, tile.wall0T)) {
+					Debug.Log("Vessel:152");
+					return false;
+				}
+				if (tile.wall1T != WallType.None) {
+					if (!NonAcuteSequence(type, tile.wall1T)) {
+						Debug.Log("Vessel:157");
+						return false;
 					}
 				}
 			}
 		}
 
-		if (!start) {
-			//check other walls that touch index
-			for (byte i = 1; i < 9; i++) {
-				VesselTile otherTile = TryGetTile(index - wallOffsets[i]);
-				if (otherTile != null) {
-					if (otherTile.Contains(i)) {
-						if (Mathf.Abs((byte)type - (byte)i) < 4) {
-							return false;
-						}
+		//check other walls that touch index
+		for (byte i = 1; i < 9; i++) {
+			VesselTile otherTile = TryGetTile(index - wallOffsets[i]);
+			if (otherTile != null) {
+				if (otherTile.Contains(i)) {
+					if (Mathf.Abs((byte)type - (byte)i) < 4) {
+						Debug.Log("Vessel:170");
+						return false;
 					}
 				}
 			}
@@ -116,13 +180,13 @@ public class Vessel {
 	public bool NonAcuteSequence(WallType wall0, WallType wall1)
 	{
 		if (wall1 < WallType.ZeroByOne) {
-			int offset = (byte)wall1 - (byte)wall0;
-			if (offset < 4) {
+			if ((byte)wall0 > 4 + (byte)wall1) {
+				Debug.Log("Vessel:184");
 				return false;
 			}
 		} else if (wall1 > WallType.ZeroByOne) {
-			int offset = (byte)wall1 - (byte)wall0;
-			if (offset > -4) {
+			if ((byte)wall0 < (byte)wall1 - 4) {
+				Debug.Log("Vessel:189");
 				return false;
 			}
 		}
@@ -133,13 +197,12 @@ public class Vessel {
 	public VesselTile TryGetTile(Vec2i index)
 	{
 		Vec2i chunkI = TileToChunkI(index);
-		index -= chunkI << VesselChunk.SIZE_POW;
-		
 		VesselChunk vc = chunks.TryGet(chunkI);
 		
 		if (vc == null) {
 			return null;
 		} else {
+			index = index - (chunkI << VesselChunk.SIZE_POW);
 			return vc.TileAt(index);
 		}
 	}

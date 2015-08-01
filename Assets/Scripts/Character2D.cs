@@ -66,6 +66,14 @@ public class Character2D : NetworkBehaviour
 		Vector2 movement = new Vector2(hAxis, vAxis);
 		Move(movement, facing);
 	}
+	
+	[Command(channel=0)]
+	public void CmdBuildWall(int x, int y, int count, int wallType)
+	{
+		ServerVessel cv = (ServerVessel)currentVessel;
+
+
+	}
 
 	[Command(channel=0)]
 	public void CmdLogin(string username, string password)

@@ -157,7 +157,7 @@ public class VesselChunk
 	
 	public VesselTile TileAt(Vec2i index)
 	{
-		return data[Utility.Utility.MatToVector(index.x, index.x, SIZE)];
+		return data[Utility.Utility.MatToVector(index.x, index.y, SIZE)];
 	}
 
 	public void Destroy()
@@ -176,19 +176,13 @@ public class VesselChunk
 
 				VesselTile tile = TileAt(i,j);
 
-				if (tile != null && (tile.wallNode || tile.wall0T != WallType.None)) {
+				if (tile != null && tile.wallNode) {
 
 					Vector2 offset = TileIToOffset(new Vec2i(i,j));
 					
 					GameObject tileGO;
-
 					
-					if (tile.wallNode) {
-						tileGO = GameObject.Instantiate(GameManager.Instance.wallNodePrefab, (Vector3)offset, Quaternion.identity) as GameObject;
-					} else {
-						tileGO = new GameObject();
-						tileGO.transform.position = (Vector3)offset;
-					}
+					tileGO = GameObject.Instantiate(GameManager.Instance.wallNodePrefab, (Vector3)offset, Quaternion.identity) as GameObject;
 
 					tileGO.name = "Tile" + new Vec2i(i,j).ToString();
 					tileGO.transform.SetParent(instance.transform, false);

@@ -19,9 +19,9 @@ public class VesselTile
 	public static Quaternion ONE_BY_ONE_QUAT = Quaternion.AngleAxis(45.0f, Vector3.forward);
 	public static Quaternion ONE_BY_TWO_QUAT = Quaternion.AngleAxis(ONE_BY_TWO_ROT, Vector3.forward);
 	public static Quaternion ZERO_BY_ONE_QUAT = Quaternion.AngleAxis(90.0f, Vector3.forward);
-	public static Quaternion TWO_BY_ONE_FLIPPED_QUAT = Quaternion.AngleAxis(TWO_BY_ONE_ROT + 90.0f, Vector3.forward);
-	public static Quaternion ONE_BY_ONE_FLIPPED_QUAT = Quaternion.AngleAxis(45.0f + 90.0f, Vector3.back);
-	public static Quaternion ONE_BY_TWO_FLIPPED_QUAT = Quaternion.AngleAxis(ONE_BY_TWO_ROT + 90.0f, Vector3.forward);
+	public static Quaternion ONE_BY_TWO_FLIPPED_QUAT = Quaternion.AngleAxis(180.0f - ONE_BY_TWO_ROT, Vector3.forward);
+	public static Quaternion ONE_BY_ONE_FLIPPED_QUAT = Quaternion.AngleAxis(180.0f - 45.0f, Vector3.forward);
+	public static Quaternion TWO_BY_ONE_FLIPPED_QUAT = Quaternion.AngleAxis(180.0f - TWO_BY_ONE_ROT, Vector3.forward);
 	
 	public bool wallNode;
 	public WallType wall0T;
@@ -43,15 +43,24 @@ public class VesselTile
 		case WallType.ZeroByOne:
 			return GameObject.Instantiate(GameManager.Instance.wallSmallPrefab, Vector3.zero, ZERO_BY_ONE_QUAT) as GameObject;
 		case WallType.OneByTwoFlipped:
-			return GameObject.Instantiate(GameManager.Instance.wallSmallPrefab, Vector3.zero, ONE_BY_TWO_FLIPPED_QUAT) as GameObject;
+			return GameObject.Instantiate(GameManager.Instance.wallLargePrefab, Vector3.zero, ONE_BY_TWO_FLIPPED_QUAT) as GameObject;
 		case WallType.OneByOneFlipped:
-			return GameObject.Instantiate(GameManager.Instance.wallSmallPrefab, Vector3.zero, ONE_BY_ONE_FLIPPED_QUAT) as GameObject;
+			return GameObject.Instantiate(GameManager.Instance.wallMediumPrefab, Vector3.zero, ONE_BY_ONE_FLIPPED_QUAT) as GameObject;
 		case WallType.TwoByOneFlipped:
-			return GameObject.Instantiate(GameManager.Instance.wallSmallPrefab, Vector3.zero, TWO_BY_ONE_FLIPPED_QUAT) as GameObject;
+			return GameObject.Instantiate(GameManager.Instance.wallLargePrefab, Vector3.zero, TWO_BY_ONE_FLIPPED_QUAT) as GameObject;
 		default:
 			return null;
 			break;
 		}
+	}
+	
+	public VesselTile()
+	{
+		this.wall0T = WallType.None;
+		this.wall1T = WallType.None;
+		this.wallNode = false;
+		this.floor0 = FloorType.None;
+		this.floor1 = FloorType.None;
 	}
 	
 	public VesselTile(WallType wall0, WallType wall1, bool wallNode, FloorType floor0, FloorType floor1)
