@@ -241,7 +241,7 @@ public class ServerVessel : Vessel
 		Vec2i chunkI = TileToChunkI(index);
 		index = index - (chunkI << VesselChunk.SIZE_POW);
 
-		Debug.Log("Setting tile " + temppp + " with local address " + index.ToString() + " in chunk " + chunkI.ToString());
+		//Debug.Log("Setting tile " + temppp + " with local address " + index.ToString() + " in chunk " + chunkI.ToString());
 
 		VesselChunk vc = chunks.TryGet(chunkI);
 		
@@ -260,7 +260,11 @@ public class ServerVessel : Vessel
 
 		for (int i = 0; i < count; i++) {
 
-			if (IsWallLegal(index, type)) {
+			bool temp = IsWallLegal(index, type);
+
+			Debug.Log("Build wall?: " + temp);
+
+			if (temp) {
 
 				tile = TryGetTile(index);
 				if (tile == null) {

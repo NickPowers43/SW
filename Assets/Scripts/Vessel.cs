@@ -51,7 +51,7 @@ public class Vessel {
 	
 	public bool IsWallLegal(Vec2i index, WallType type)
 	{
-		if (type != WallType.OneByZero && type != WallType.ZeroByOne) {
+		if (!(type == WallType.OneByZero || type == WallType.ZeroByOne)) {
 
 			int hDir = (type < WallType.ZeroByOne) ? 1 : -1;
 
@@ -79,10 +79,18 @@ public class Vessel {
 					}
 				}
 			}
-
 		}
 
-		return LegalWallStart(type, index) && LegalWallEnd(type, index + wallOffsets[(byte)type]);
+		Vec2i end = index + wallOffsets[(byte)type];
+
+		if (TooCloseToWallTop(end, type > WallType.ZeroByOne)) {
+			return false;
+		}
+		if (TooCloseToWallBottom(index, type > WallType.ZeroByOne)) {
+			return false;
+		}
+
+		return LegalWallStart(type, index) && LegalWallEnd(type, end);
 	}
 
 	public bool ContainsWall(Vec2i index)
@@ -90,7 +98,12 @@ public class Vessel {
 		VesselTile tile = TryGetTile(index);
 		
 		if (tile != null) {
-			return tile.wallNode;
+			if (tile.wallNode) {
+				return true;
+			} else {
+				return false;
+			}
+
 //			if (tile.wall0T != WallType.None) {
 //				return true;
 //			}
@@ -139,6 +152,76 @@ public class Vessel {
 		}
 		
 		return true;
+	}
+
+	public bool TooCloseToWallTop(Vec2i index, bool flipped)
+	{
+		VesselTile tile;
+
+		if (flipped) {
+			tile = TryGetTile(new Vec2i(index.x-1, index.y));
+			if (tile != null) {
+				if (tile.Contains(WallType.OneByOne) || tile.Contains(WallType.TwoByOne)) {
+					return true;
+				}
+			}
+			tile = TryGetTile(new Vec2i(index.x-1, index.y-1));
+			if (tile != null) {
+				if (tile.Contains(WallType.OneByTwo)) {
+					return true;
+				}
+			}
+		} else {
+			tile = TryGetTile(new Vec2i(index.x+1, index.y));
+			if (tile != null) {
+				if (tile.Contains(WallType.OneByOneFlipped) || tile.Contains(WallType.TwoByOneFlipped)) {
+					return true;
+				}
+			}
+			tile = TryGetTile(new Vec2i(index.x+1, index.y-1));
+			if (tile != null) {
+				if (tile.Contains(WallType.OneByTwoFlipped)) {
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+	
+	public bool TooCloseToWallBottom(Vec2i index, bool flipped)
+	{
+		VesselTile tile;
+		
+		if (flipped) {
+			tile = TryGetTile(new Vec2i(index.x, index.y-1));
+			if (tile != null) {
+				if (tile.Contains(WallType.OneByOne) || tile.Contains(WallType.OneByTwo)) {
+					return true;
+				}
+			}
+			tile = TryGetTile(new Vec2i(index.x-1, index.y-1));
+			if (tile != null) {
+				if (tile.Contains(WallType.TwoByOne)) {
+					return true;
+				}
+			}
+		} else {
+			tile = TryGetTile(new Vec2i(index.x, index.y-1));
+			if (tile != null) {
+				if (tile.Contains(WallType.OneByOneFlipped) || tile.Contains(WallType.OneByTwoFlipped)) {
+					return true;
+				}
+			}
+			tile = TryGetTile(new Vec2i(index.x+1, index.y-1));
+			if (tile != null) {
+				if (tile.Contains(WallType.TwoByOneFlipped)) {
+					return true;
+				}
+			}
+		}
+		
+		return false;
 	}
 
 	public bool LegalWallEnd(WallType type, Vec2i index)

@@ -28,8 +28,8 @@ public class StartingVessel : ServerVessel
 		Vec2i tempI = new Vec2i(VesselChunk.SIZE >> 1, VesselChunk.SIZE >> 1);
 		//tempTile = new VesselTile(WallType.OneByZero, WallType.ZeroByOne, true, FloorType.Basic, FloorType.None);
 		//SetTile(tempI, tempTile);
-		BuildWall(tempI, 30, WallType.ZeroByOne);
-		//BuildWall(tempI, 3, WallType.OneByZero);
+		BuildWall(tempI, 10, WallType.ZeroByOne);
+		BuildWall(tempI, 10, WallType.OneByZero);
 
 		//tempI += new Vec2i(0, 3);
 		//tempTile = new VesselTile(WallType.OneByZero, WallType.None, true, FloorType.None, FloorType.None);
