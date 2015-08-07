@@ -26,6 +26,7 @@ public class VesselChunk
 	public static int SIZE_POW = 3;
 	public static int SIZE = 1 << SIZE_POW;
 	public static int DATA_COUNT = VesselChunk.SIZE * VesselChunk.SIZE;
+	public static int OFFSET_MASK = (1 << (SIZE_POW + 1)) - 1;
 	public static float WALL_RADIUS = 0.15f;
 
 	public VesselTile[] data;
@@ -147,7 +148,7 @@ public class VesselChunk
 	public void SetTile(Vec2i offset, VesselTile val)
 	{
 		updateMessageBytes = true;
-		this.data[Utility.Utility.MatToVector(offset.x, offset.y, VesselChunk.SIZE)] = val;
+		data[Utility.Utility.MatToVector(offset.x, offset.y, SIZE)] = val;
 	}
 	
 	public VesselTile TileAt(int x, int y)
@@ -158,6 +159,13 @@ public class VesselChunk
 	public VesselTile TileAt(Vec2i index)
 	{
 		return data[Utility.Utility.MatToVector(index.x, index.y, SIZE)];
+	}
+
+	public Vec2i OriginTileIndex()
+	{
+		return new Vec2i(
+			index.x * SIZE,
+			index.y * SIZE);
 	}
 
 	public void Destroy()

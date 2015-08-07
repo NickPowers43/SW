@@ -76,5 +76,10 @@ public class VesselTile
 	{
 		return (WallType)wall == wall0T || (WallType)wall == wall1T;
 	}
+	
+	public bool Contains(WallType wall)
+	{
+		return wall == wall0T || wall == wall1T;
+	}
 }
 

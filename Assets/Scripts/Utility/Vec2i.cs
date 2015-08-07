@@ -55,6 +55,10 @@ namespace Utility
 		{
 			return new Vec2i (a.x << b, a.y << b);
 		}
+		public static Vec2i operator & (Vec2i a, int b)
+		{
+			return new Vec2i (a.x & b, a.y & b);
+		}
 
 		public static bool operator < (Vec2i a, int b)
 		{

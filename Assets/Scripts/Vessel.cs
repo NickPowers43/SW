@@ -56,7 +56,7 @@ public class Vessel {
 			int hDir = (type < WallType.ZeroByOne) ? 1 : -1;
 
 			if (ContainsWall(new Vec2i(index.x,index.y+1)) || ContainsWall(new Vec2i(index.x+hDir,index.y))) {
-				Debug.Log("Vessel:59");
+				Debug.Log("IsWallLegal:0");
 				return false;
 			}
 
@@ -64,17 +64,17 @@ public class Vessel {
 
 			if (diff != 2) {
 				if (ContainsWall(new Vec2i(index.x+hDir,index.y+1))) {
-					Debug.Log("Vessel:67");
+					Debug.Log("IsWallLegal:1");
 					return false;
 				}
 				if (diff == 1) {
 					if (ContainsWall(new Vec2i(index.x,index.y+2))) {
-						Debug.Log("Vessel:72");
+						Debug.Log("IsWallLegal:2");
 						return false;
 					}
 				} else if (diff == 3) {
 					if (ContainsWall(new Vec2i(index.x+hDir+hDir,index.y))) {
-						Debug.Log("Vessel:77");
+						Debug.Log("IsWallLegal:3");
 						return false;
 					}
 				}
@@ -84,13 +84,19 @@ public class Vessel {
 		Vec2i end = index + wallOffsets[(byte)type];
 
 		if (TooCloseToWallTop(end, type > WallType.ZeroByOne)) {
+			Debug.Log("IsWallLegal:4");
 			return false;
 		}
 		if (TooCloseToWallBottom(index, type > WallType.ZeroByOne)) {
+			Debug.Log("IsWallLegal:5");
 			return false;
 		}
 
-		return LegalWallStart(type, index) && LegalWallEnd(type, end);
+		bool a = LegalWallStart(type, index);
+		bool b = LegalWallEnd(type, end);
+		Debug.Log("Testing LegalWallStart(" + a + ") and LegalWallEnd(" + b + ")");
+
+		return a && b;
 	}
 
 	public bool ContainsWall(Vec2i index)
@@ -103,21 +109,7 @@ public class Vessel {
 			} else {
 				return false;
 			}
-
-//			if (tile.wall0T != WallType.None) {
-//				return true;
-//			}
 		}
-
-		//check other walls that touch index
-//		for (byte i = 1; i < 9; i++) {
-//			VesselTile otherTile = TryGetTile(index - wallOffsets[i]);
-//			if (otherTile != null) {
-//				if (otherTile.Contains(i)) {
-//					return true;
-//				}
-//			}
-//		}
 
 		return false;
 	}
@@ -128,29 +120,34 @@ public class Vessel {
 		
 		if (tile != null) {
 
-			if (tile.wall1T != WallType.None)
-				Debug.Log("Vessel:119");
+			if (tile.wall1T != WallType.None) {
+				Debug.Log("LegalWallStart:0");
 				return false;
+			}
 			if (tile.wall0T != WallType.None) {
 				if (Mathf.Abs((byte)tile.wall0T - (byte)type) < 4) {
-					Debug.Log("Vessel:123");
+					Debug.Log("LegalWallStart:1");
 					return false;
 				}
 			}
 		}
+
+		Debug.Log("LegalWallStart:3");
 
 		for (byte i = 1; i < 9; i++) {
 			VesselTile otherTile = TryGetTile(index - wallOffsets[i]);
 			if (otherTile != null) {
 				if (otherTile.Contains(i)) {
 					if (!NonAcuteSequence((WallType)i, type)) {
-						Debug.Log("Vessel:134");
+						Debug.Log("LegalWallStart:2");
 						return false;
 					}
 				}
 			}
 		}
-		
+
+		Debug.Log("LegalWallStart:4");
+
 		return true;
 	}
 
@@ -232,12 +229,12 @@ public class Vessel {
 			//check with the walls originating from index
 			if (tile.wall0T != WallType.None) {
 				if (!NonAcuteSequence(type, tile.wall0T)) {
-					Debug.Log("Vessel:152");
+					Debug.Log("LegalWallEnd:0");
 					return false;
 				}
 				if (tile.wall1T != WallType.None) {
 					if (!NonAcuteSequence(type, tile.wall1T)) {
-						Debug.Log("Vessel:157");
+						Debug.Log("LegalWallEnd:1");
 						return false;
 					}
 				}
@@ -250,7 +247,7 @@ public class Vessel {
 			if (otherTile != null) {
 				if (otherTile.Contains(i)) {
 					if (Mathf.Abs((byte)type - (byte)i) < 4) {
-						Debug.Log("Vessel:170");
+						Debug.Log("LegalWallEnd:2");
 						return false;
 					}
 				}
@@ -264,12 +261,12 @@ public class Vessel {
 	{
 		if (wall1 < WallType.ZeroByOne) {
 			if ((byte)wall0 > 4 + (byte)wall1) {
-				Debug.Log("Vessel:184");
+				Debug.Log("NonAcuteSequence:0");
 				return false;
 			}
 		} else if (wall1 > WallType.ZeroByOne) {
 			if ((byte)wall0 < (byte)wall1 - 4) {
-				Debug.Log("Vessel:189");
+				Debug.Log("NonAcuteSequence:1");
 				return false;
 			}
 		}
@@ -285,7 +282,7 @@ public class Vessel {
 		if (vc == null) {
 			return null;
 		} else {
-			index = index - (chunkI << VesselChunk.SIZE_POW);
+			index -= vc.OriginTileIndex();
 			return vc.TileAt(index);
 		}
 	}
@@ -317,8 +314,8 @@ public class Vessel {
 	public static Vec2i TileToChunkI(Vec2i tileI)
 	{
 		Vec2i output;
-		output.x = (tileI.x >= 0) ? tileI.x >> VesselChunk.SIZE_POW : (tileI.x >> VesselChunk.SIZE_POW) - 1;
-		output.y = (tileI.y >= 0) ? tileI.y >> VesselChunk.SIZE_POW : (tileI.y >> VesselChunk.SIZE_POW) - 1;
+		output.x = (tileI.x >= 0) ? tileI.x / VesselChunk.SIZE : ((tileI.x + 1) / VesselChunk.SIZE) - 1;
+		output.y = (tileI.y >= 0) ? tileI.y / VesselChunk.SIZE : ((tileI.y + 1) / VesselChunk.SIZE) - 1;
 		return output;
 	}
 	

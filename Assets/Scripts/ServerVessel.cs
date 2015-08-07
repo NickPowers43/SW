@@ -236,22 +236,22 @@ public class ServerVessel : Vessel
 	
 	public void SetTile(Vec2i index, VesselTile val)
 	{
-		string temppp = index.ToString();
-
+		Vec2i index2 = index;
 		Vec2i chunkI = TileToChunkI(index);
-		index = index - (chunkI << VesselChunk.SIZE_POW);
-
-		//Debug.Log("Setting tile " + temppp + " with local address " + index.ToString() + " in chunk " + chunkI.ToString());
-
 		VesselChunk vc = chunks.TryGet(chunkI);
-		
+
 		if (vc == null) {
 			vc = CreateChunk(chunkI);
 		}
-		
-		vc.SetTile(index, val);
-		
-		AddModifiedChunk(vc);
+
+		try {
+			index -= vc.OriginTileIndex();
+			vc.SetTile(index, val);
+			
+			AddModifiedChunk(vc);
+		} catch (System.Exception ex) {
+			Debug.Log("Failed to set tile at " + index2.ToString() + "/" + index.ToString() + " at chunk " + chunkI.ToString());
+		}
 	}
 
 	public void BuildWall(Vec2i index, int count, WallType type)
@@ -260,11 +260,7 @@ public class ServerVessel : Vessel
 
 		for (int i = 0; i < count; i++) {
 
-			bool temp = IsWallLegal(index, type);
-
-			Debug.Log("Build wall?: " + temp);
-
-			if (temp) {
+			if (IsWallLegal(index, type)) {
 
 				tile = TryGetTile(index);
 				if (tile == null) {
@@ -278,8 +274,8 @@ public class ServerVessel : Vessel
 					tile.wall0T = type;
 				}
 				tile.wallNode = true;
-
-				index = index + wallOffsets[(byte)type];
+				
+				index += wallOffsets[(byte)type];
 
 				tile = TryGetTile(index);
 				if (tile == null) {
@@ -288,7 +284,7 @@ public class ServerVessel : Vessel
 				}
 				tile.wallNode = true;
 			} else {
-				index = index + wallOffsets[(byte)type];
+				index += wallOffsets[(byte)type];
 			}
 		}
 	}
