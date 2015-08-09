@@ -5,12 +5,19 @@ using Utility;
 
 public struct VesselTileData
 {
-	public WallType wall0;
-	public WallType wall1;
+	public WallTypeMask wall0;
+	public WallTypeMask wall1;
 }
 
 public class VesselTile
 {
+	public enum FLAGS : uint
+	{
+		NONE = 0,
+		HATCH0 = 1 << 0,
+		HATCH1 = 1 << 1
+	}
+
 	public static float TWO_BY_ONE_ROT = Mathf.Rad2Deg * Mathf.Atan2(1, 2);
 	public static float ONE_BY_TWO_ROT = Mathf.Rad2Deg * Mathf.Atan2(2, 1);
 	
@@ -24,10 +31,11 @@ public class VesselTile
 	public static Quaternion TWO_BY_ONE_FLIPPED_QUAT = Quaternion.AngleAxis(180.0f - TWO_BY_ONE_ROT, Vector3.forward);
 	
 	public bool wallNode;
-	public WallType wall0T;
-	public WallType wall1T;
+	public byte wallMask;
+	public uint flags;
 	public FloorType floor0;
 	public FloorType floor1;
+	public BlockType blockT;
 	
 	public static GameObject GetWall(WallType type)
 	{
@@ -56,30 +64,66 @@ public class VesselTile
 	
 	public VesselTile()
 	{
-		this.wall0T = WallType.None;
-		this.wall1T = WallType.None;
+		this.flags = (uint)FLAGS.NONE;
+		this.wallMask = 0;
 		this.wallNode = false;
 		this.floor0 = FloorType.None;
 		this.floor1 = FloorType.None;
 	}
 	
-	public VesselTile(WallType wall0, WallType wall1, bool wallNode, FloorType floor0, FloorType floor1)
+	public VesselTile(WallTypeMask wallMask, bool wallNode, FloorType floor0, FloorType floor1, uint flags)
 	{
-		this.wall0T = wall0;
-		this.wall1T = wall1;
+		this.flags = flags;
+		this.wallMask = (byte)wallMask;
 		this.wallNode = wallNode;
 		this.floor0 = floor0;
 		this.floor1 = floor1;
 	}
 	
-	public bool Contains(byte wall)
+	public int WallCount()
 	{
-		return (WallType)wall == wall0T || (WallType)wall == wall1T;
+		int count = 0;
+
+		for (int i = 0; i < 8; i++) {
+			if (((wallMask >> i) & 1) > 0) {
+				count++;
+			}
+		}
+
+		return count;
+	}
+
+	public int GetWalls(out WallType wall0, out WallType wall1)
+	{
+		wall0 = WallType.None;
+		wall1 = WallType.None;
+		bool firstSet = false;
+
+		int count = 0;
+		
+		for (int i = 0; i < 8; i++) {
+			if (((wallMask >> i) & 1) > 0) {
+				count++;
+				if (!firstSet) {
+					wall0 = (WallType)(i + 1);
+					firstSet = true;
+				} else {
+					wall1 = (WallType)(i + 1);
+				}
+			}
+		}
+		
+		return count;
 	}
 	
 	public bool Contains(WallType wall)
 	{
-		return wall == wall0T || wall == wall1T;
+		return (wallMask & (1 << ((byte)wall - 1))) > 0;
+	}
+	
+	public bool Contains(WallTypeMask wall)
+	{
+		return (wallMask & (byte)wall) > 0;
 	}
 }
 

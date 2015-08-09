@@ -56,31 +56,31 @@ public class ClientVC : VesselChunk
 							brTile = (r != null) ? r.TileAt(0,j-1) : null;
 
 						if (tile.floor0 == tile.floor1) {
-							Sprites.AppendMeshData(Sprites.FloorMeshes[(byte)tile.floor0][(byte)FloorType.None][(byte)WallType.None][0],vertices,uv,indices,offset);
+							Sprites.AppendMeshData(Sprites.FloorMeshes[(byte)tile.floor0][(byte)FloorType.None][(byte)WallTypeMask.None][0],vertices,uv,indices,offset);
 						} else {
 							FloorMesh[][][][] gg = Sprites.FloorMeshes;
 							FloorMesh[][] floorCombMeshes = Sprites.FloorMeshes[(byte)tile.floor0][(byte)tile.floor1];
 							
-							if (tile.Contains((byte)WallType.TwoByOne)) { //this tile contains a TwoByOne
+							if (tile.Contains(WallTypeMask.TwoByOne)) { //this tile contains a TwoByOne
 								Sprites.AppendMeshData(floorCombMeshes[(byte)WallType.TwoByOne][0],vertices,uv,indices,offset);
-							} else if (tile.Contains((byte)WallType.OneByTwo)) { //this tile contains a OneByTwo
+							} else if (tile.Contains(WallTypeMask.OneByTwo)) { //this tile contains a OneByTwo
 								Sprites.AppendMeshData(floorCombMeshes[(byte)WallType.OneByTwo][0],vertices,uv,indices,offset);
-							} else if (tile.Contains((byte)WallType.OneByOne)) { //this tile contains a OneByOne
+							} else if (tile.Contains(WallTypeMask.OneByOne)) { //this tile contains a OneByOne
 								Sprites.AppendMeshData(floorCombMeshes[(byte)WallType.OneByOne][0],vertices,uv,indices,offset);
 							} 
-							else if (lTile != null && lTile.Contains((byte)WallType.TwoByOne)) { //left tile contains a TwoByOne
+							else if (lTile != null && lTile.Contains(WallTypeMask.TwoByOne)) { //left tile contains a TwoByOne
 								Sprites.AppendMeshData(floorCombMeshes[(byte)WallType.TwoByOne][1],vertices,uv,indices,offset);
-							} else if (bTile != null && bTile.Contains((byte)WallType.OneByTwo)) { //bottom tile contains a OneByTwo
+							} else if (bTile != null && bTile.Contains(WallTypeMask.OneByTwo)) { //bottom tile contains a OneByTwo
 								Sprites.AppendMeshData(floorCombMeshes[(byte)WallType.OneByTwo][1],vertices,uv,indices,offset);
-							} else if (brTile != null && brTile.Contains((byte)WallType.OneByTwoFlipped)) { //br tile contains a OneByTwoFlipped
+							} else if (brTile != null && brTile.Contains(WallTypeMask.OneByTwoFlipped)) { //br tile contains a OneByTwoFlipped
 								Sprites.AppendMeshData(floorCombMeshes[(byte)WallType.OneByTwoFlipped][1],vertices,uv,indices,offset);
-							} else if (rTile != null && rTile.Contains((byte)WallType.TwoByOneFlipped)) { //r tile contains a TwoByOneFlipped
+							} else if (rTile != null && rTile.Contains(WallTypeMask.TwoByOneFlipped)) { //r tile contains a TwoByOneFlipped
 								Sprites.AppendMeshData(floorCombMeshes[(byte)WallType.TwoByOneFlipped][0],vertices,uv,indices,offset);
-							} else if (rTile != null && rTile.Contains((byte)WallType.OneByOneFlipped)) { //r tile contains a OneByOneFlipped
+							} else if (rTile != null && rTile.Contains(WallTypeMask.OneByOneFlipped)) { //r tile contains a OneByOneFlipped
 								Sprites.AppendMeshData(floorCombMeshes[(byte)WallType.OneByOneFlipped][0],vertices,uv,indices,offset);
-							} else if (rTile != null && rTile.Contains((byte)WallType.OneByTwoFlipped)) { //r tile contains a OneByTwoFlipped
+							} else if (rTile != null && rTile.Contains(WallTypeMask.OneByTwoFlipped)) { //r tile contains a OneByTwoFlipped
 								Sprites.AppendMeshData(floorCombMeshes[(byte)WallType.OneByTwoFlipped][0],vertices,uv,indices,offset);
-							} else if (r2Tile != null && r2Tile.Contains((byte)WallType.TwoByOneFlipped)) { //r2 tile contains a TwoByOneFlipped
+							} else if (r2Tile != null && r2Tile.Contains(WallTypeMask.TwoByOneFlipped)) { //r2 tile contains a TwoByOneFlipped
 								Sprites.AppendMeshData(floorCombMeshes[(byte)WallType.TwoByOneFlipped][1],vertices,uv,indices,offset);
 							} else {
 								//no walls cut this tile

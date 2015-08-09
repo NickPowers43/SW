@@ -79,8 +79,7 @@ public class VesselChunk
 							nw.Write(j);
 							nw.Write((byte)tile.floor0);
 							nw.Write((byte)tile.floor1);
-							nw.Write((byte)tile.wall0T);
-							nw.Write((byte)tile.wall1T);
+							nw.Write((byte)tile.wallMask);
 							nw.Write(tile.wallNode);
 
 						}
@@ -135,11 +134,10 @@ public class VesselChunk
 			tileI.y = nr.ReadInt32();
 			FloorType floor0 = (FloorType)nr.ReadByte();
 			FloorType floor1 = (FloorType)nr.ReadByte();
-			WallType wall0T = (WallType)nr.ReadByte();
-			WallType wall1T = (WallType)nr.ReadByte();
+			WallTypeMask wallMask = (WallTypeMask)nr.ReadByte();
 			bool wallNode = nr.ReadBoolean();
 
-			VesselTile tile = new VesselTile(wall0T, wall1T, wallNode, floor0, floor1);
+			VesselTile tile = new VesselTile(wallMask, wallNode, floor0, floor1, (uint)VesselTile.FLAGS.NONE);
 			
 			SetTile(tileI, tile);
 		}
@@ -194,17 +192,17 @@ public class VesselChunk
 
 					tileGO.name = "Tile" + new Vec2i(i,j).ToString();
 					tileGO.transform.SetParent(instance.transform, false);
-					
-					if (tile.wall0T != WallType.None) {
 
-						GameObject wall0GO = VesselTile.GetWall(tile.wall0T);
+					WallType wall0;
+					WallType wall1;
+					int wallCount = tile.GetWalls(out wall0, out wall1);
+
+					if (wallCount > 0) {
+						GameObject wall0GO = VesselTile.GetWall(wall0);
 						wall0GO.transform.SetParent(tileGO.transform, false);
-
-						if (tile.wall1T != WallType.None) {
-
-							GameObject wall1GO = VesselTile.GetWall(tile.wall1T);
+						if (wallCount > 1) {
+							GameObject wall1GO = VesselTile.GetWall(wall1);
 							wall1GO.transform.SetParent(tileGO.transform, false);
-
 						}
 					}
 				}

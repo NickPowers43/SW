@@ -222,15 +222,12 @@ public class Character2D : NetworkBehaviour
 
 	public override bool OnCheckObserver (NetworkConnection newObserver)
 	{
-		Debug.Log("OnCheckObserver");
-
 		for (int i = 0; i < newObserver.playerControllers.Count; i++) {
 
 			Vector2 diff = (Vector2)newObserver.playerControllers[i].gameObject.transform.position - (Vector2)transform.position;
 			
 			if (diff.sqrMagnitude < NETWORK_VIS_RANGE_SQR) {
-				
-				Debug.Log("Adding observer");
+
 				return true;
 			}
 			
@@ -241,8 +238,6 @@ public class Character2D : NetworkBehaviour
 
 	public override bool OnRebuildObservers (HashSet<NetworkConnection> observers, bool initial)
 	{
-		Debug.Log("OnRebuildObservers");
-
 		bool output = false;
 
 		if (networkIdentity != null) {
@@ -260,18 +255,22 @@ public class Character2D : NetworkBehaviour
 				ServerVessel cv = (ServerVessel)currentVessel;
 				
 				for (int i = 0; i < cv.netIdentities.Count; i++) {
-					
-					if (cv.netIdentities[i].connectionToClient != null) {
-						
-						Vector2 diff = (Vector2)cv.netIdentities[i].transform.position - (Vector2)transform.position;
-						
-						if (diff.sqrMagnitude < NETWORK_VIS_RANGE_SQR) {
+
+					try {
+						if (cv.netIdentities[i].connectionToClient != null) {
 							
-							Debug.Log("Adding observer");
-							observers.Add (cv.netIdentities[i].connectionToClient);
-							output |= true;
+							Vector2 diff = (Vector2)cv.netIdentities[i].transform.position - (Vector2)transform.position;
 							
+							if (diff.sqrMagnitude < NETWORK_VIS_RANGE_SQR) {
+								
+								Debug.Log("Adding observer");
+								observers.Add (cv.netIdentities[i].connectionToClient);
+								output |= true;
+								
+							}
 						}
+					} catch (Exception ex) {
+						cv.netIdentities.RemoveAt(i);
 					}
 				}
 			}

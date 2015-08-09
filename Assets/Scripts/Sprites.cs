@@ -77,7 +77,7 @@ public class Sprites : MonoBehaviour {
 
 				for (int k = 0; k < 9; k++) {
 					floorMeshes[i][j][k] = GenerateMeshes(
-						(WallType)(byte)k, 
+						(WallTypeMask)(byte)k, 
 						(i == 0) ? FloorUVRects[i] : FloorUVRects[i - 1], 
 						i == 0, 
 						(j == 0) ? FloorUVRects[j] : FloorUVRects[j - 1], 
@@ -87,7 +87,7 @@ public class Sprites : MonoBehaviour {
 		}
 	}
 
-	private static FloorMesh[] GenerateMeshes(WallType type, Rect rightFloor, bool none0, Rect leftFloor, bool none1)
+	private static FloorMesh[] GenerateMeshes(WallTypeMask type, Rect rightFloor, bool none0, Rect leftFloor, bool none1)
 	{
 		if (none0 && none1) {
 			return null;
@@ -102,7 +102,7 @@ public class Sprites : MonoBehaviour {
 		FloorMesh[] output;
 
 		switch (type) {
-		case WallType.None:
+		case WallTypeMask.None:
 			//wall type None (simple quad)
 			if (!none0) {
 				vTemp.Add(v0[0]);
@@ -112,7 +112,7 @@ public class Sprites : MonoBehaviour {
 				AddQuad(iTemp);
 			}
 			return new FloorMesh[1] {new FloorMesh(vTemp.ToArray(), iTemp.ToArray())};
-		case WallType.TwoByOne:
+		case WallTypeMask.TwoByOne:
 			output = new FloorMesh[2]; //wall type TwoByOne
 			if (!none0) {
 				vTemp.Add(v0[0]);
@@ -145,7 +145,7 @@ public class Sprites : MonoBehaviour {
 			}
 			output[1] = new FloorMesh(vTemp.ToArray(), iTemp.ToArray());
 			return output;
-		case WallType.OneByOne:
+		case WallTypeMask.OneByOne:
 			//wall type None (simple quad)
 			if (!none0) {
 				vTemp.Add(v0[0]);
@@ -160,7 +160,7 @@ public class Sprites : MonoBehaviour {
 				AddTriangle(iTemp);
 			}
 			return new FloorMesh[1] {new FloorMesh(vTemp.ToArray(), iTemp.ToArray())};
-		case WallType.OneByTwo:
+		case WallTypeMask.OneByTwo:
 			output = new FloorMesh[2]; //wall type OneByTwo
 			if (!none0) {
 				vTemp.Add(v0[0]);
@@ -193,7 +193,7 @@ public class Sprites : MonoBehaviour {
 			}
 			output[1] = new FloorMesh(vTemp.ToArray(), iTemp.ToArray());
 			return output;
-		case WallType.OneByTwoFlipped:
+		case WallTypeMask.OneByTwoFlipped:
 			output = new FloorMesh[2]; //wall type OneByTwoFlipped
 			if (!none0) {
 				vTemp.Add(v0[2]);
@@ -226,7 +226,7 @@ public class Sprites : MonoBehaviour {
 			}
 			output[1] = new FloorMesh(vTemp.ToArray(), iTemp.ToArray());
 			return output;
-		case WallType.OneByOneFlipped:
+		case WallTypeMask.OneByOneFlipped:
 			//wall type None (simple quad)
 			if (!none0) {
 				vTemp.Add(v0[2]);
@@ -241,7 +241,7 @@ public class Sprites : MonoBehaviour {
 				AddTriangle(iTemp);
 			}
 			return new FloorMesh[1] {new FloorMesh(vTemp.ToArray(), iTemp.ToArray())};
-		case WallType.TwoByOneFlipped:
+		case WallTypeMask.TwoByOneFlipped:
 			output = new FloorMesh[2]; //wall type OneByTwo
 			if (!none0) {
 				vTemp.Add(v0[2]);

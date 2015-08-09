@@ -16,7 +16,32 @@ Platform assembly: C:\Users\Nick\Desktop\SW\SW_Data\Managed\UnityEngine.Networki
 Loading C:\Users\Nick\Desktop\SW\SW_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
 Platform assembly: C:\Users\Nick\Desktop\SW\SW_Data\Managed\UnityEngine.Analytics.dll (this message is harmless)
 Loading C:\Users\Nick\Desktop\SW\SW_Data\Managed\UnityEngine.Analytics.dll into Unity Child Domain
-- Completed reload, in  0.081 seconds
+- Completed reload, in  0.073 seconds
+<RI> Initializing input.
+<RI> Input initialized.
+desktop: 1920x1080 60Hz; virtual: 3360x1080 at -1440,0
+<RI> Initialized touch support.
+Platform assembly: C:\Users\Nick\Desktop\SW\SW_Data\Managed\System.Core.dll (this message is harmless)
+Platform assembly: C:\Users\Nick\Desktop\SW\SW_Data\Managed\System.dll (this message is harmless)
+Initialize engine version: 5.1.2f1 (afd2369b692a)
+GfxDevice: creating device client; threaded=1
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.0]
+    Renderer: NVIDIA GeForce GTX 970 (ID=0x13c2)
+    Vendor:   NVIDIA
+    VRAM:     3072 MB
+Begin MonoManager ReloadAssembly
+Platform assembly: C:\Users\Nick\Desktop\SW\SW_Data\Managed\UnityEngine.dll (this message is harmless)
+Loading C:\Users\Nick\Desktop\SW\SW_Data\Managed\UnityEngine.dll into Unity Child Domain
+Platform assembly: C:\Users\Nick\Desktop\SW\SW_Data\Managed\Assembly-CSharp.dll (this message is harmless)
+Loading C:\Users\Nick\Desktop\SW\SW_Data\Managed\Assembly-CSharp.dll into Unity Child Domain
+Platform assembly: C:\Users\Nick\Desktop\SW\SW_Data\Managed\UnityEngine.UI.dll (this message is harmless)
+Loading C:\Users\Nick\Desktop\SW\SW_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
+Platform assembly: C:\Users\Nick\Desktop\SW\SW_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
+Loading C:\Users\Nick\Desktop\SW\SW_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
+Platform assembly: C:\Users\Nick\Desktop\SW\SW_Data\Managed\UnityEngine.Analytics.dll (this message is harmless)
+Loading C:\Users\Nick\Desktop\SW\SW_Data\Managed\UnityEngine.Analytics.dll into Unity Child Domain
+- Completed reload, in  0.035 seconds
 <RI> Initializing input.
 <RI> Input initialized.
 desktop: 1920x1080 60Hz; virtual: 3360x1080 at -1440,0
@@ -47,11 +72,92 @@ Receiving chunk
  
 (Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 65)
 
-Setting chunk (0, 2)
+Setting chunk (1, 0)
  
 (Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 65)
 
 Nick logged in
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 65)
+
+Syncing Vessel: 0
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 65)
+
+Receiving chunk
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 65)
+
+Need to destroy existing chunk
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 65)
+
+Setting chunk (0, 0)
+ 
+(Filename: C:/buildslave/unity/build/arSifayts/ginne Vessatled/c
+ 
+(on/rFitlenamni: C:/builyEslave/unntyineD/bugBindings.gcts/ge Line: 65)
+
+on/runtime/UnityEngineDebugBindings.gen.cpp Line: 65)
+
+Receiving chunk
+ 
+(Filename: C:/buildslave/unRtycebuilvi/artifactg chunk
+ 
+(F/clenamemmon/run:imC:/buiUnildslave/unity/build/artif.cppcts/g neraine: ed/com65)
+
+untime/UnityEngineDebugBindings.gen.cpp Line: 65)
+
+Need to destroy existing chunk
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 65)
+
+Setting chunk (0, 1)
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 65)
+
+Setting chunk (0, 0)
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 65)
+
+Receiving chunk
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 65)
+
+Need to destroy existing chunk
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 65)
+
+Setting chunk (1, 0)
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 65)
+
+Nick logged in
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 65)
+
+Receiving chunk
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 65)
+
+Setting chunk (0, 1)
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 65)
+
+Receiving chunk
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 65)
+
+Setting chunk (1, 0)
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 65)
+
+Nick logged in
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 65)
+
+Log: connection {1} has been disconnected by timeout; address {::ffff:127.0.0.1:7777}
+UNet Client Disconnect Error: Timeout
  
 (Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 65)
 

@@ -23,35 +23,48 @@ public class StartingVessel : ServerVessel
 
 	private void Initialize()
 	{
-		VesselTile tempTile;
+		//tip
+		BuildWall(new Vec2i(4,13), 1, WallType.OneByZero);
+		//outer left
+		//
+		BuildWall(new Vec2i(1,1), 1, WallType.ZeroByOne);
+		BuildWall(new Vec2i(1,2), 1, WallType.OneByTwo);
+		BuildWall(new Vec2i(2,4), 5, WallType.ZeroByOne);
+		BuildWall(new Vec2i(2,9), 1, WallType.OneByTwo);
+		BuildWall(new Vec2i(3,11), 1, WallType.ZeroByOne);
+		BuildWall(new Vec2i(3,12), 1, WallType.OneByOne);
+		//outer right
+		//
+		BuildWall(new Vec2i(8,1), 1, WallType.ZeroByOne);
+		BuildWall(new Vec2i(8,2), 1, WallType.OneByTwoFlipped);
+		BuildWall(new Vec2i(7,4), 5, WallType.ZeroByOne);
+		BuildWall(new Vec2i(7,9), 1, WallType.OneByTwoFlipped);
+		BuildWall(new Vec2i(6,11), 1, WallType.ZeroByOne);
+		BuildWall(new Vec2i(6,12), 1, WallType.OneByOneFlipped);
 
-		Vec2i tempI = new Vec2i(VesselChunk.SIZE >> 1, VesselChunk.SIZE >> 1);
-		//tempTile = new VesselTile(WallType.OneByZero, WallType.ZeroByOne, true, FloorType.Basic, FloorType.None);
-		//SetTile(tempI, tempTile);
-		BuildWall(tempI, 10, WallType.ZeroByOne);
-		BuildWall(tempI, 10, WallType.OneByZero);
-		BuildWall(tempI, 10, WallType.OneByOne);
+		//inner vertical walls
+		BuildWall(new Vec2i(4,4), 7, WallType.ZeroByOne);
+		BuildWall(new Vec2i(5,4), 7, WallType.ZeroByOne);
+		//left horizontal walls
+		BuildWall(new Vec2i(3,11), 1, WallType.OneByZero);
+		BuildWall(new Vec2i(2,7), 2, WallType.OneByZero);
+		BuildWall(new Vec2i(2,4), 2, WallType.OneByZero);
+		//right horizontal walls
+		BuildWall(new Vec2i(5,11), 1, WallType.OneByZero);
+		BuildWall(new Vec2i(5,7), 2, WallType.OneByZero);
+		BuildWall(new Vec2i(5,4), 2, WallType.OneByZero);
 
-		tempI += new Vec2i(3, 0);
-		BuildWall(tempI, 10, WallType.ZeroByOne);
+		//place spawner for noobs
+		PlaceBlock(BlockType.Spawner, new Vec2i(4, 2));
+	}
 
-		tempI += new Vec2i(3, 0);
-		BuildWall(tempI, 10, WallType.ZeroByOne);
-		BuildWall(tempI, 10, WallType.TwoByOne);
-		BuildWall(tempI, 10, WallType.TwoByOneFlipped);
+	public override bool PlaceBlock(BlockType type, Vec2i location)
+	{
 
-		tempI += new Vec2i(4, 0);
-		BuildWall(tempI, 10, WallType.OneByOneFlipped);
 
-		//tempI += new Vec2i(3, -3);
-		//tempTile = new VesselTile(WallType.None, WallType.None, true, FloorType.None, FloorType.None);
-		//SetTile(tempI, tempTile);
-		//BuildWall(tempI, 3, WallType.OneByZero);
+		if (type == BlockType.Spawner) {
 
-		//tempI += new Vec2i(0, -1);
-		//tempTile = new VesselTile(WallType.ZeroByOne, WallType.None, true, FloorType.None, FloorType.None);
-		//SetTile(tempI, tempTile);
-		//BuildWall(tempI, 3, WallType.OneByZero);
+		}
 	}
 
 	public static StartingVessel GetStartingVessel()

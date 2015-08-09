@@ -268,11 +268,7 @@ public class ServerVessel : Vessel
 					SetTile(index, tile);
 				}
 
-				if (tile.wall0T != WallType.None) {
-					tile.wall1T = type;
-				} else {
-					tile.wall0T = type;
-				}
+				tile.wallMask |= (byte)(1 << ((byte)type - 1));
 				tile.wallNode = true;
 				
 				index += wallOffsets[(byte)type];
@@ -288,7 +284,12 @@ public class ServerVessel : Vessel
 			}
 		}
 	}
-	
+
+	public virtual bool PlaceBlock(BlockType type, Vec2i location)
+	{
+		return false;
+	}
+
 	public void AddPlayer(Character2D player)
 	{
 		if (!interiorExists) {
