@@ -41,24 +41,26 @@ public class ClientVC : VesselChunk
 						VesselTile tTile = (j == SIZE-1) ? (t != null) ? t.TileAt(i,0) : null : TileAt(i,j+1);
 						VesselTile lTile = (i == 0) ? (l != null) ? l.TileAt(SIZE-1,j) : null : TileAt(i-1,j);
 						VesselTile rTile = (i == SIZE-1) ? (r != null) ? r.TileAt(0,j) : null : TileAt(i+1,j);
-						VesselTile r2Tile = (i >= SIZE-2) ? (r != null) ? r.TileAt(i-SIZE-2,j) : null : TileAt(i+2,j);
+						VesselTile r2Tile = (i >= SIZE-2) ? (r != null) ? r.TileAt(i-(SIZE-2),j) : null : TileAt(i+2,j);
 						VesselTile bTile = (j == 0) ? (b != null) ? b.TileAt(i,SIZE-1) : null : TileAt(i,j-1);
 						VesselTile brTile = null;
-						if (i == 0)
-							if (j < SIZE-1)
+						if (j == 0) {
+							if (i < SIZE-1) {
 								brTile = (b != null) ? b.TileAt(i+1,SIZE-1) : null;
-						else
-							brTile = (br != null) ? br.TileAt(0,SIZE-1) : null;
-						else
-							if (j < SIZE-1)
-								brTile = TileAt(i+1,j-1);
-						else
-							brTile = (r != null) ? r.TileAt(0,j-1) : null;
-
-						if (tile.floor0 == tile.floor1) {
-							Sprites.AppendMeshData(Sprites.FloorMeshes[(byte)tile.floor0][(byte)FloorType.None][(byte)WallTypeMask.None][0],vertices,uv,indices,offset);
+							} else {
+								brTile = (br != null) ? br.TileAt(0,SIZE-1) : null;
+							}
 						} else {
-							FloorMesh[][][][] gg = Sprites.FloorMeshes;
+							if (i != SIZE-1) {
+								brTile = TileAt(i+1,j-1);
+							} else {
+								brTile = (r != null) ? r.TileAt(0,j-1) : null;
+							}
+						}
+					
+						if (tile.floor0 == tile.floor1) {
+							Sprites.AppendMeshData(Sprites.FloorMeshes[(byte)tile.floor0][(byte)FloorType.None][(byte)WallType.None][0],vertices,uv,indices,offset);
+						} else {
 							FloorMesh[][] floorCombMeshes = Sprites.FloorMeshes[(byte)tile.floor0][(byte)tile.floor1];
 							
 							if (tile.Contains(WallTypeMask.TwoByOne)) { //this tile contains a TwoByOne

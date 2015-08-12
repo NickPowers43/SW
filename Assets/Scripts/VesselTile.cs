@@ -33,6 +33,8 @@ public class VesselTile
 	public bool wallNode;
 	public byte wallMask;
 	public uint flags;
+	public Compartment c0;
+	public Compartment c1;
 	public FloorType floor0;
 	public FloorType floor1;
 	public BlockType blockT;
@@ -67,7 +69,7 @@ public class VesselTile
 		this.flags = (uint)FLAGS.NONE;
 		this.wallMask = 0;
 		this.wallNode = false;
-		this.floor0 = FloorType.None;
+		this.floor0 = FloorType.Basic;
 		this.floor1 = FloorType.None;
 	}
 	

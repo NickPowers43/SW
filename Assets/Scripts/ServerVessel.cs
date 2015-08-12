@@ -284,35 +284,63 @@ public class ServerVessel : Vessel
 			}
 		}
 	}
+	
+	public void RebuildCompartments()
+	{
+		Vec2i start = ChunkIToTileI(bl);
+		Vec2i end = ChunkIToTileI(tr + 1);
+
+		for (int i = start.y; i < end.y; i++) {
+			for (int j = start.x; j < end.x; j++) {
+
+				VesselTile tile;
+				if ((tile = TryGetTile(new Vec2i(j,i))) != null) {
+
+					VesselTile lTile;
+					if ((lTile = TryGetTile(new Vec2i(j-1,i))) != null) {
+						
+						
+						
+					}
+
+					VesselTile lTile;
+					if ((lTile = TryGetTile(new Vec2i(j-1,i))) != null) {
+						
+						
+						
+					}
+				}
+
+			}
+		}
+	}
 
 	public virtual bool PlaceBlock(BlockType type, Vec2i location)
 	{
+		VesselTile tile;
+
+		if ((tile = TryGetTile(location)) != null) {
+			tile.blockT = type;
+		}
+
 		return false;
 	}
-
-	public void AddPlayer(Character2D player)
-	{
-		if (!interiorExists) {
-			AllocateInteriorSpace();
-		}
-		
-		//find a spawn point for the player
-		Vector2 position = Vector2.zero;
-		
-		player.transform.position = (Vector3)(interiorPosition + position);
-
-		netIdentities.Add(player.networkIdentity);
-		player.currentVessel = this;
-		playersOnBoard.Add(player);
-		player.RpcSyncVessel(Index, MessageBytes);
-		player.ChunkI = WorldToChunkI(player.transform.position);
-		SendNearbyChunks(player);
-		InstantiateNearbyChunks(player);
-
-		noPlayers = false;
-		timeEmpty = 0.0f;
-	}
 	
+	public virtual void BuildFoundation(Vec2i origin, Vec2i size)
+	{
+		VesselTile tile;
+
+		for (int i = 0; i < size.y; i++) {
+			for (int j = 0; j < size.x; j++) {
+
+				Vec2i temp = origin + new Vec2i(j, i);
+				if ((tile = TryGetTile(temp)) == null) {
+					SetTile(temp, new VesselTile());
+				}
+			}
+		}
+	}
+
 	public void AddPlayer(Character2D player, Vector2 position)
 	{
 		if (!interiorExists) {

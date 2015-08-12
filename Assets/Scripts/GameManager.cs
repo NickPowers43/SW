@@ -4,6 +4,11 @@ using System.Collections;
 
 public class GameManager : MonoBehaviour {
 
+	public void SelectBlockType(int type)
+	{
+		Debug.Log("Selecting block type: " + type.ToString());
+	}
+
 	private QTSpaceAllocator spaceQT;
 	
 	private static GameManager instance = null;
@@ -23,14 +28,17 @@ public class GameManager : MonoBehaviour {
 	public GameObject wallLargePrefab;
 	public GameObject chunkPrefab;
 
-	void Start () {
-
+	public GameManager()
+	{
 		if (instance == null) {
 			Instance = this;
 		} else {
-			DestroyImmediate(this);
+			//DestroyImmediate(this);
 			return;
 		}
+	}
+
+	void Start () {
 
 		GlobalVariables.CharacterInterior = LayerMask.NameToLayer("CharacterInterior");
 		GlobalVariables.CharacterExterior = LayerMask.NameToLayer("CharacterExterior");

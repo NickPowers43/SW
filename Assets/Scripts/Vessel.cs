@@ -8,7 +8,8 @@ using Utility;
 public enum BlockType : byte
 {
 	None = 0,
-	Spawner = 1
+	Spawner = 1,
+	Turret = 2
 }
 
 public enum WallType : byte
@@ -56,11 +57,6 @@ public class Vessel {
 		new Vec2i(-1,1),
 		new Vec2i(-2,1)
 	};
-	
-	public static Vec2i[] objectSizes = new Vec2i[2] {
-		new Vec2i(0,0),
-		new Vec2i(1,1)
-	};
 
 	public static int PLAYER_CHUNK_RANGE = 2;
 
@@ -77,10 +73,16 @@ public class Vessel {
 	
 	public bool IsWallLegal(Vec2i index, WallType type)
 	{
+		//check if foundations have been set and walls nodes are not too close
+		//to the new wall
 		if (!(type == WallType.OneByZero || type == WallType.ZeroByOne)) {
 
 			int hDir = (type < WallType.ZeroByOne) ? 1 : -1;
 
+			if (TryGetTile(new Vec2i(index.x+hDir, index.y)) == null) {
+				return false;
+			}
+			
 			if (ContainsWall(new Vec2i(index.x,index.y+1)) || ContainsWall(new Vec2i(index.x+hDir,index.y))) {
 				return false;
 			}
@@ -92,14 +94,36 @@ public class Vessel {
 					return false;
 				}
 				if (diff == 1) {
+					if (hDir < 0) {
+						if (TryGetTile(new Vec2i(index.x-1, index.y+1)) == null) {
+							return false;
+						}
+					} else {
+						if (TryGetTile(new Vec2i(index.x, index.y+1)) == null) {
+							return false;
+						}
+					}
 					if (ContainsWall(new Vec2i(index.x,index.y+2))) {
 						return false;
 					}
 				} else if (diff == 3) {
+					if (hDir < 0) {
+						if (TryGetTile(new Vec2i(index.x-2, index.y)) == null) {
+							return false;
+						}
+					} else {
+						if (TryGetTile(new Vec2i(index.x+1, index.y)) == null) {
+							return false;
+						}
+					}
 					if (ContainsWall(new Vec2i(index.x+hDir+hDir,index.y))) {
 						return false;
 					}
 				}
+			}
+		} else {
+			if (TryGetTile(index) == null) {
+				return false;
 			}
 		}
 
@@ -109,11 +133,7 @@ public class Vessel {
 			return false;
 		}
 
-		bool a = LegalWallStart(type, index);
-		bool b = LegalWallEnd(type, end);
-		Debug.Log("Testing LegalWallStart(" + a + ") and LegalWallEnd(" + b + ")");
-
-		return a && b;
+		return LegalWallStart(type, index) && LegalWallEnd(type, end);
 	}
 
 	public bool ContainsWall(Vec2i index)
@@ -161,8 +181,6 @@ public class Vessel {
 				}
 			}
 		}
-
-		Debug.Log("LegalWallStart:4");
 
 		return true;
 	}
@@ -404,6 +422,21 @@ public class Vessel {
 		output.x = (tileI.x >= 0) ? tileI.x / VesselChunk.SIZE : ((tileI.x + 1) / VesselChunk.SIZE) - 1;
 		output.y = (tileI.y >= 0) ? tileI.y / VesselChunk.SIZE : ((tileI.y + 1) / VesselChunk.SIZE) - 1;
 		return output;
+	}
+	
+	public static Vec2i ChunkIToTileI(Vec2i chunkI)
+	{
+		return chunkI * VesselChunk.SIZE;
+	}
+	
+	public static Vector2 TileCenterToLocal(Vec2i tileI)
+	{
+		return new Vector2(tileI.x + 0.5f, tileI.y + 0.5f);
+	}
+
+	public static Vector2 TileToLocal(Vec2i tileI)
+	{
+		return new Vector2(tileI.x, tileI.y);
 	}
 	
 	public static Vec2i TileOffset(Vec2i tileI, Vec2i chunkI)

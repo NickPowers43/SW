@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Networking;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using Utility;
@@ -151,7 +152,11 @@ public class VesselChunk
 	
 	public VesselTile TileAt(int x, int y)
 	{
-		return data[Utility.Utility.MatToVector(x, y, SIZE)];
+		try {
+			return data[Utility.Utility.MatToVector(x, y, SIZE)];
+		} catch (System.Exception ex) {
+			throw new ArgumentException();
+		}
 	}
 	
 	public VesselTile TileAt(Vec2i index)
