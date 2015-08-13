@@ -38,7 +38,7 @@ public class ClientVC : VesselChunk
 					
 						Vector3 offset = new Vector3(i, j, 0.0f);
 					
-						VesselTile tTile = (j == SIZE-1) ? (t != null) ? t.TileAt(i,0) : null : TileAt(i,j+1);
+						//VesselTile tTile = (j == SIZE-1) ? (t != null) ? t.TileAt(i,0) : null : TileAt(i,j+1);
 						VesselTile lTile = (i == 0) ? (l != null) ? l.TileAt(SIZE-1,j) : null : TileAt(i-1,j);
 						VesselTile rTile = (i == SIZE-1) ? (r != null) ? r.TileAt(0,j) : null : TileAt(i+1,j);
 						VesselTile r2Tile = (i >= SIZE-2) ? (r != null) ? r.TileAt(i-(SIZE-2),j) : null : TileAt(i+2,j);

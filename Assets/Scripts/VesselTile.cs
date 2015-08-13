@@ -33,10 +33,10 @@ public class VesselTile
 	public bool wallNode;
 	public byte wallMask;
 	public uint flags;
-	public Compartment c0;
-	public Compartment c1;
-	public FloorType floor0;
-	public FloorType floor1;
+	public Compartment c0;//right compartment
+	public Compartment c1;//left compartment
+	public FloorType floor0;//right floor
+	public FloorType floor1;//left floor
 	public BlockType blockT;
 	
 	public static GameObject GetWall(WallType type)

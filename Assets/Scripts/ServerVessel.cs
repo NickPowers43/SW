@@ -291,26 +291,128 @@ public class ServerVessel : Vessel
 		Vec2i end = ChunkIToTileI(tr + 1);
 
 		for (int i = start.y; i < end.y; i++) {
+
+			VesselTile lTile = null;
+			VesselTile tile = TryGetTile(new Vec2i(start.x, i));
+			VesselTile rTile = TryGetTile(new Vec2i(start.x+1, i));
+			//Compartment c0 = null;
+			//Compartment c1 = null;//impossible for this one to be non-null only
+
 			for (int j = start.x; j < end.x; j++) {
+				VesselTile nextRTile = TryGetTile(new Vec2i(j+2, i));
 
-				VesselTile tile;
-				if ((tile = TryGetTile(new Vec2i(j,i))) != null) {
+				Vec2i tileI = new Vec2i(j,i);
+				if (tile != null) {
 
-					VesselTile lTile;
-					if ((lTile = TryGetTile(new Vec2i(j-1,i))) != null) {
-						
-						
-						
+					VesselTile r2Tile = TryGetTile(new Vec2i(tileI.x+2,tileI.y));
+					VesselTile bTile = TryGetTile(new Vec2i(tileI.x,tileI.y-1));
+					VesselTile brTile = TryGetTile(new Vec2i(tileI.x+1,tileI.y-1));
+
+
+					if (tile.Contains(WallTypeMask.ZeroByOne)) {
+						if (tile.Contains(WallTypeMask.OneByZero)) {
+							tile.c0 = new Compartment();
+							tile.c1 = null;
+						} else {
+							//try take bottom's compartment
+							if (bTile != null) {
+
+							}
+						}
+
+					} else if (lTile != null) {
+						if (tile.Contains(WallTypeMask.TwoByOne | WallTypeMask.OneByTwo | WallTypeMask.OneByOne)) { //this tile contains a non-ortho wall originating from origin
+							tile.c1 = lTile.c0;
+							tile.c0 = new Compartment();//or take bottom's
+						} else if (lTile.Contains(WallTypeMask.TwoByOne)) { //left tile contains a TwoByOne
+						} else if (bTile != null && bTile.Contains(WallTypeMask.OneByTwo)) { //bottom tile contains a OneByTwo
+						} else if (brTile != null && brTile.Contains(WallTypeMask.OneByTwoFlipped)) { //br tile contains a OneByTwoFlipped
+						} else if (rTile != null && rTile.Contains(WallTypeMask.TwoByOneFlipped)) { //r tile contains a TwoByOneFlipped
+							tile.c0 = lTile.c0;
+							tile.c1 = lTile.c1;//or take bottom's
+						} else if (rTile != null && rTile.Contains(WallTypeMask.OneByOneFlipped)) { //r tile contains a OneByOneFlipped
+						} else if (rTile != null && rTile.Contains(WallTypeMask.OneByTwoFlipped)) { //r tile contains a OneByTwoFlipped
+						} else if (r2Tile != null && r2Tile.Contains(WallTypeMask.TwoByOneFlipped)) { //r2 tile contains a TwoByOneFlipped
+						} else {
+							if (tile.Contains(WallTypeMask.ZeroByOne)) {
+								tile.c0 = new Compartment();
+							} else {
+								tile.c0 = lTile.c0;
+							}
+						}
+					} else {
+						if (tile.Contains(WallTypeMask.TwoByOne | WallTypeMask.OneByTwo | WallTypeMask.OneByOne)) { //this tile contains a non-ortho wall originating from origin
+							tile.c1 = null;
+							tile.c0 = new Compartment();//or take bottom's
+						} else if (bTile != null && bTile.Contains(WallTypeMask.OneByTwo)) { //bottom tile contains a OneByTwo
+							tile.c0 = bTile.c0;
+							tile.c1 = bTile.c1;
+						} else if (brTile != null && brTile.Contains(WallTypeMask.OneByTwoFlipped)) { //br tile contains a OneByTwoFlipped
+							tile.c0 = bTile.c0;
+							tile.c1 = bTile.c1;
+						} else if (rTile != null && rTile.Contains(WallTypeMask.TwoByOneFlipped)) { //r tile contains a TwoByOneFlipped
+							tile.c0 = new Compartment();
+							tile.c1 = new Compartment();//or take bottom's
+						} else if (rTile != null && rTile.Contains(WallTypeMask.OneByOneFlipped)) { //r tile contains a OneByOneFlipped
+							tile.c0 = new Compartment();
+							tile.c1 = new Compartment();//or take bottom's
+						} else if (rTile != null && rTile.Contains(WallTypeMask.OneByTwoFlipped)) { //r tile contains a OneByTwoFlipped
+							tile.c0 = new Compartment();
+							tile.c1 = new Compartment();//or take bottom's
+						} else if (r2Tile != null && r2Tile.Contains(WallTypeMask.TwoByOneFlipped)) { //r2 tile contains a TwoByOneFlipped
+							tile.c0 = new Compartment();
+							tile.c1 = new Compartment();//or take bottom's
+						} else {
+							tile.c0 = new Compartment();//or take bottom's
+							tile.c1 = null;
+						}
 					}
 
-					VesselTile lTile;
-					if ((lTile = TryGetTile(new Vec2i(j-1,i))) != null) {
-						
-						
-						
+						if (c0 != null && c1 != null) {
+							tile.c0 = c0;
+							tile.c1 = c1;
+
+							
+						} else if (c0 != null) {
+							
+							if (tile.Contains(WallTypeMask.ZeroByOne)) {
+								c0 = new Compartment();
+								tile.c0 = c0;
+								tile.c1 = null;
+							} else if (tile.Contains(WallTypeMask.TwoByOne)) { //this tile contains a TwoByOne
+								c1 = c0;
+								c0 = new Compartment();
+								tile.c0 = c0;
+								tile.c1 = c1;
+							} else if (tile.Contains(WallTypeMask.OneByTwo | WallTypeMask.OneByOne)) { //this tile contains a OneByTwo
+								tile.c0 = c0;
+								tile.c1 = c1;
+								c0 = null;
+								c1 = null;
+							}
+							
+						} else {
+							
+							//no compartments we can use from the other tile
+							
+						}
 					}
+
+
+					if (lTile == null) {
+						//create new compartment for this tile
+					} else {
+						//take left tile compartment if you can
+					}
+
+
+
+
 				}
 
+				lTile = tile;
+				tile = rTile;
+				rTile = nextRTile;
 			}
 		}
 	}

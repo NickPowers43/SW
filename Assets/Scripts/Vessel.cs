@@ -423,6 +423,11 @@ public class Vessel {
 		output.y = (tileI.y >= 0) ? tileI.y / VesselChunk.SIZE : ((tileI.y + 1) / VesselChunk.SIZE) - 1;
 		return output;
 	}
+
+	public bool CutTile(Vec2i tileI, ref WallType type, ref int offset)
+	{
+		return false;
+	}
 	
 	public static Vec2i ChunkIToTileI(Vec2i chunkI)
 	{

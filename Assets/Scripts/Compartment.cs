@@ -30,8 +30,10 @@ public class Compartment
 
 	public void Combine(Compartment other)
 	{
-		isPtr = true;
-		ptrValue = other;
+		if (other != this) {
+			isPtr = true;
+			ptrValue = other;
+		}
 	}
 
 	public static bool operator == (Compartment a, Compartment b)
