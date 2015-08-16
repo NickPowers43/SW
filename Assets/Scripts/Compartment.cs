@@ -1,4 +1,4 @@
-
+using UnityEngine;
 using System;
 
 
@@ -7,6 +7,7 @@ public class Compartment
 	public float area;
 	public float pressure;
 	public float oxygen;
+	public Color color;
 
 	public Compartment Instance
 	{
@@ -24,6 +25,7 @@ public class Compartment
 
 	public Compartment ()
 	{
+		color = new Color(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value);
 		isPtr = false;
 		ptrValue = null;
 	}
@@ -32,17 +34,17 @@ public class Compartment
 	{
 		if (other != this) {
 			isPtr = true;
-			ptrValue = other;
+			ptrValue = other.Instance;
 		}
 	}
 
-	public static bool operator == (Compartment a, Compartment b)
-	{
-		return 
-			a == b || 
-			(a.isPtr && a.ptrValue == b) ||
-			(b.isPtr && b.ptrValue == a) ||
-			((a.isPtr && b.isPtr) && a.ptrValue == b.ptrValue);
-	}
+//	public static bool operator == (Compartment a, Compartment b)
+//	{
+//		return 
+//			a == b || 
+//			(a.isPtr && a.ptrValue == b) ||
+//			(b.isPtr && b.ptrValue == a) ||
+//			((a.isPtr && b.isPtr) && a.ptrValue == b.ptrValue);
+//	}
 }
 

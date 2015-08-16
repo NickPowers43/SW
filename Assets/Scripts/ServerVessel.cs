@@ -5,6 +5,72 @@ using System.Collections;
 using System.Collections.Generic;
 using Utility;
 
+public class AdjacentTiles {
+
+	private ServerVessel vessel;
+	private Vec2i pos;
+
+	public VesselTile l2Tile = null;
+	public VesselTile lTile = null;
+	public VesselTile blTile = null;
+	public VesselTile bTile = null;
+	public VesselTile b2Tile = null;
+	public VesselTile brTile = null;
+	public VesselTile b2rTile = null;
+	public VesselTile br2Tile = null;
+	public VesselTile tile = null;
+	public VesselTile rTile = null;
+	public VesselTile r2Tile = null;
+	
+	public AdjacentTiles (ServerVessel vessel) {
+		this.vessel = vessel;
+	}
+	public AdjacentTiles (ServerVessel vessel, Vec2i start) {
+		this.vessel = vessel;
+		Reset(start);
+	}
+
+	public void Reset (Vec2i pos)
+	{
+		this.pos = pos;
+
+		l2Tile = vessel.TryGetTile(new Vec2i(pos.x-2,pos.y));
+		lTile = vessel.TryGetTile(new Vec2i(pos.x-1,pos.y));
+		blTile = vessel.TryGetTile(new Vec2i(pos.x-1,pos.y-1));
+		bTile = vessel.TryGetTile(new Vec2i(pos.x,pos.y-1));
+		b2Tile = vessel.TryGetTile(new Vec2i(pos.x,pos.y-2));
+		brTile = vessel.TryGetTile(new Vec2i(pos.x+1,pos.y-1));
+		b2rTile = vessel.TryGetTile(new Vec2i(pos.x+1,pos.y-2));
+		br2Tile = vessel.TryGetTile(new Vec2i(pos.x+2,pos.y-1));
+		tile = vessel.TryGetTile(new Vec2i(pos.x, pos.y));
+		rTile = vessel.TryGetTile(new Vec2i(pos.x+1, pos.y));
+		r2Tile = vessel.TryGetTile(new Vec2i(pos.x+2, pos.y));
+	}
+
+	public void MoveRight () {
+
+		VesselTile nextR2Tile = vessel.TryGetTile(new Vec2i(pos.x+3, pos.y));
+		VesselTile nextBR2Tile = vessel.TryGetTile(new Vec2i(pos.x+3,pos.y-1));
+		VesselTile nextB2RTile = vessel.TryGetTile(new Vec2i(pos.x+2,pos.y-2));
+
+		blTile = bTile;
+		bTile = brTile;
+		brTile = br2Tile;
+		br2Tile = nextBR2Tile;
+		
+		b2Tile = b2rTile;
+		b2rTile = nextB2RTile;
+		
+		l2Tile = lTile;
+		lTile = tile;
+		tile = rTile;
+		rTile = r2Tile;
+		r2Tile = nextR2Tile;
+
+		pos.x += 1;
+	}
+}
+
 public class ServerVessel : Vessel
 {
 	public static float CHUNK_UPDATE_INTERVAL = 2.0f;
@@ -284,134 +350,105 @@ public class ServerVessel : Vessel
 			}
 		}
 	}
-	
+
+	private static void FillTile(AdjacentTiles t)
+	{
+		//take the compartments from left or bottom no matter what in these cases
+		if ((t.bTile != null && t.bTile.Contains(WallTypeMask.OneByTwo)) || (t.brTile != null && t.brTile.Contains(WallTypeMask.OneByTwoFlipped))) {
+			t.tile.c0 = t.bTile.c0.Instance;
+			t.tile.c1 = t.bTile.c1.Instance;
+			return;
+		}
+		if ((t.lTile != null && t.lTile.Contains(WallTypeMask.TwoByOne)) || (t.rTile != null && t.rTile.Contains(WallTypeMask.TwoByOneFlipped))) {
+			t.tile.c0 = t.lTile.c0.Instance;
+			t.tile.c1 = t.lTile.c1.Instance;
+			return;
+		}
+		//
+
+		//try take from bottom
+		Compartment b = null;
+		if (t.bTile != null) {
+			if (!t.tile.Contains(WallTypeMask.OneByZero)) {
+				//set the appropriate compartment field depending on how "bTile" is cut
+				if (
+					(t.blTile != null && t.blTile.Contains(WallTypeMask.TwoByOne)) ||
+					(t.bTile.Contains(WallTypeMask.OneByOne)) ||
+					(t.b2Tile != null && t.b2Tile.Contains(WallTypeMask.OneByTwo))) {
+					b = t.bTile.c1.Instance;
+				//} else if (
+				//	(t.b2rTile != null && t.b2rTile.Contains(WallTypeMask.OneByTwoFlipped)) ||
+				//	(t.brTile != null && t.brTile.Contains(WallTypeMask.OneByOneFlipped)) ||
+				//	(t.br2Tile != null && t.br2Tile.Contains(WallTypeMask.TwoByOneFlipped))){
+				//	b = t.bTile.c0.Instance;
+				} else {
+					b = t.bTile.c0.Instance;
+				}
+			}
+		}
+		Compartment l = null;
+		if (t.lTile != null) {
+			if (!t.tile.Contains(WallTypeMask.ZeroByOne)) {
+				l = t.lTile.c0.Instance;
+			}
+		}
+
+		if (
+			(t.r2Tile != null && t.r2Tile.Contains(WallTypeMask.TwoByOneFlipped)) || 
+			(t.rTile != null && t.rTile.Contains(WallTypeMask.OneByOneFlipped | WallTypeMask.OneByTwoFlipped))) {
+			t.tile.c0 = new Compartment();
+			if (l != null && b != null) {
+				l.Combine(b);
+			}
+			if (b != null) {
+				t.tile.c1 = b;
+			} else if (l != null) {
+				t.tile.c1 = l;
+			} else {
+				t.tile.c1 = new Compartment();
+			}
+			return;
+		} else if (t.tile != null && t.tile.Contains(WallTypeMask.TwoByOne | WallTypeMask.OneByOne | WallTypeMask.OneByTwo)) {
+			if (b == null) {
+				b = new Compartment();
+			}
+			t.tile.c0 = b;
+			if (l == null) {
+				l = new Compartment();
+			}
+			t.tile.c1 = l;
+			return;
+		} else {
+			if (l != null && b != null) {
+				l.Combine(b);
+			} else {
+				l = (l == null) ? b : l;
+			}
+			if (l == null) {
+				l = new Compartment();
+			}
+			t.tile.c0 = l.Instance;
+		}
+	}
+
 	public void RebuildCompartments()
 	{
 		Vec2i start = ChunkIToTileI(bl);
 		Vec2i end = ChunkIToTileI(tr);
 
+		AdjacentTiles at = new AdjacentTiles(this);
+
 		for (int i = start.y; i < end.y; i++) {
 
-			VesselTile l2Tile = null;
-			VesselTile lTile = null;
-			VesselTile blTile = null;
-			VesselTile bTile = TryGetTile(new Vec2i(start.x,i-1));
-			VesselTile b2Tile = TryGetTile(new Vec2i(start.x,i-2));
-			VesselTile brTile = TryGetTile(new Vec2i(start.x+1,i-1));
-			VesselTile b2rTile = TryGetTile(new Vec2i(start.x+1,i-2));
-			VesselTile br2Tile = TryGetTile(new Vec2i(start.x+2,i-1));
-			VesselTile tile = TryGetTile(new Vec2i(start.x, i));
-			VesselTile rTile = TryGetTile(new Vec2i(start.x+1, i));
-			VesselTile r2Tile = TryGetTile(new Vec2i(start.x+2, i));
+			at.Reset(new Vec2i(start.x, i));
 
 			for (int j = start.x; j < end.x; j++) {
-				VesselTile nextR2Tile = TryGetTile(new Vec2i(j+3, i));
-				VesselTile nextBR2Tile = TryGetTile(new Vec2i(j+3,i-1));
-				VesselTile nextB2RTile = TryGetTile(new Vec2i(j+2,i-2));
-				
-				Vec2i tileI = new Vec2i(j,i);
-				if (tile != null) {
+				if (at.tile != null) {
 
-					Compartment bottomComp = null;
+					FillTile(at);
 
-					//try to take from left tile first
-					if (lTile != null) {
-						if (!tile.Contains(WallType.ZeroByOne)) {
-							//take compartment from left tile
-							if (lTile.Contains(WallTypeMask.TwoByOne)) {
-								tile.c0 = lTile.c0;
-								tile.c1 = lTile.c1;
-								bottomComp = tile.c0;
-							} else if (rTile != null && rTile.Contains(WallTypeMask.TwoByOneFlipped)) {
-								tile.c0 = lTile.c0;
-								tile.c1 = lTile.c1;
-								bottomComp = tile.c1;
-							} else {
-								//set the appropriate compartment field depending on how "tile" is cut
-								if (
-									(bTile != null && bTile.Contains(WallTypeMask.OneByTwo)) ||
-									(brTile != null && brTile.Contains(WallTypeMask.OneByTwoFlipped))) {
-									tile.c1 = lTile.c0;
-									tile.c0 = new Compartment();
-								} else if (rTile != null && rTile.Contains(WallTypeMask.OneByOneFlipped | WallTypeMask.OneByTwoFlipped)) {
-									tile.c1 = lTile.c0;
-									tile.c0 = new Compartment();
-									bottomComp = tile.c1;
-								} else if (r2Tile != null && r2Tile.Contains(WallTypeMask.TwoByOneFlipped)) {
-									tile.c1 = lTile.c0;
-									tile.c0 = new Compartment();
-									bottomComp = tile.c1;
-								} else {
-									tile.c0 = lTile.c0;
-									tile.c1 = null;
-									bottomComp = tile.c0;
-								}
-							}
-						} else {
-							//create new compartment
-							tile.c0 = new Compartment();
-							bottomComp = tile.c0;
-						}
-					} else {
-						if (!tile.Contains(WallType.ZeroByOne)) {
-							//take compartment from left tile
-							//set the appropriate compartment field depending on how "tile" is cut
-							if (
-								(bTile != null && bTile.Contains(WallTypeMask.OneByTwo)) ||
-								(brTile != null && brTile.Contains(WallTypeMask.OneByTwoFlipped))) {
-								tile.c1 = new Compartment();
-								tile.c0 = new Compartment();
-							} else if (rTile != null && rTile.Contains(WallTypeMask.OneByOneFlipped | WallTypeMask.OneByTwoFlipped)) {
-								tile.c1 = new Compartment();
-								tile.c0 = new Compartment();
-								bottomComp = tile.c1;
-							} else if (r2Tile != null && r2Tile.Contains(WallTypeMask.TwoByOneFlipped)) {
-								tile.c1 = new Compartment();
-								tile.c0 = new Compartment();
-								bottomComp = tile.c1;
-							} else {
-								tile.c0 = new Compartment();
-								tile.c1 = null;
-								bottomComp = tile.c0;
-							}
-						} else {
-							//create new compartment
-							tile.c0 = new Compartment();
-							bottomComp = tile.c0;
-						}
-					}
-
-					if (bTile != null) {
-						//set compartments of bottom tile
-						if (bTile.Contains(WallTypeMask.OneByTwo) || (brTile != null && brTile.Contains(WallTypeMask.OneByTwoFlipped))) {
-							bTile.c0.Combine(tile.c0);
-							bTile.c1.Combine(tile.c1);
-						} else {
-							//set the appropriate compartment field depending on how "bTile" is cut
-							if (
-								(blTile != null && blTile.Contains(WallTypeMask.TwoByOne)) ||
-								(bTile.Contains(WallTypeMask.OneByOne)) ||
-								(b2Tile != null && b2Tile.Contains(WallTypeMask.OneByTwo))) {
-								bTile.c1.Combine(bottomComp);
-							} else {
-								bTile.c0.Combine(bottomComp);
-							}
-						}
-					}
 				}
-				blTile = bTile;
-				bTile = brTile;
-				brTile = br2Tile;
-				br2Tile = nextBR2Tile;
-
-				b2Tile = b2rTile;
-				b2rTile = nextB2RTile;
-
-				l2Tile = lTile;
-				lTile = tile;
-				tile = rTile;
-				rTile = r2Tile;
-				r2Tile = nextR2Tile;
+				at.MoveRight();
 			}
 		}
 	}
