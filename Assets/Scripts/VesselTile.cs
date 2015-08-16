@@ -63,7 +63,7 @@ public class VesselTile
 			break;
 		}
 	}
-	
+
 	public VesselTile()
 	{
 		this.flags = (uint)FLAGS.NONE;
