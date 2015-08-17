@@ -258,12 +258,15 @@ public class ServerVessel : Vessel
 	
 	private void SendModifiedChunks()
 	{
-		for (int i = 0; i < modifiedChunks.Count; i++) {
+		for (int j = 0; j < playersOnBoard.Count; j++) {
 			
+			playersOnBoard[j].ChunkI = WorldToChunkI(playersOnBoard[j].transform.position);
+			
+		}
+		for (int i = 0; i < modifiedChunks.Count; i++) {
 			for (int j = 0; j < playersOnBoard.Count; j++) {
-				
-				Vec2i playerCI = WorldToChunkI(playersOnBoard[j].transform.position);
-				Vec2i offset = modifiedChunks[i].Index - playerCI;
+
+				Vec2i offset = modifiedChunks[i].Index - playersOnBoard[j].ChunkI;
 				if (offset <= PLAYER_CHUNK_RANGE) {
 					
 					playersOnBoard[j].RpcSetChunk(Index, modifiedChunks[i].MessageBytes);
@@ -551,15 +554,18 @@ public class ServerVessel : Vessel
 				Vec2i tileI = new Vec2i(j, i);
 				VesselTile tile;
 				if ((tile = TryGetTile(tileI)) != null) {
+					bool modified = false;
 					if (tile.c0 != null && tile.c0.Instance == c) {
 						tile.floor0 = type;
-						Vec2i chunkI = TileToChunkI(tileI);
-						AddModifiedChunk(chunks.Get(chunkI));
+						modified = true;
 					}
 					if (tile.c1 != null && tile.c1.Instance == c) {
 						tile.floor1 = type;
-						Vec2i chunkI = TileToChunkI(tileI);
-						AddModifiedChunk(chunks.Get(chunkI));
+						modified |= true;
+					}
+
+					if (modified) {
+						AddModifiedChunk(chunks.Get(TileToChunkI(tileI)));
 					}
 				}
 			}

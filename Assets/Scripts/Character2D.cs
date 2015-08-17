@@ -80,8 +80,10 @@ public class Character2D : NetworkBehaviour
 	{
 		Debug.Log("Filling At: " + local.ToString());
 		ServerVessel cv = (ServerVessel)currentVessel;
-		
-		cv.SetCompartmentFloor(FloorType.Basic, cv.CompartmentAt(local));
+
+		FloorType floorType = (FloorType)(1 + (int)(UnityEngine.Random.value * 2.0f));
+
+		cv.SetCompartmentFloor(floorType, cv.CompartmentAt(local));
 	}
 
 	[Command(channel=0)]

@@ -41,7 +41,8 @@ public enum WallTypeMask : byte
 public enum FloorType : byte
 {
 	None = 0,
-	Basic = 1
+	Basic = 1,
+	SmoothWhite = 2,
 }
 
 public class Vessel {
