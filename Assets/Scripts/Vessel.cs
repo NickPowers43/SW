@@ -73,53 +73,109 @@ public class Vessel {
 	
 	public bool IsWallLegal(Vec2i index, WallType type)
 	{
+		VesselTile tile = null;
+		if ((tile = TryGetTile(index)) != null && tile.blockT != BlockType.None) {
+			return false;
+		}
+		if ((tile = TryGetTile(new Vec2i(index.x-1, index.y))) != null  && tile.blockT != BlockType.None) {
+			return false;
+		}
+
 		//check if foundations have been set and walls nodes are not too close
 		//to the new wall
 		if (!(type == WallType.OneByZero || type == WallType.ZeroByOne)) {
 
 			int hDir = (type < WallType.ZeroByOne) ? 1 : -1;
+			int diff = Mathf.Abs((byte)type - (byte)WallType.ZeroByOne);
 
-			if (TryGetTile(new Vec2i(index.x+hDir, index.y)) == null) {
-				return false;
+			if (hDir < 0) {
+				if ((tile = TryGetTile(new Vec2i(index.x-1, index.y))) == null) {
+					return false;
+				} else {
+					if (tile.blockT != BlockType.None)
+						return false;
+				}
+				if (((tile = TryGetTile(new Vec2i(index.x-1, index.y-1))) != null && tile.blockT != BlockType.None) ||
+				    ((tile = TryGetTile(new Vec2i(index.x-2, index.y))) != null && tile.blockT != BlockType.None) ||
+				    ((tile = TryGetTile(new Vec2i(index.x-1, index.y+1))) != null && tile.blockT != BlockType.None) ||
+				    ((tile = TryGetTile(new Vec2i(index.x, index.y))) != null && tile.blockT != BlockType.None) ||
+				    ((tile = TryGetTile(new Vec2i(index.x-2, index.y-1))) != null && tile.blockT != BlockType.None) ||
+				    ((tile = TryGetTile(new Vec2i(index.x, index.y+1))) != null && tile.blockT != BlockType.None)) {
+					return false;
+				}
+				if (diff != 2) {
+					if (((tile = TryGetTile(new Vec2i(index.x-1, index.y+1))) != null && tile.blockT != BlockType.None) ||
+					     ContainsWall(new Vec2i(index.x-1,index.y+1))) {
+						return false;
+					}
+				}
+				if (diff == 3) {
+					if (TryGetTile(new Vec2i(index.x-2, index.y)) == null ||
+					    ContainsWall(new Vec2i(index.x-2,index.y))) {
+						return false;
+					}
+					if (((tile = TryGetTile(new Vec2i(index.x-3, index.y-1))) != null && tile.blockT != BlockType.None) ||
+					    ((tile = TryGetTile(new Vec2i(index.x-3, index.y))) != null && tile.blockT != BlockType.None)) {
+						return false;
+					}
+				} else if (diff == 1) {
+					if (TryGetTile(new Vec2i(index.x-1, index.y+1)) == null ||
+					    ContainsWall(new Vec2i(index.x,index.y+2))) {
+						return false;
+					}
+					if (((tile = TryGetTile(new Vec2i(index.x-2, index.y+2))) != null && tile.blockT != BlockType.None) ||
+					    ((tile = TryGetTile(new Vec2i(index.x-1, index.y+2))) != null && tile.blockT != BlockType.None)) {
+						return false;
+					}
+				}
+			} else {
+				if ((tile = TryGetTile(new Vec2i(index.x, index.y))) == null) {
+					return false;
+				} else {
+					if (tile.blockT != BlockType.None)
+						return false;
+				}
+				if ((tile = TryGetTile(new Vec2i(index.x, index.y-1))) != null && tile.blockT != BlockType.None) {
+					return false;
+				}
+				if (((tile = TryGetTile(new Vec2i(index.x, index.y-1))) != null && tile.blockT != BlockType.None) ||
+				    ((tile = TryGetTile(new Vec2i(index.x+1, index.y))) != null && tile.blockT != BlockType.None) ||
+				    ((tile = TryGetTile(new Vec2i(index.x, index.y+1))) != null && tile.blockT != BlockType.None) ||
+				    ((tile = TryGetTile(new Vec2i(index.x-1, index.y))) != null && tile.blockT != BlockType.None) ||
+				    ((tile = TryGetTile(new Vec2i(index.x+1, index.y-1))) != null && tile.blockT != BlockType.None) ||
+				    ((tile = TryGetTile(new Vec2i(index.x-1, index.y+1))) != null && tile.blockT != BlockType.None)) {
+					return false;
+				}
+				if (diff != 2) {
+					if (((tile = TryGetTile(new Vec2i(index.x+1, index.y+1))) != null && tile.blockT != BlockType.None) ||
+					    ContainsWall(new Vec2i(index.x+1,index.y+1))) {
+						return false;
+					}
+				}
+				if (diff == 3) {
+					if (TryGetTile(new Vec2i(index.x+1, index.y)) == null ||
+					    ContainsWall(new Vec2i(index.x+2,index.y))) {
+						return false;
+					}
+					if (((tile = TryGetTile(new Vec2i(index.x+2, index.y-1))) != null && tile.blockT != BlockType.None) ||
+					    ((tile = TryGetTile(new Vec2i(index.x+2, index.y))) != null && tile.blockT != BlockType.None)) {
+						return false;
+					}
+				} else if (diff == 1) {
+					if (TryGetTile(new Vec2i(index.x, index.y+1)) == null ||
+					    ContainsWall(new Vec2i(index.x,index.y+2))) {
+						return false;
+					}
+					if (((tile = TryGetTile(new Vec2i(index.x-1, index.y+2))) != null && tile.blockT != BlockType.None) ||
+					    ((tile = TryGetTile(new Vec2i(index.x, index.y+2))) != null && tile.blockT != BlockType.None)) {
+						return false;
+					}
+				}
 			}
+
 			
 			if (ContainsWall(new Vec2i(index.x,index.y+1)) || ContainsWall(new Vec2i(index.x+hDir,index.y))) {
 				return false;
-			}
-
-			int diff = Mathf.Abs((byte)type - (byte)WallType.ZeroByOne);
-
-			if (diff != 2) {
-				if (ContainsWall(new Vec2i(index.x+hDir,index.y+1))) {
-					return false;
-				}
-				if (diff == 1) {
-					if (hDir < 0) {
-						if (TryGetTile(new Vec2i(index.x-1, index.y+1)) == null) {
-							return false;
-						}
-					} else {
-						if (TryGetTile(new Vec2i(index.x, index.y+1)) == null) {
-							return false;
-						}
-					}
-					if (ContainsWall(new Vec2i(index.x,index.y+2))) {
-						return false;
-					}
-				} else if (diff == 3) {
-					if (hDir < 0) {
-						if (TryGetTile(new Vec2i(index.x-2, index.y)) == null) {
-							return false;
-						}
-					} else {
-						if (TryGetTile(new Vec2i(index.x+1, index.y)) == null) {
-							return false;
-						}
-					}
-					if (ContainsWall(new Vec2i(index.x+hDir+hDir,index.y))) {
-						return false;
-					}
-				}
 			}
 		} else {
 			if (TryGetTile(index) == null) {
@@ -391,6 +447,11 @@ public class Vessel {
 			return vc.TileAt(index);
 		}
 	}
+	
+	public Vector2 LocalToWorld(Vector2 local)
+	{
+		return interiorPosition + local;
+	}
 
 	public Vector2 WorldToLocal(Vector2 world)
 	{
@@ -442,6 +503,13 @@ public class Vessel {
 	public static Vector2 TileToLocal(Vec2i tileI)
 	{
 		return new Vector2(tileI.x, tileI.y);
+	}
+
+	public static Vec2i LocalToTile(Vector2 local)
+	{
+		return new Vec2i(
+			(local.x < 0.0f) ? -(int)(-local.x) - 1 : (int)local.x, 
+			(local.y < 0.0f) ? -(int)(-local.y) - 1 : (int)local.y);
 	}
 	
 	public static Vec2i TileOffset(Vec2i tileI, Vec2i chunkI)

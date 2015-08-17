@@ -241,6 +241,12 @@ namespace Utility
 			return data [indexOf(x,y)];
 		}
 		
+		public T Get (Vec2i index)
+		{
+			index -= origin;
+			return data [indexOf(index.x,index.y)];
+		}
+		
 		public T Get2 (int x, int y)
 		{
 			return data [indexOf(x,y)];

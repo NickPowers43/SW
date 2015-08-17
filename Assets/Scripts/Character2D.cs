@@ -76,6 +76,15 @@ public class Character2D : NetworkBehaviour
 	}
 
 	[Command(channel=0)]
+	public void CmdFillAt(Vector2 local)
+	{
+		Debug.Log("Filling At: " + local.ToString());
+		ServerVessel cv = (ServerVessel)currentVessel;
+		
+		cv.SetCompartmentFloor(FloorType.Basic, cv.CompartmentAt(local));
+	}
+
+	[Command(channel=0)]
 	public void CmdLogin(string username, string password)
 	{
 		foreach (PlayerInfo item in playerAccounts) {
@@ -139,6 +148,8 @@ public class Character2D : NetworkBehaviour
 		if (!ClientVessel.Vessels.TryGetValue(vesselIndex, out cv)) {
 			cv = new ClientVessel(vesselIndex, message);
 		}
+
+		currentVessel = cv;
 	}
 	
 	[ClientRpc(channel=0)]
@@ -201,6 +212,12 @@ public class Character2D : NetworkBehaviour
 				if (Input.GetKey(KeyCode.LeftShift) && Input.GetMouseButtonDown(0)) {
 					CmdHandleShiftClick(cursorPosition);
 				}
+
+				if (Input.GetMouseButtonDown(0)) {
+					Vector2 mouseWorld = (Vector2)MainCamera.Instance.camera.ScreenToWorldPoint(Input.mousePosition);
+					Debug.Log("Sending FillAt command for location: " + mouseWorld.ToString());
+					CmdFillAt(mouseWorld - currentVessel.LocalToWorld(Vector2.zero));
+				}
 				
 				MainCamera.Instance.SetTarget(transform.position);
 
@@ -262,8 +279,7 @@ public class Character2D : NetworkBehaviour
 							Vector2 diff = (Vector2)cv.netIdentities[i].transform.position - (Vector2)transform.position;
 							
 							if (diff.sqrMagnitude < NETWORK_VIS_RANGE_SQR) {
-								
-								Debug.Log("Adding observer");
+
 								observers.Add (cv.netIdentities[i].connectionToClient);
 								output |= true;
 								

@@ -15,7 +15,8 @@ public class VesselTile
 	{
 		NONE = 0,
 		HATCH0 = 1 << 0,
-		HATCH1 = 1 << 1
+		HATCH1 = 1 << 1,
+		SOLID_BLOCK = 1 << 2
 	}
 
 	public static float TWO_BY_ONE_ROT = Mathf.Rad2Deg * Mathf.Atan2(1, 2);
@@ -69,7 +70,7 @@ public class VesselTile
 		this.flags = (uint)FLAGS.NONE;
 		this.wallMask = 0;
 		this.wallNode = false;
-		this.floor0 = FloorType.Basic;
+		this.floor0 = FloorType.None;
 		this.floor1 = FloorType.None;
 	}
 	

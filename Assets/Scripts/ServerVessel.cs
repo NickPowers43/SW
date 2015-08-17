@@ -279,6 +279,8 @@ public class ServerVessel : Vessel
 	
 	private void AddModifiedChunk(VesselChunk vc)
 	{
+		vc.Modified = true;
+
 		if (modifiedChunks.Count != 0) {
 			for (int i = 0; i < modifiedChunks.Count; i++) {
 				if (modifiedChunks[i] == vc)
@@ -353,6 +355,11 @@ public class ServerVessel : Vessel
 
 	private static void FillTile(AdjacentTiles t)
 	{
+		if ((t.tile.flags & (uint)VesselTile.FLAGS.SOLID_BLOCK) > 0) {
+			t.tile.c0 = null;
+			t.tile.c1 = null;
+		}
+
 		//take the compartments from left or bottom no matter what in these cases
 		if ((t.bTile != null && t.bTile.Contains(WallTypeMask.OneByTwo)) || (t.brTile != null && t.brTile.Contains(WallTypeMask.OneByTwoFlipped))) {
 			t.tile.c0 = t.bTile.c0.Instance;
@@ -369,7 +376,9 @@ public class ServerVessel : Vessel
 		//try take from bottom
 		Compartment b = null;
 		if (t.bTile != null) {
-			if (!t.tile.Contains(WallTypeMask.OneByZero)) {
+			if ((t.bTile.flags & (uint)VesselTile.FLAGS.SOLID_BLOCK) > 0)
+				b = null;
+			else if (!t.tile.Contains(WallTypeMask.OneByZero)) {
 				//set the appropriate compartment field depending on how "bTile" is cut
 				if (
 					(t.blTile != null && t.blTile.Contains(WallTypeMask.TwoByOne)) ||
@@ -388,7 +397,9 @@ public class ServerVessel : Vessel
 		}
 		Compartment l = null;
 		if (t.lTile != null) {
-			if (!t.tile.Contains(WallTypeMask.ZeroByOne)) {
+			if ((t.lTile.flags & (uint)VesselTile.FLAGS.SOLID_BLOCK) > 0)
+				l = null;
+			else if (!t.tile.Contains(WallTypeMask.ZeroByOne)) {
 				l = t.lTile.c0.Instance;
 			}
 		}
@@ -396,7 +407,6 @@ public class ServerVessel : Vessel
 		if (
 			(t.r2Tile != null && t.r2Tile.Contains(WallTypeMask.TwoByOneFlipped)) || 
 			(t.rTile != null && t.rTile.Contains(WallTypeMask.OneByOneFlipped | WallTypeMask.OneByTwoFlipped))) {
-			t.tile.c0 = new Compartment();
 			if (l != null && b != null) {
 				l.Combine(b);
 			}
@@ -404,11 +414,12 @@ public class ServerVessel : Vessel
 				t.tile.c1 = b;
 			} else if (l != null) {
 				t.tile.c1 = l;
-			} else {
-				t.tile.c1 = new Compartment();
 			}
+
+			t.tile.c0 = new Compartment();
+
 			return;
-		} else if (t.tile != null && t.tile.Contains(WallTypeMask.TwoByOne | WallTypeMask.OneByOne | WallTypeMask.OneByTwo)) {
+		} else if (t.tile.Contains(WallTypeMask.TwoByOne | WallTypeMask.OneByOne | WallTypeMask.OneByTwo)) {
 			if (b == null) {
 				b = new Compartment();
 			}
@@ -421,9 +432,9 @@ public class ServerVessel : Vessel
 		} else {
 			if (l != null && b != null) {
 				l.Combine(b);
-			} else {
-				l = (l == null) ? b : l;
 			}
+
+			l = (l == null) ? b : l;
 			if (l == null) {
 				l = new Compartment();
 			}
@@ -451,6 +462,110 @@ public class ServerVessel : Vessel
 				at.MoveRight();
 			}
 		}
+
+		return;
+	}
+
+	public Compartment CompartmentAt(Vector2 local)
+	{
+		Vec2i tileI = LocalToTile(local);
+		Vector2 diff = local - TileToLocal(tileI);
+
+		VesselTile oTile = TryGetTile(tileI);
+		VesselTile tile = oTile;
+
+		if (tile != null) {
+			for (int i = (int)WallType.TwoByOne; i < (int)WallType.ZeroByOne; i++) {
+				if (tile.Contains((WallType)i)) {
+					if (Vector2.Dot(diff, new Vector2(-wallOffsets[i].y, wallOffsets[i].x)) > 0.0f) {
+						return oTile.c1.Instance;
+					} else {
+						return oTile.c0.Instance;
+					}
+				}
+			}
+
+			Vec2i tempI = new Vec2i(tileI.x, tileI.y-1);
+			if ((tile = TryGetTile(tempI)) != null && tile.Contains(WallType.OneByTwo)) {
+				diff = local - TileToLocal(tempI);
+				if (Vector2.Dot(diff, new Vector2(-wallOffsets[(int)WallType.OneByTwo].y, wallOffsets[(int)WallType.OneByTwo].x)) > 0.0f) {
+					return oTile.c1.Instance;
+				} else {
+					return oTile.c0.Instance;
+				}
+			} 
+			tempI = new Vec2i(tileI.x+1, tileI.y-1);
+			if (((tile = TryGetTile(tempI))) != null && tile.Contains(WallType.OneByTwoFlipped)) {
+				diff = local - TileToLocal(tempI);
+				if (Vector2.Dot(diff, new Vector2(-wallOffsets[(int)WallType.OneByTwoFlipped].y, wallOffsets[(int)WallType.OneByTwoFlipped].x)) > 0.0f) {
+					return oTile.c1.Instance;
+				} else {
+					return oTile.c0.Instance;
+				}
+			}
+			tempI = new Vec2i(tileI.x+1, tileI.y);
+			if ((tile = TryGetTile(tempI)) != null && tile.Contains(WallType.OneByOneFlipped)) {
+				diff = local - TileToLocal(tempI);
+				if (Vector2.Dot(diff, new Vector2(-wallOffsets[(int)WallType.OneByOneFlipped].y, wallOffsets[(int)WallType.OneByOneFlipped].x)) > 0.0f) {
+					return oTile.c1.Instance;
+				} else {
+					return oTile.c0.Instance;
+				}
+			}
+			
+			tempI = new Vec2i(tileI.x-1, tileI.y);
+			if ((tile = TryGetTile(tempI)) != null && tile.Contains(WallType.TwoByOne)) {
+				diff = local - TileToLocal(tempI);
+				if (Vector2.Dot(diff, new Vector2(-wallOffsets[(int)WallType.TwoByOne].y, wallOffsets[(int)WallType.TwoByOne].x)) > 0.0f) {
+					return oTile.c1.Instance;
+				} else {
+					return oTile.c0.Instance;
+				}
+			}
+
+			for (int i = 1; i < 3; i++) {
+				tempI = new Vec2i(tileI.x+i, tileI.y);
+				if ((tile = TryGetTile(tempI)) != null && tile.Contains(WallType.TwoByOneFlipped)) {
+					diff = local - TileToLocal(tempI);
+					if (Vector2.Dot(diff, new Vector2(-wallOffsets[(int)WallType.TwoByOneFlipped].y, wallOffsets[(int)WallType.TwoByOneFlipped].x)) > 0.0f) {
+						return oTile.c1.Instance;
+					} else {
+						return oTile.c0.Instance;
+					}
+				}
+			}
+
+			return oTile.c0.Instance;
+		}
+
+		return null;
+	}
+
+	public void SetCompartmentFloor(FloorType type, Compartment c)
+	{
+		Vec2i start = ChunkIToTileI(bl);
+		Vec2i end = ChunkIToTileI(tr);
+
+		for (int i = start.y; i < end.y; i++) {
+			for (int j = start.x; j < end.x; j++) {
+				Vec2i tileI = new Vec2i(j, i);
+				VesselTile tile;
+				if ((tile = TryGetTile(tileI)) != null) {
+					if (tile.c0 != null && tile.c0.Instance == c) {
+						tile.floor0 = type;
+						Vec2i chunkI = TileToChunkI(tileI);
+						AddModifiedChunk(chunks.Get(chunkI));
+					}
+					if (tile.c1 != null && tile.c1.Instance == c) {
+						tile.floor1 = type;
+						Vec2i chunkI = TileToChunkI(tileI);
+						AddModifiedChunk(chunks.Get(chunkI));
+					}
+				}
+			}
+		}
+
+		SendModifiedChunks();
 	}
 
 	public virtual bool PlaceBlock(BlockType type, Vec2i location)

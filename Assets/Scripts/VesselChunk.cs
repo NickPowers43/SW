@@ -56,6 +56,16 @@ public class VesselChunk
 			return index;
 		}
 	}
+
+	public bool Modified
+	{
+		get{
+			return updateMessageBytes;
+		}
+		set {
+			updateMessageBytes = true;
+		}
+	}
 	private bool updateMessageBytes;
 	private byte[] messageBytes;
 	public byte[] MessageBytes

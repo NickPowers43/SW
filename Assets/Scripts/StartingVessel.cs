@@ -25,7 +25,7 @@ public class StartingVessel : ServerVessel
 
 	private void Initialize()
 	{
-		BuildFoundation(new Vec2i(0,0), new Vec2i(8, 16));
+		BuildFoundation(new Vec2i(0,0), new Vec2i(9, 16));
 		//tip
 		BuildWall(new Vec2i(4,13), 1, WallType.OneByZero);
 		//outer left
@@ -45,6 +45,8 @@ public class StartingVessel : ServerVessel
 		BuildWall(new Vec2i(6,11), 1, WallType.ZeroByOne);
 		BuildWall(new Vec2i(6,12), 1, WallType.OneByOneFlipped);
 
+		BuildWall(new Vec2i(1,1), 7, WallType.OneByZero);
+
 		//inner vertical walls
 		BuildWall(new Vec2i(4,4), 7, WallType.ZeroByOne);
 		BuildWall(new Vec2i(5,4), 7, WallType.ZeroByOne);
@@ -59,6 +61,8 @@ public class StartingVessel : ServerVessel
 
 		//place spawner for noobs
 		PlaceBlock(BlockType.Spawner, new Vec2i(4, 2));
+
+		RebuildCompartments();
 	}
 
 	public override bool PlaceBlock(BlockType type, Vec2i location)
