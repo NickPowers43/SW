@@ -217,7 +217,7 @@ public class Character2D : NetworkBehaviour
 
 				if (Input.GetMouseButtonDown(0)) {
 					Vector2 mouseWorld = (Vector2)MainCamera.Instance.camera.ScreenToWorldPoint(Input.mousePosition);
-					Debug.Log("Sending FillAt command for location: " + mouseWorld.ToString());
+					//Debug.Log("Sending FillAt command for location: " + mouseWorld.ToString());
 					CmdFillAt(mouseWorld - currentVessel.LocalToWorld(Vector2.zero));
 				}
 				

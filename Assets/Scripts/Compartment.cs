@@ -1,9 +1,11 @@
 using UnityEngine;
 using System;
+using Utility;
 
 
 public class Compartment
 {
+	public AABBi aabb;
 	public float area;
 	public float pressure;
 	public float oxygen;
@@ -25,9 +27,15 @@ public class Compartment
 
 	public Compartment ()
 	{
+		aabb = new AABBi(new Vec2i(0,0), new Vec2i(0,0));
 		color = new Color(UnityEngine.Random.value, UnityEngine.Random.value, UnityEngine.Random.value);
 		isPtr = false;
 		ptrValue = null;
+	}
+
+	public void FitTile(Vec2i index)
+	{
+		aabb.FitWhole(index);
 	}
 
 	public void Combine(Compartment other)
@@ -35,6 +43,8 @@ public class Compartment
 		if (other != this) {
 			isPtr = true;
 			ptrValue = other.Instance;
+
+			other.aabb.FitAABB(ref aabb);
 		}
 	}
 

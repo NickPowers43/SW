@@ -282,7 +282,7 @@ public class Vessel {
 		//4
 		tile = TryGetTile(new Vec2i(index.x+1, index.y-1));
 		if (tile != null) {
-			if (tile.Contains(WallTypeMask.OneByOneFlipped | WallTypeMask.OneByTwoFlipped)) {
+			if (tile.Contains(WallTypeMask.TwoByOneFlipped | WallTypeMask.OneByTwoFlipped)) {
 				return true;
 			}
 		}

@@ -75,8 +75,7 @@ public class ServerVessel : Vessel
 {
 	public static float CHUNK_UPDATE_INTERVAL = 2.0f;
 
-	private Vec2i bl = new Vec2i(0,0);
-	private Vec2i tr = new Vec2i(0,0);
+	private AABBi aabb;
 	private bool interiorExists;
 	private Rect interiorSpace;
 	private ulong spaceAddress;
@@ -114,6 +113,8 @@ public class ServerVessel : Vessel
 	public ServerVessel () :
 		base(NextIndex++)
 	{
+		aabb = new AABBi(new Vec2i(0,0), new Vec2i(0,0));
+
 		interiorExists = false;
 		spaceAddress = 0;
 
@@ -218,8 +219,8 @@ public class ServerVessel : Vessel
 	private void AllocateInteriorSpace()
 	{
 		Vector2 interiorSize = new Vector2(
-			(tr.x - bl.x) * (float)VesselChunk.SIZE, 
-			(tr.y - bl.y) * (float)VesselChunk.SIZE);
+			(aabb.tr.x - aabb.bl.x) * (float)VesselChunk.SIZE, 
+			(aabb.tr.y - aabb.bl.y) * (float)VesselChunk.SIZE);
 		
 		//pad interiorSize
 		interiorSize *= 2.0f;
@@ -227,7 +228,7 @@ public class ServerVessel : Vessel
 		spaceAddress = 0;
 		interiorExists = SpaceAllocator.AllocateSpace(interiorSize, ref spaceAddress, ref interiorSpace);
 		
-		Vector2 localCenter = ((Vector2)bl + (Vector2)tr) * 0.5f * (float)VesselChunk.SIZE;
+		Vector2 localCenter = ((Vector2)aabb.bl + (Vector2)aabb.tr) * 0.5f * (float)VesselChunk.SIZE;
 		
 		interiorPosition = interiorSpace.center - localCenter;
 		
@@ -239,30 +240,17 @@ public class ServerVessel : Vessel
 		VesselChunk temp = new VesselChunk(index);
 		chunks.Set(index.x, index.y, temp);
 		
-		if (index.x < bl.x){
-			bl.x = index.x;
-		}
-		if (index.y < bl.y){
-			bl.y = index.y;
-		}
-		
-		if (index.x >= tr.x){
-			tr.x = index.x + 1;
-		}
-		if (index.y >= tr.y){
-			tr.y = index.y + 1;
-		}
+		aabb.FitWhole(index);
 		
 		return temp;
 	}
 	
 	private void SendModifiedChunks()
 	{
-		for (int j = 0; j < playersOnBoard.Count; j++) {
-			
-			playersOnBoard[j].ChunkI = WorldToChunkI(playersOnBoard[j].transform.position);
-			
-		}
+		//for (int j = 0; j < playersOnBoard.Count; j++) {
+		//	playersOnBoard[j].ChunkI = WorldToChunkI(playersOnBoard[j].transform.position);
+		//}
+
 		for (int i = 0; i < modifiedChunks.Count; i++) {
 			for (int j = 0; j < playersOnBoard.Count; j++) {
 
@@ -322,6 +310,28 @@ public class ServerVessel : Vessel
 			AddModifiedChunk(vc);
 		} catch (System.Exception ex) {
 			Debug.Log("Failed to set tile at " + index2.ToString() + "/" + index.ToString() + " at chunk " + chunkI.ToString());
+		}
+	}
+	
+	
+	public void BuildWall(ref Vec2i index, int count, WallType type)
+	{
+		BuildWall(index, count, type);
+
+		index += wallOffsets[(int)type] * count;
+	}
+	
+	
+	public void BuildWall(ref Vec2i index, int count, WallType type, bool reverse)
+	{
+		if (reverse) {
+			index -= wallOffsets[(int)type] * count;
+		}
+
+		BuildWall(index, count, type);
+
+		if (!reverse) {
+			index += wallOffsets[(int)type] * count;
 		}
 	}
 
@@ -447,8 +457,8 @@ public class ServerVessel : Vessel
 
 	public void RebuildCompartments()
 	{
-		Vec2i start = ChunkIToTileI(bl);
-		Vec2i end = ChunkIToTileI(tr);
+		Vec2i start = ChunkIToTileI(aabb.bl);
+		Vec2i end = ChunkIToTileI(aabb.tr);
 
 		AdjacentTiles at = new AdjacentTiles(this);
 
@@ -546,8 +556,8 @@ public class ServerVessel : Vessel
 
 	public void SetCompartmentFloor(FloorType type, Compartment c)
 	{
-		Vec2i start = ChunkIToTileI(bl);
-		Vec2i end = ChunkIToTileI(tr);
+		Vec2i start = ChunkIToTileI(aabb.bl);
+		Vec2i end = ChunkIToTileI(aabb.tr);
 
 		for (int i = start.y; i < end.y; i++) {
 			for (int j = start.x; j < end.x; j++) {
