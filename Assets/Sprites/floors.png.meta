@@ -1,10 +1,11 @@
 fileFormatVersion: 2
 guid: 4a51bffc0bf2e934e9986ba60e670d4b
-timeCreated: 1437749732
+timeCreated: 1439816142
 licenseType: Free
 TextureImporter:
   fileIDToRecycleName:
     21300000: basic
+    21300002: smooth_white
   serializedVersion: 2
   mipmaps:
     mipMapMode: 0
@@ -59,6 +60,16 @@ TextureImporter:
         height: 32
       alignment: 6
       pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: smooth_white
+      rect:
+        serializedVersion: 2
+        x: 32
+        y: 0
+        width: 32
+        height: 32
+      alignment: 0
+      pivot: {x: .5, y: .5}
       border: {x: 0, y: 0, z: 0, w: 0}
   spritePackingTag: 
   userData: 

@@ -37,19 +37,9 @@ public class VesselChunk
 			return instance != null;
 		}
 	}
-	private bool seen;
-	public bool Seen
-	{
-		get {
-			return seen;
-		}
-		set {
-			seen = value;
-		}
-	}
 	public GameObject instance;
 
-	private Vec2i index;
+	protected Vec2i index;
 	public Vec2i Index
 	{
 		get{
@@ -57,66 +47,14 @@ public class VesselChunk
 		}
 	}
 
-	public bool Modified
+	protected int tileCount = 0;
+	public uint version;
+
+	public VesselChunk(Vec2i index, uint version)
 	{
-		get{
-			return updateMessageBytes;
-		}
-		set {
-			updateMessageBytes = true;
-		}
-	}
-	private bool updateMessageBytes;
-	private byte[] messageBytes;
-	public byte[] MessageBytes
-	{
-		get
-		{
-			if (updateMessageBytes) {
-				NetworkWriter nw = new NetworkWriter();
-
-				nw.Write(index.x);
-				nw.Write(index.y);
-
-				for (int i = 0; i < VesselChunk.SIZE; i++) {
-
-					for (int j = 0; j < VesselChunk.SIZE; j++) {
-
-						VesselTile tile = TileAt(i, j);
-						
-						if (tile != null) {
-
-							nw.Write(i);
-							nw.Write(j);
-							nw.Write((byte)tile.floor0);
-							nw.Write((byte)tile.floor1);
-							nw.Write((byte)tile.wallMask);
-							nw.Write(tile.wallNode);
-
-						}
-					}
-				}
-
-				messageBytes = nw.ToArray();
-
-				updateMessageBytes = false;
-			}
-
-			return messageBytes;
-		}
-	}
-	
-	public VesselChunk(Vec2i index)
-	{
+		this.version = version;
 		this.index = index;
-		updateMessageBytes = true;
 		data = new VesselTile[VesselChunk.DATA_COUNT];
-	}
-	public VesselChunk(VesselChunkData data, Vec2i index)
-	{
-		this.index = index;
-		updateMessageBytes = true;
-		this.data = new VesselTile[VesselChunk.DATA_COUNT];
 	}
 
 	public static Vector2 TileIToOffset(Vec2i tileI)
@@ -125,45 +63,29 @@ public class VesselChunk
 			(float)tileI.x,
 			(float)tileI.y);
 	}
-
-	public VesselChunk(byte[] messageBytes)
-	{
-		updateMessageBytes = true;
-		this.data = new VesselTile[VesselChunk.DATA_COUNT];
-
-		NetworkReader nr = new NetworkReader(messageBytes);
-
-		index.x = nr.ReadInt32();
-		index.y = nr.ReadInt32();
-
-		while (nr.Position != messageBytes.Length) {
-			
-			//read in vessel tile
-			Vec2i tileI;
-
-			tileI.x = nr.ReadInt32();
-			tileI.y = nr.ReadInt32();
-			FloorType floor0 = (FloorType)nr.ReadByte();
-			FloorType floor1 = (FloorType)nr.ReadByte();
-			WallTypeMask wallMask = (WallTypeMask)nr.ReadByte();
-			bool wallNode = nr.ReadBoolean();
-
-			VesselTile tile = new VesselTile(wallMask, wallNode, floor0, floor1, (uint)VesselTile.FLAGS.NONE);
-			
-			SetTile(tileI, tile);
-		}
-	}
 	
 	public void SetTile(Vec2i offset, VesselTile val)
 	{
-		updateMessageBytes = true;
-		data[Utility.Utility.MatToVector(offset.x, offset.y, SIZE)] = val;
+		int index = offset.x + (offset.y * SIZE);
+		VesselTile org = data[index];
+
+		if (org == null) {
+			if (val != null) {
+				tileCount++;
+			}
+		} else {
+			if (val == null) {
+				tileCount--;
+			}
+		}
+
+		data[index] = val;
 	}
 	
 	public VesselTile TileAt(int x, int y)
 	{
 		try {
-			return data[Utility.Utility.MatToVector(x, y, SIZE)];
+			return data[x + (y * SIZE)];
 		} catch (System.Exception ex) {
 			throw new ArgumentException();
 		}
@@ -171,7 +93,7 @@ public class VesselChunk
 	
 	public VesselTile TileAt(Vec2i index)
 	{
-		return data[Utility.Utility.MatToVector(index.x, index.y, SIZE)];
+		return data[index.x + (index.y * SIZE)];
 	}
 
 	public Vec2i OriginTileIndex()

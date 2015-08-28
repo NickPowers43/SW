@@ -86,7 +86,7 @@ namespace Utility
 					
 					T temp2 = null;
 					if (TryGet (temp.x, temp.y, ref temp2)) {
-						yield return TryGet(temp.x, temp.y);
+						yield return temp2;
 					}
 				}
 			}
@@ -180,7 +180,7 @@ namespace Utility
 				if (y < origin.y) {
 					//expand bottom right
 					GrowTopRight(new Vec2i(x - (dim.x + origin.x) + 1, 0));
-					GrowBottomLeft(new Vec2i(0, y - (dim.y + origin.y) + 1));
+					GrowBottomLeft(new Vec2i(0, origin.y - y));
 				} else if (y >= dim.y + origin.y) {
 					//expand top right
 					GrowTopRight(new Vec2i(x - (dim.x + origin.x) + 1, y - (dim.y + origin.y) + 1));
@@ -251,17 +251,6 @@ namespace Utility
 		{
 			return data [indexOf(x,y)];
 		}
-
-//		public void Set (Vec2i index, T val)
-//		{
-//			
-//			data [(index.y * dim.x) + index.x] = val;
-//		}
-//		
-//		public T Get (Vec2i index)
-//		{
-//			return data [(index.y * dim.x) + index.x];
-//		}
 	}
 }
 

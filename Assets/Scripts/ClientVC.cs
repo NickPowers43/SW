@@ -6,9 +6,42 @@ using Utility;
 
 public class ClientVC : VesselChunk
 {
-	public ClientVC (byte[] messageBytes) :
-		base(messageBytes)
+	private bool modified = true;
+	public bool Modified {
+		get{
+			return modified;
+		}
+		set{
+			modified = value;
+		}
+	}
+
+
+	public ClientVC (NetworkReader nr) : base(new Vec2i(0,0), 0)
 	{
+		this.data = new VesselTile[VesselChunk.DATA_COUNT];
+		
+		index.x = nr.ReadInt32();
+		index.y = nr.ReadInt32();
+
+		version = nr.ReadUInt32();
+		tileCount = nr.ReadInt32();
+
+		for (int i = 0; i < tileCount; i++) {
+			//read in vessel tile
+			Vec2i tileI;
+			
+			tileI.x = nr.ReadInt32();
+			tileI.y = nr.ReadInt32();
+			FloorType floor0 = (FloorType)nr.ReadByte();
+			FloorType floor1 = (FloorType)nr.ReadByte();
+			WallTypeMask wallMask = (WallTypeMask)nr.ReadByte();
+			bool wallNode = nr.ReadBoolean();
+			
+			VesselTile tile = new VesselTile(wallMask, wallNode, floor0, floor1, (uint)VesselTile.FLAGS.NONE);
+			
+			SetTile(tileI, tile);
+		}
 	}
 	
 	public override void Instantiate(VesselChunk t, VesselChunk l, VesselChunk r, VesselChunk b, VesselChunk br, Vector2 position)

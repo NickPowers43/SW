@@ -11,6 +11,8 @@ public class Compartment
 	public float oxygen;
 	public Color color;
 
+	public readonly uint Index;
+
 	public Compartment Instance
 	{
 		get{

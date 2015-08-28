@@ -1,3 +1,6 @@
+
+#if !(UNITY_WEBGL && !UNITY_EDITOR)
+
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Networking.NetworkSystem;
@@ -18,9 +21,9 @@ public class StartingVessel : ServerVessel
 		Vessels.Add(this);
 	}
 
-	public override void Update()
+	public override void Update(NetworkWriter nw)
 	{
-		base.Update();
+		base.Update(nw);
 	}
 
 	private void Initialize()
@@ -71,11 +74,35 @@ public class StartingVessel : ServerVessel
 		loc0 = new Vec2i(0,2);
 		BuildWall(ref loc0, 4, WallType.ZeroByOne, false);
 		BuildWall(ref loc0, 1, WallType.OneByOneFlipped, false);
-		BuildWall(ref loc0, 5, WallType.ZeroByOne, false);
+		BuildWall(ref loc0, 1, WallType.ZeroByOne, false);
+		Vec2i circleInner = loc0;
+		BuildWall(ref loc0, 3, WallType.ZeroByOne, false);
+		Vec2i circleOuter = loc0;
+		BuildWall(ref loc0, 1, WallType.ZeroByOne, false);
 		BuildWall(ref loc0, 3, WallType.OneByZero, false);
 		BuildWall(ref loc0, 5, WallType.ZeroByOne, true);
 		BuildWall(ref loc0, 1, WallType.OneByOne, true);
 		BuildWall(ref loc0, 4, WallType.ZeroByOne, true);
+
+		BuildWall(ref circleInner, 4, WallType.OneByZero, true);
+		BuildWall(ref circleInner, 2, WallType.OneByOne, true);
+		BuildWall(ref circleInner, 11, WallType.ZeroByOne, true);
+		BuildWall(ref circleInner, 2, WallType.OneByOneFlipped, true);
+		BuildWall(ref circleInner, 11, WallType.OneByZero, false);
+		BuildWall(ref circleInner, 2, WallType.OneByOne, false);
+		BuildWall(ref circleInner, 11, WallType.ZeroByOne, false);
+		BuildWall(ref circleInner, 2, WallType.OneByOneFlipped, false);
+		BuildWall(ref circleInner, 4, WallType.OneByZero, true);
+		
+		BuildWall(ref circleOuter, 5, WallType.OneByZero, true);
+		BuildWall(ref circleOuter, 4, WallType.OneByOne, true);
+		BuildWall(ref circleOuter, 13, WallType.ZeroByOne, true);
+		BuildWall(ref circleOuter, 4, WallType.OneByOneFlipped, true);
+		BuildWall(ref circleOuter, 13, WallType.OneByZero, false);
+		BuildWall(ref circleOuter, 4, WallType.OneByOne, false);
+		BuildWall(ref circleOuter, 13, WallType.ZeroByOne, false);
+		BuildWall(ref circleOuter, 4, WallType.OneByOneFlipped, false);
+		BuildWall(ref circleOuter, 5, WallType.OneByZero, true);
 
 		//place spawner for noobs
 		PlaceBlock(BlockType.Spawner, new Vec2i(0, 0));
@@ -92,9 +119,9 @@ public class StartingVessel : ServerVessel
 		return base.PlaceBlock(type, location);
 	}
 
-	public void AddPlayer(Character2D player)
+	public void AddPlayer(ServerPlayer player, NetworkWriter nw)
 	{
-		base.AddPlayer(player, TileCenterToLocal(spawnerLocation));
+		base.AddPlayer(player, TileCenterToLocal(spawnerLocation), nw);
 	}
 
 	public static StartingVessel GetStartingVessel()
@@ -114,3 +141,4 @@ public class StartingVessel : ServerVessel
 	private static List<StartingVessel> Vessels = new List<StartingVessel>(64);
 }
 
+#endif

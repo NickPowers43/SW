@@ -29,7 +29,7 @@ public class UIBlockCarriage : MonoBehaviour {
 
 			Button button = bGO.GetComponent<Button>();
 			int arg = i;
-			UnityEngine.Events.UnityAction action = () => {GameManager.Instance.SelectBlockType(arg);};
+			UnityEngine.Events.UnityAction action = () => {};
 			button.onClick.AddListener(action);
 			Image image = bGO.GetComponent<Image>();
 			image.sprite = blocks[i].sprite;

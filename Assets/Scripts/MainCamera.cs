@@ -14,6 +14,17 @@ public class MainCamera : MonoBehaviour {
 		}
 	}
 
+	private static Vector2 cursorPosition = Vector2.zero;
+	public static Vector2 CursorPosition
+	{
+		get{
+			return cursorPosition;
+		}
+		set{
+			cursorPosition = value;
+		}
+	}
+
 	private Vector3 target;
 	public Camera camera;
 
@@ -30,7 +41,7 @@ public class MainCamera : MonoBehaviour {
 	}
 
 	void Update () {
-
+		CursorPosition = (Vector2)MainCamera.Instance.camera.ScreenToWorldPoint(Input.mousePosition);
 	}
 
 	void FixedUpdate () {

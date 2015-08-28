@@ -1,3 +1,5 @@
+#if !(UNITY_WEBGL && !UNITY_EDITOR)
+
 using UnityEngine;
 
 public class PlayerInfo
@@ -17,3 +19,4 @@ public class PlayerInfo
 	}
 }
 
+#endif

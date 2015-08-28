@@ -1,3 +1,6 @@
+
+#if !(UNITY_WEBGL && !UNITY_EDITOR)
+
 using UnityEngine;
 using UnityEngine.Networking;
 using UnityEngine.Networking.NetworkSystem;
@@ -80,10 +83,10 @@ public class ServerVessel : Vessel
 	private Rect interiorSpace;
 	private ulong spaceAddress;
 
-	private List<VesselChunk> modifiedChunks = new List<VesselChunk>(5);
+	private List<ServerVC> modifiedChunks = new List<ServerVC>(5);
 	public List<NetworkIdentity> netIdentities = new List<NetworkIdentity>();
 
-	private List<Character2D> playersOnBoard = new List<Character2D>(5);
+	private List<ServerPlayer> playersOnBoard = new List<ServerPlayer>(5);
 
 	private bool noPlayers;
 	private float timeEmpty;
@@ -123,68 +126,100 @@ public class ServerVessel : Vessel
 		Vessels.Add(this);
 	}
 	
-	public virtual void Update () {
-
-
+	public virtual void Update (NetworkWriter nw) {
 		if (interiorExists) {
-			
+
 			if (chunkCheckTimer.Update()) {
+				chunkCheckTimer.Set(CHUNK_UPDATE_INTERVAL);
 
 				MarkAllChunksUnseen();
-				
+
 				for (int i = 0; i < playersOnBoard.Count; i++) {
 					
-					UpdatePlayer(playersOnBoard[i]);
-					
+					TrySendModifiedChunks(playersOnBoard[i], nw);
+					InstantiateNearbyChunks(playersOnBoard[i]);
 				}
-				
-				DestroyUnseenChunks();
 
-				chunkCheckTimer.Set(CHUNK_UPDATE_INTERVAL);
+				modifiedChunks.Clear();
+				DestroyUnseenChunks();
 			}
 		}
-		
+
 		if (noPlayers) {
 			timeEmpty += Time.deltaTime;
 		}
 	}
 
-	private void UpdatePlayer(Character2D player)
+	public void WritePlayerUpdates(NetworkWriter nw)
+	{
+		nw.Write ((ushort)ServerMessageType.UpdatePlayer);
+		nw.Write((ushort)playersOnBoard.Count);
+		for (int i = 0; i < playersOnBoard.Count; i++) {
+			nw.Write((ushort)i);
+		}
+	}
+
+	public void HandleChunkRequestMessage(NetworkReader nr, NetworkWriter nw)
+	{
+		int count = nr.ReadUInt16();
+		for (int j = 0; j < count; j++) {
+			ServerVC chunk = ReadChunkRequest(nr);
+			if (chunk != null) {
+				nw.Write((ushort)ServerMessageType.SetChunk);
+				chunk.WriteSetChunk(nw);
+			}
+		}
+	}
+	public void HandleFillAtMessage(NetworkReader nr)
+	{
+		Vector2 cursorWorld = nr.ReadVector2();
+		
+		FloorType floorType = (FloorType)(1 + (int)(UnityEngine.Random.value * 2.0f));
+		
+		SetCompartmentFloor(floorType, CompartmentAt(WorldToLocal(cursorWorld)));
+	}
+
+	private ServerVC ReadChunkRequest(NetworkReader nr)
+	{
+		Vec2i index;
+		index.x = nr.ReadInt32();
+		index.y = nr.ReadInt32();
+
+		uint version = nr.ReadUInt32();
+
+
+		if (version == uint.MaxValue) {
+			return (ServerVC)chunks.TryGet(index);
+		} else {
+			ServerVC vc = (ServerVC)chunks.TryGet(index);
+
+			if (version != vc.version) {
+				return vc;
+			} else {
+				return null;
+			}
+		}
+	}
+
+	private void InstantiateNearbyChunks(ServerPlayer player)
 	{
 		Vec2i pChunkI = WorldToChunkI(player.transform.position);
 		
 		if (pChunkI != player.ChunkI) {
 			
-			foreach (var chunk in chunks.TryGetOutsideInside(player.ChunkI, pChunkI, PLAYER_CHUNK_RANGE)) {
+			foreach (ServerVC chunk in chunks.TryGetOutsideInside(player.ChunkI, pChunkI, PLAYER_CHUNK_RANGE)) {
 				
 				if (chunk != null) {
-					
-					player.RpcSetChunk(Index, chunk.MessageBytes);
-					
+					if (!chunk.Instantiated) {
+						InstantiateChunk(chunk);
+					}
 				}
 				
 			}
 			player.ChunkI = pChunkI;
 		}
-		
-		InstantiateNearbyChunks(player);
-	}
 
-	private void SendNearbyChunks(Character2D player)
-	{
-		foreach (var chunk in chunks.WithinRange(player.ChunkI, PLAYER_CHUNK_RANGE)) {
-
-			if (chunk != null) {
-
-				player.RpcSetChunk(Index, chunk.MessageBytes);
-
-			}
-		}
-	}
-
-	private void InstantiateNearbyChunks(Character2D player)
-	{
-		foreach (var chunk in chunks.WithinRange(player.ChunkI, PLAYER_CHUNK_RANGE)) {
+		foreach (ServerVC chunk in chunks.WithinRange(pChunkI, PLAYER_CHUNK_RANGE)) {
 			
 			if (chunk != null) {
 				
@@ -203,7 +238,7 @@ public class ServerVessel : Vessel
 	{
 		for (int i = 0; i < chunks.data.Length; i++) {
 			if(chunks.data[i] != null)
-				chunks.data[i].Seen = false;
+				((ServerVC)chunks.data[i]).Seen = false;
 		}
 	}
 	
@@ -211,7 +246,7 @@ public class ServerVessel : Vessel
 	{
 		for (int i = 0; i < chunks.data.Length; i++) {
 			if(chunks.data[i] != null)
-				if (!chunks.data[i].Seen && chunks.data[i].Instantiated)
+				if (!((ServerVC)chunks.data[i]).Seen && chunks.data[i].Instantiated)
 					chunks.data[i].Destroy();
 		}
 	}
@@ -235,9 +270,9 @@ public class ServerVessel : Vessel
 		Debug.Log ("AllocateInteriorSpace: " + interiorSpace);
 	}
 	
-	private VesselChunk CreateChunk(Vec2i index)
+	private ServerVC CreateChunk(Vec2i index)
 	{
-		VesselChunk temp = new VesselChunk(index);
+		ServerVC temp = new ServerVC(index);
 		chunks.Set(index.x, index.y, temp);
 		
 		aabb.FitWhole(index);
@@ -245,30 +280,17 @@ public class ServerVessel : Vessel
 		return temp;
 	}
 	
-	private void SendModifiedChunks()
+	private void TrySendModifiedChunks(ServerPlayer player, NetworkWriter nw)
 	{
-		//for (int j = 0; j < playersOnBoard.Count; j++) {
-		//	playersOnBoard[j].ChunkI = WorldToChunkI(playersOnBoard[j].transform.position);
-		//}
-
 		for (int i = 0; i < modifiedChunks.Count; i++) {
-			for (int j = 0; j < playersOnBoard.Count; j++) {
-
-				Vec2i offset = modifiedChunks[i].Index - playersOnBoard[j].ChunkI;
-				if (offset <= PLAYER_CHUNK_RANGE) {
-					
-					playersOnBoard[j].RpcSetChunk(Index, modifiedChunks[i].MessageBytes);
-					
-				}
-				
+			Vec2i offset = modifiedChunks[i].Index - player.ChunkI;
+			if (offset <= PLAYER_CHUNK_RANGE) {
+				modifiedChunks[i].WriteSetChunk(nw);
 			}
-			
 		}
-		
-		modifiedChunks.Clear();
 	}
 	
-	private void AddModifiedChunk(VesselChunk vc)
+	private void AddModifiedChunk(ServerVC vc)
 	{
 		vc.Modified = true;
 
@@ -297,7 +319,7 @@ public class ServerVessel : Vessel
 	{
 		Vec2i index2 = index;
 		Vec2i chunkI = TileToChunkI(index);
-		VesselChunk vc = chunks.TryGet(chunkI);
+		ServerVC vc = (ServerVC)chunks.TryGet(chunkI);
 
 		if (vc == null) {
 			vc = CreateChunk(chunkI);
@@ -575,13 +597,11 @@ public class ServerVessel : Vessel
 					}
 
 					if (modified) {
-						AddModifiedChunk(chunks.Get(TileToChunkI(tileI)));
+						AddModifiedChunk((ServerVC)chunks.Get(TileToChunkI(tileI)));
 					}
 				}
 			}
 		}
-
-		SendModifiedChunks();
 	}
 
 	public virtual bool PlaceBlock(BlockType type, Vec2i location)
@@ -610,7 +630,15 @@ public class ServerVessel : Vessel
 		}
 	}
 
-	public void AddPlayer(Character2D player, Vector2 position)
+	public void WriteSyncVessel(NetworkWriter nw)
+	{
+		nw.SeekZero();
+		nw.Write((ushort)ServerMessageType.SyncVessel);
+		nw.Write(Index);
+		nw.Write(interiorPosition);
+	}
+
+	public void AddPlayer(ServerPlayer player, Vector2 position, NetworkWriter nw)
 	{
 		if (!interiorExists) {
 			AllocateInteriorSpace();
@@ -618,25 +646,49 @@ public class ServerVessel : Vessel
 		
 		player.transform.position = (Vector3)(interiorPosition + position);
 
-		netIdentities.Add(player.networkIdentity);
 		player.currentVessel = this;
 		playersOnBoard.Add(player);
-		player.RpcSyncVessel(Index, MessageBytes);
-		player.ChunkI = WorldToChunkI(player.transform.position);
-		SendNearbyChunks(player);
+		player.ChunkI = WorldToChunkI((Vector2)player.transform.position);
 		InstantiateNearbyChunks(player);
 
 		noPlayers = false;
 		timeEmpty = 0.0f;
+
+		WriteSyncVessel(nw);
+		byte error;
+		NetworkTransport.Send(player.hostId, player.connectionId, GameManager.ChannelId, nw.AsArray(), nw.Position, out error);    
+		if(error != 0)
+			Debug.Log ((NetworkError)error);
+
+		nw.SeekZero();
+		nw.Write((ushort)ServerMessageType.AddPlayer);
+		nw.Write((ushort)(playersOnBoard.Count - 1));
+		nw.Write((Vector2)player.transform.position);
+		//TODO: write player info here
+		for (int i = 0; i < playersOnBoard.Count; i++) {
+			NetworkTransport.Send(playersOnBoard[i].hostId, playersOnBoard[i].connectionId, GameManager.ChannelId, nw.AsArray(), nw.Position, out error);    
+			if(error != 0)
+				Debug.Log ((NetworkError)error);
+		}
 	}
 	
-	public void RemovePlayer(Character2D player)
+	public void RemovePlayer(ServerPlayer player, NetworkWriter nw)
 	{
-		playersOnBoard.Remove(player);
-		netIdentities.Remove(player.networkIdentity);
+		int id = playersOnBoard.IndexOf(player);
+		playersOnBoard.RemoveAt(id);
 		player.currentVessel = null;
 		if (playersOnBoard.Count == 0) {
 			noPlayers = true;
+		}
+
+		nw.SeekZero();
+		nw.Write((ushort)ServerMessageType.RemovePlayer);
+		nw.Write((ushort)id);
+		for (int i = 0; i < playersOnBoard.Count; i++) {
+			byte error;
+			NetworkTransport.Send(playersOnBoard[i].hostId, playersOnBoard[i].connectionId, GameManager.ChannelId, nw.AsArray(), nw.Position, out error);    
+			if(error != 0)
+				Debug.Log ((NetworkError)error);
 		}
 	}
 
@@ -655,3 +707,5 @@ public class ServerVessel : Vessel
 	}
 }
 
+
+#endif
