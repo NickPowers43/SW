@@ -1,5 +1,5 @@
 
-#if !(UNITY_WEBGL && !UNITY_EDITOR)
+
 
 using UnityEngine;
 using UnityEngine.Networking;
@@ -141,4 +141,3 @@ public class StartingVessel : ServerVessel
 	private static List<StartingVessel> Vessels = new List<StartingVessel>(64);
 }
 
-#endif

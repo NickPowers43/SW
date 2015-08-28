@@ -1,5 +1,5 @@
 
-#if !(UNITY_WEBGL && !UNITY_EDITOR)
+
 
 using UnityEngine;
 using UnityEngine.Networking;
@@ -708,4 +708,3 @@ public class ServerVessel : Vessel
 }
 
 
-#endif

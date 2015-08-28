@@ -1,5 +1,5 @@
 ﻿
-#if !(UNITY_WEBGL && !UNITY_EDITOR)
+
 
 using UnityEngine;
 using UnityEngine.Networking;
@@ -29,4 +29,3 @@ public class ServerPlayer : Player {
 	}
 }
 
-#endif
