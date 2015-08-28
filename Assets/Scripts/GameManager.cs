@@ -22,10 +22,16 @@ public class GameManager : NetworkBehaviour {
 
 	public GameObject playerPrefab;
 
+	public bool Initialized
+	{
+		get{
+			return _isStarted;
+		}
+	}
 	private bool _isStarted = false;
 	private bool _isServer = false;
 	string defaultIP  = "160.39.38.100";
-	int defaultPort = 7777;
+	int defaultPort = 7778;
 	
 	private int m_ConnectionId = 0;
 	private int m_WebSocketHostId = 0;
@@ -109,11 +115,7 @@ public class GameManager : NetworkBehaviour {
 
 			if (GUI.Button(new Rect(PADDING, PADDING, BOX_WIDTH, BOX_HEIGHT), "Stop"))
 			{
-				Debug.Log("Shutting down");
-				NetworkTransport.Shutdown();
-
-				_isStarted = false;
-
+				Shutdown();
 			}
 		}
 	}
@@ -145,6 +147,13 @@ public class GameManager : NetworkBehaviour {
 		}
 	}
 
+	public void Shutdown()
+	{
+		Debug.Log("Shutting down");
+		NetworkTransport.Shutdown();
+		_isStarted = false;
+	}
+	
 	void Update ()
 	{
 		if (!_isStarted)
@@ -237,84 +246,113 @@ public class GameManager : NetworkBehaviour {
 			currentPlayer.WriteInputMessage(nw);
 
 			if (nw.Position != 0) {
-				NetworkTransport.Send(recHostId, clientConnectionId, ChannelId, nw.AsArray(), nw.Position, out error);
+				if (Initialized) {
+					NetworkTransport.Send(recHostId, clientConnectionId, ChannelId, nw.AsArray(), nw.Position, out error);
+				}
 			}     
 			if(error != 0)
 				Debug.Log ((NetworkError)error);
 		} else {
-
-			NetworkReader nr = new NetworkReader(recBuffer);
-			NetworkWriter nw = new NetworkWriter(new byte[1 << 14]);
-
-			foreach (var vessel in ServerVessel.Vessels) {
-				vessel.Update(nw);
-			}
-
-			NetworkEventType recData;
-			while (true) {
-				recData = NetworkTransport.Receive(out recHostId, out connectionId, out channelId, recBuffer, recBuffer.Length, out dataSize, out error);
-				if(error != 0)
-				{
-					Debug.Log ((NetworkError)error + " " + dataSize + " ");
-				} else if (recData == NetworkEventType.Nothing) {
-					break;
-				} else {
-					switch(recData) {
-					case NetworkEventType.ConnectEvent:
+			try {
+				NetworkReader nr = new NetworkReader(recBuffer);
+				NetworkWriter nw = new NetworkWriter(new byte[1 << 14]);
+				
+				foreach (var vessel in ServerVessel.Vessels) {
+					vessel.Update(nw);
+				}
+				
+				NetworkEventType recData;
+				while (true) {
+					recData = NetworkTransport.Receive(out recHostId, out connectionId, out channelId, recBuffer, recBuffer.Length, out dataSize, out error);
+					if(error != 0)
 					{
-						Debug.Log("Client connecting");
-						//start this player off from the beginning
-						StartingVessel startVessel = StartingVessel.GetStartingVessel();
-						GameObject playerGO = GameObject.Instantiate(playerPrefab) as GameObject;
-						ServerPlayer player = playerGO.AddComponent<ServerPlayer>();
-						serverPlayers.Add(recHostId, player);
-						player.hostId = recHostId;
-						startVessel.AddPlayer(player, nw);
-						
+						Debug.Log ((NetworkError)error + " " + dataSize + " ");
+						Shutdown();
+						return;
+					} else if (recData == NetworkEventType.Nothing) {
 						break;
-					}
-					case NetworkEventType.DataEvent:  //if server will receive echo it will send it back to client, when client will receive echo from serve wit will send other message
-					{
-						ServerPlayer player = serverPlayers[recHostId];
-						
-						nr.SeekZero();
-						nw.SeekZero();
-						while (nr.Position != dataSize) {
-							switch ((ClientMessageType)nr.ReadUInt16()) {
-							case ClientMessageType.RequestChunk:
-								player.currentVessel.HandleChunkRequestMessage(nr, nw);
-								break;
-							case ClientMessageType.Inputs:
-								player.ReadInputsMessage(nr);
-								break;
-							case ClientMessageType.FillAt:
-								player.currentVessel.HandleFillAtMessage(nr);
-								break;
-							default:
+					} else {
+						switch(recData) {
+						case NetworkEventType.ConnectEvent:
+						{
+							Debug.Log("Client connecting");
+							//start this player off from the beginning
+							StartingVessel startVessel = StartingVessel.GetStartingVessel();
+							GameObject playerGO = GameObject.Instantiate(playerPrefab) as GameObject;
+							ServerPlayer player = playerGO.AddComponent<ServerPlayer>();
+							serverPlayers.Add(recHostId, player);
+							player.hostId = recHostId;
+							startVessel.AddPlayer(player, nw);
+							
+							break;
+						}
+						case NetworkEventType.DataEvent:  //if server will receive echo it will send it back to client, when client will receive echo from serve wit will send other message
+						{
+							ServerPlayer player;
+							try {
+								player = serverPlayers[recHostId];
+							} catch (System.Exception ex) {
+								//							string pairs = "";
+								//							foreach (KeyValuePair<int, ServerPlayer> kvp in serverPlayers)
+								//							{
+								//								//textBox3.Text += ("Key = {0}, Value = {1}", kvp.Key, kvp.Value);
+								//								pairs += string.Format("Key = {0}, Value = {1}", kvp.Key.ToString(), kvp.Value.ToString()) + "\n";
+								//							}
+								//							Debug.LogError("Failed to get ServerPlayer with hostId: " + recHostId.ToString() + "\n" + pairs);
 								break;
 							}
+							
+							Debug.Log ("Client message received");
+							
+							nr.SeekZero();
+							nw.SeekZero();
+							while (nr.Position != dataSize) {
+								switch ((ClientMessageType)nr.ReadUInt16()) {
+								case ClientMessageType.RequestChunk:
+									Debug.Log ("ClientMessageType.RequestChunk");
+									player.currentVessel.HandleChunkRequestMessage(nr, nw);
+									break;
+								case ClientMessageType.Inputs:
+									Debug.Log ("ClientMessageType.Inputs");
+									player.ReadInputsMessage(nr);
+									break;
+								case ClientMessageType.FillAt:
+									Debug.Log ("ClientMessageType.FillAt");
+									player.currentVessel.HandleFillAtMessage(nr);
+									break;
+								default:
+									break;
+								}
+							}
+							
+							if (nw.Position != 0) {
+								Debug.Log("Sending response: " + recHostId + "," + connectionId + "," + channelId + "," + nw.AsArray() + "," + nw.Position + ".");
+								NetworkTransport.Send(recHostId, connectionId, channelId, nw.AsArray(), nw.Position, out error);
+							}     
+							if(error != 0)
+							{
+								Debug.Log ((NetworkError)error);
+								Shutdown();
+								return;
+							}
+							break;
 						}
-						
-						if (nw.Position != 0) {
-							Debug.Log("Sending response: " + recHostId + "," + connectionId + "," + channelId + "," + nw.AsArray() + "," + nw.Position + ".");
-							NetworkTransport.Send(recHostId, connectionId, channelId, nw.AsArray(), nw.Position, out error);
-						}     
-						if(error != 0)
-							Debug.Log ((NetworkError)error);
-						break;
-					}
-					case NetworkEventType.DisconnectEvent:
-					{
-						Debug.Log("Client disconnecting");
-						ServerPlayer player = serverPlayers[recHostId];
-						player.currentVessel.RemovePlayer(player, nw);
-						serverPlayers.Remove(recHostId);
-						break;
-					}
-					default:
-						break;
+						case NetworkEventType.DisconnectEvent:
+						{
+							Debug.Log("Client disconnecting");
+							ServerPlayer player = serverPlayers[recHostId];
+							player.currentVessel.RemovePlayer(player, nw);
+							serverPlayers.Remove(recHostId);
+							break;
+						}
+						default:
+							break;
+						}
 					}
 				}
+			} catch (System.Exception ex) {
+				//Debug.Log(ex.StackTrace);
+				Shutdown ();
 			}
 		}
 	}

@@ -9,6 +9,7 @@ public class ClientPlayer : Player {
 
 	void Start () {
 		myPlayer = false;
+		BaseStart();
 	}
 
 	void Update () {
@@ -25,6 +26,6 @@ public class ClientPlayer : Player {
 	{
 		nw.Write((ushort)ClientMessageType.Inputs);
 		nw.Write(new Vector2(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical")));
-	    nw.Write(MainCamera.CursorPosition);
+		nw.Write(MainCamera.CursorPosition - (Vector2)transform.position);
 	}
 }

@@ -14,7 +14,7 @@ public class ServerPlayer : Player {
 	public PlayerInfo pi;
 
 	void Start () {
-
+		BaseStart();
 	}
 
 	void Update () {
@@ -24,7 +24,7 @@ public class ServerPlayer : Player {
 	public void ReadInputsMessage(NetworkReader nr)
 	{
 		Vector2 movement = nr.ReadVector2();
-		Vector2 facing = nr.ReadVector2() - (Vector2)transform.position;
+		Vector2 facing = nr.ReadVector2();
 		Move(movement, facing);
 	}
 }

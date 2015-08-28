@@ -654,21 +654,29 @@ public class ServerVessel : Vessel
 		noPlayers = false;
 		timeEmpty = 0.0f;
 
-		WriteSyncVessel(nw);
-		byte error;
-		NetworkTransport.Send(player.hostId, player.connectionId, GameManager.ChannelId, nw.AsArray(), nw.Position, out error);    
-		if(error != 0)
-			Debug.Log ((NetworkError)error);
-
-		nw.SeekZero();
-		nw.Write((ushort)ServerMessageType.AddPlayer);
-		nw.Write((ushort)(playersOnBoard.Count - 1));
-		nw.Write((Vector2)player.transform.position);
-		//TODO: write player info here
-		for (int i = 0; i < playersOnBoard.Count; i++) {
-			NetworkTransport.Send(playersOnBoard[i].hostId, playersOnBoard[i].connectionId, GameManager.ChannelId, nw.AsArray(), nw.Position, out error);    
-			if(error != 0)
+		if (GameManager.Instance.Initialized) {
+			WriteSyncVessel(nw);
+			byte error;
+			NetworkTransport.Send(player.hostId, player.connectionId, GameManager.ChannelId, nw.AsArray(), nw.Position, out error);    
+			if(error != 0){
 				Debug.Log ((NetworkError)error);
+				GameManager.Instance.Shutdown();
+			}
+		}
+		if (GameManager.Instance.Initialized) {
+			nw.SeekZero();
+			nw.Write((ushort)ServerMessageType.AddPlayer);
+			nw.Write((ushort)(playersOnBoard.Count - 1));
+			nw.Write((Vector2)player.transform.position);
+			//TODO: write player info here
+			for (int i = 0; i < playersOnBoard.Count; i++) {
+				byte error;
+				NetworkTransport.Send(playersOnBoard[i].hostId, playersOnBoard[i].connectionId, GameManager.ChannelId, nw.AsArray(), nw.Position, out error);    
+				if(error != 0){
+					Debug.Log ((NetworkError)error);
+					GameManager.Instance.Shutdown();
+				}
+			}
 		}
 	}
 	
@@ -681,14 +689,19 @@ public class ServerVessel : Vessel
 			noPlayers = true;
 		}
 
-		nw.SeekZero();
-		nw.Write((ushort)ServerMessageType.RemovePlayer);
-		nw.Write((ushort)id);
-		for (int i = 0; i < playersOnBoard.Count; i++) {
-			byte error;
-			NetworkTransport.Send(playersOnBoard[i].hostId, playersOnBoard[i].connectionId, GameManager.ChannelId, nw.AsArray(), nw.Position, out error);    
-			if(error != 0)
-				Debug.Log ((NetworkError)error);
+		if (GameManager.Instance.Initialized) {
+			nw.SeekZero();
+			nw.Write((ushort)ServerMessageType.RemovePlayer);
+			nw.Write((ushort)id);
+			for (int i = 0; i < playersOnBoard.Count; i++) {
+				byte error;
+				NetworkTransport.Send(playersOnBoard[i].hostId, playersOnBoard[i].connectionId, GameManager.ChannelId, nw.AsArray(), nw.Position, out error);    
+				if(error != 0)
+				{
+					Debug.Log ((NetworkError)error);
+					GameManager.Instance.Shutdown();
+				}
+			}
 		}
 	}
 

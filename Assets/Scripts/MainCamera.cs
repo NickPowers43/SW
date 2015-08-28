@@ -41,7 +41,7 @@ public class MainCamera : MonoBehaviour {
 	}
 
 	void Update () {
-		CursorPosition = (Vector2)MainCamera.Instance.camera.ScreenToWorldPoint(Input.mousePosition);
+		CursorPosition = (Vector2)camera.ScreenToWorldPoint(Input.mousePosition);
 	}
 
 	void FixedUpdate () {

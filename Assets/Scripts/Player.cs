@@ -24,7 +24,7 @@ public class Player : MonoBehaviour
 	private float baseRot;
 
 
-	void Start()
+	public void BaseStart()
 	{
 		rb = GetComponent<Rigidbody2D>();
 		baseRot = transform.rotation.eulerAngles.z;
