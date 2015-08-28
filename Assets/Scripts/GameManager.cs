@@ -45,14 +45,14 @@ public class GameManager : NetworkBehaviour {
 	private int clientConnectionId = 0;
 	private HostTopology topology;
 
-	public ClientVessel currentVessel;
-	public ClientPlayer currentPlayer;
-	public Dictionary<uint, ClientVessel> clientVessels;
+	public ClientVessel currentVessel = null;
+	public ClientPlayer currentPlayer = null;
+	public Dictionary<uint, ClientVessel> clientVessels = new Dictionary<uint, ClientVessel>();
 
 #if !(UNITY_WEBGL && !UNITY_EDITOR)
 	//Server fields
-	private Dictionary<int, ServerPlayer> serverPlayers;
-	private List<ServerVessel> serverVessels;
+	private Dictionary<int, ServerPlayer> serverPlayers = new Dictionary<int, ServerPlayer>();
+	private List<ServerVessel> serverVessels = new List<ServerVessel>();
 #endif
 
 	void Start()
@@ -83,6 +83,7 @@ public class GameManager : NetworkBehaviour {
 				_isStarted = true;
 				_isServer = true;
 				NetworkTransport.Init();
+				Application.targetFrameRate = 20;
 				
 				//add 2 host one for udp another for websocket, as websocket works via tcp we can do this
 				m_WebSocketHostId = NetworkTransport.AddWebsocketHost(topology, int.Parse(port), null);
@@ -160,12 +161,17 @@ public class GameManager : NetworkBehaviour {
 
 			bool reinstantiateChunks = false;
 			
-			NetworkEventType recData;
-			while ((recData = NetworkTransport.Receive(out recHostId, out connectionId, out channelId, recBuffer, recBuffer.Length, out dataSize, out error)) != NetworkEventType.Nothing) {
+
+			while (true) {
+
+				NetworkEventType recData = NetworkTransport.Receive(out recHostId, out connectionId, out channelId, recBuffer, recBuffer.Length, out dataSize, out error);
 				if(error != 0)
 				{
 					Debug.Log ((NetworkError)error + " " + dataSize + " ");
 					return;
+				}
+				if (recData == NetworkEventType.Nothing) {
+					break;
 				}
 				
 				switch(recData) {
@@ -212,7 +218,7 @@ public class GameManager : NetworkBehaviour {
 				}
 				case NetworkEventType.DisconnectEvent:
 				{
-					Debug.Log("DisConnect from host");
+					Debug.Log("Disconnect from host");
 					_isStarted = false;
 					break;
 				}
@@ -257,6 +263,7 @@ public class GameManager : NetworkBehaviour {
 				switch(recData) {
 				case NetworkEventType.ConnectEvent:
 				{
+					Debug.Log("Client connecting");
 					//start this player off from the beginning
 					StartingVessel startVessel = StartingVessel.GetStartingVessel();
 					GameObject playerGO = GameObject.Instantiate(playerPrefab) as GameObject;
@@ -274,26 +281,23 @@ public class GameManager : NetworkBehaviour {
 					nr.SeekZero();
 					nw.SeekZero();
 					while (nr.Position != dataSize) {
-						try {
-							switch ((ClientMessageType)nr.ReadUInt16()) {
-							case ClientMessageType.RequestChunk:
-								player.currentVessel.HandleChunkRequestMessage(nr, nw);
-								break;
-							case ClientMessageType.Inputs:
-								player.ReadInputsMessage(nr);
-								break;
-							case ClientMessageType.FillAt:
-								player.currentVessel.HandleFillAtMessage(nr);
-								break;
-							default:
-								break;
-							}
-						} catch (System.Exception ex) {
+						switch ((ClientMessageType)nr.ReadUInt16()) {
+						case ClientMessageType.RequestChunk:
+							player.currentVessel.HandleChunkRequestMessage(nr, nw);
+							break;
+						case ClientMessageType.Inputs:
+							player.ReadInputsMessage(nr);
+							break;
+						case ClientMessageType.FillAt:
+							player.currentVessel.HandleFillAtMessage(nr);
+							break;
+						default:
 							break;
 						}
 					}
 
 					if (nw.Position != 0) {
+						Debug.Log("Sending response: " + recHostId + "," + connectionId + "," + channelId + "," + nw.AsArray() + "," + nw.Position + ".");
 						NetworkTransport.Send(recHostId, connectionId, channelId, nw.AsArray(), nw.Position, out error);
 					}     
 					if(error != 0)
@@ -302,6 +306,7 @@ public class GameManager : NetworkBehaviour {
 				}
 				case NetworkEventType.DisconnectEvent:
 				{
+					Debug.Log("Client disconnecting");
 					ServerPlayer player = serverPlayers[recHostId];
 					player.currentVessel.RemovePlayer(player, nw);
 					serverPlayers.Remove(recHostId);
