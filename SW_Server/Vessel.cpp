@@ -26,7 +26,6 @@ namespace SW_Server
 		if (!tile)
 			return false;
 
-		VesselTile* tile = NULL;
 		/*if ((tile = TryGetTile(index)) != NULL && tile->blockT != BlockType.None) {
 			return false;
 		}

@@ -1,9 +1,9 @@
 
 #define MB_CAPACITY 16384
-struct MessageBuffer
+struct NetworkWriter
 {
-	MessageBuffer();
-	~MessageBuffer();
+	NetworkWriter();
+	~NetworkWriter();
 
 	int size;
 	void* data;

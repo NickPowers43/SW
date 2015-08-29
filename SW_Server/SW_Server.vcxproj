@@ -42,7 +42,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>C:\Libraries\boost_1_58_0;C:\Libraries\openssl_w32\include;C:\Libraries\openssl\include;C:\Libraries\glm;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <LibraryPath>C:\Libraries\openssl_w32\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);</LibraryPath>
+    <LibraryPath>C:\Libraries\boost_1_58_0\bin.v2\libs\regex\build\msvc-12.0\debug\link-static\threading-multi;C:\Libraries\boost_1_58_0\bin.v2\libs\date_time\build\msvc-12.0\debug\link-static\threading-multi;C:\Libraries\boost_1_58_0\bin.v2\libs\system\build\msvc-12.0\debug\link-static\threading-multi;C:\Libraries\openssl_w32\lib;$(VC_LibraryPath_x86);$(WindowsSDK_LibraryPath_x86);</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -54,6 +54,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -86,7 +87,7 @@
     <ClInclude Include="Compartment.h" />
     <ClInclude Include="crypto.hpp" />
     <ClInclude Include="DynamicArray2D.h" />
-    <ClInclude Include="MessageBuffer.h" />
+    <ClInclude Include="NetworkWriter.h" />
     <ClInclude Include="ServerVC.h" />
     <ClInclude Include="server_ws.hpp" />
     <ClInclude Include="stdafx.h" />
@@ -99,12 +100,8 @@
     <ClCompile Include="AABBi.cpp" />
     <ClCompile Include="Compartment.cpp" />
     <ClCompile Include="DynamicArray2D.cpp" />
-    <ClCompile Include="MessageBuffer.cpp" />
+    <ClCompile Include="NetworkWriter.cpp" />
     <ClCompile Include="ServerVC.cpp" />
-    <ClCompile Include="stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="SW_Server.cpp" />
     <ClCompile Include="Vessel.cpp" />
     <ClCompile Include="VesselChunk.cpp" />

@@ -5,16 +5,22 @@
 
 namespace SW_Server
 {
+	const uint8_t VesselChunkFlag_None = 0;
+	const uint8_t VesselChunkFlag_Seen = 1;
+	const uint8_t VesselChunkFlag_Modified = 1;
+
 	class VesselChunk
 	{
 	public:
 
 		static float chunkUpdateInterval;
 
+		uint8_t flags;
 		glm::ivec2 index;
 		VesselTile** data;
+		uint32_t version;
 
-
+		VesselChunk(glm::ivec2 index, uint32_t version);
 		VesselChunk(glm::ivec2 index);
 		~VesselChunk();
 
@@ -25,6 +31,10 @@ namespace SW_Server
 
 		void Instantiate(VesselChunk* t, VesselChunk* l, VesselChunk* r, VesselChunk* b, VesselChunk* br, glm::vec2 position);
 		void Destroy();
+
+	private:
+		char* messageBytes;
+		int messageBytesSize;
 	};
 }
 

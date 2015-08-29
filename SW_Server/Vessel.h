@@ -1,6 +1,5 @@
 #pragma once
 
-#include "stdafx.h"
 #include "AABBi.h"
 #include "VesselTile.h"
 #include "VesselChunk.h"
@@ -74,7 +73,7 @@ namespace SW_Server
 		AABBi aabb;
 		bool interiorExists;
 
-		std::vector<ServerVC*> modifiedChunks;
+		std::vector<VesselChunk*> modifiedChunks;
 	};
 }
 

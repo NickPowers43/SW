@@ -1,5 +1,5 @@
+#include "stdafx.h"
 #include "AABBi.h"
-#include <glm\common.hpp>
 
 
 namespace SW_Server

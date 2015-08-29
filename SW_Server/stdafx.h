@@ -15,7 +15,7 @@
 #include <glm\common.hpp>
 #include <glm\vec2.hpp>
 
-#include "MessageBuffer.h"
+#include "NetworkWriter.h"
 
 //#include "crypto.hpp"
 #include "server_ws.hpp"

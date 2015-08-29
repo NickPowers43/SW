@@ -48,17 +48,14 @@
     <ClInclude Include="server_ws.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MessageBuffer.h">
+    <ClInclude Include="ServerVC.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ServerVC.h">
+    <ClInclude Include="NetworkWriter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="SW_Server.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -80,10 +77,10 @@
     <ClCompile Include="VesselTile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MessageBuffer.cpp">
+    <ClCompile Include="ServerVC.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ServerVC.cpp">
+    <ClCompile Include="NetworkWriter.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
