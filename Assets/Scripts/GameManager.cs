@@ -3,6 +3,9 @@ using UnityEngine;
 using UnityEngine.Networking;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System;
+using System.Text;
 
 public enum ServerMessageType : ushort {
 	SetChunk,
@@ -20,6 +23,18 @@ public enum ClientMessageType : ushort {
 
 public class GameManager : NetworkBehaviour {
 
+    [DllImport("__Internal")]
+    private static extern void Connect(string ip, string port);
+
+    [DllImport("__Internal")]
+    public static extern void Send(byte[] data, int size);
+
+    [DllImport("__Internal")]
+    private static extern void Close();
+
+    [DllImport("__Internal")]
+	public static extern int Receive(byte[] buffer, int bufferSize);
+
 	public GameObject playerPrefab;
 
 	public bool Initialized
@@ -32,24 +47,6 @@ public class GameManager : NetworkBehaviour {
 	private bool _isServer = false;
 	string defaultIP  = "160.39.38.100";
 	int defaultPort = 7778;
-	
-	private int m_ConnectionId = 0;
-	private int m_WebSocketHostId = 0;
-	private int m_GenericHostId = 0;
-	
-	private ConnectionConfig m_Config = null;
-	private static byte channelId = 0;
-	public static byte ChannelId
-	{
-		get {
-			return channelId;
-		}
-		set {
-			channelId = value;
-		}
-	}
-	private int clientConnectionId = 0;
-	private HostTopology topology;
 
 	public ClientVessel currentVessel = null;
 	public ClientPlayer currentPlayer = null;
@@ -63,10 +60,6 @@ public class GameManager : NetworkBehaviour {
 
 	void Start()
 	{
-		m_Config = new ConnectionConfig();
-		ChannelId = m_Config.AddChannel(QosType.Reliable);
-		topology = new HostTopology(m_Config, 2048);
-		
 		GlobalVariables.CharacterInterior = LayerMask.NameToLayer("CharacterInterior");
 		GlobalVariables.CharacterExterior = LayerMask.NameToLayer("CharacterExterior");
 	}
@@ -82,31 +75,21 @@ public class GameManager : NetworkBehaviour {
 			string ip = GUI.TextField(new Rect(PADDING, BOX_HEIGHT+(PADDING*2), BOX_WIDTH, BOX_HEIGHT), defaultIP);
 			string port = GUI.TextField(new Rect(BOX_WIDTH+(PADDING*2), BOX_HEIGHT+(PADDING*2), BOX_WIDTH, BOX_HEIGHT), defaultPort.ToString());
 
-
-			if (GUI.Button(new Rect(BOX_WIDTH+(PADDING*2), PADDING, BOX_WIDTH, BOX_HEIGHT), "Host"))
-			{
-				Debug.Log("Hosting at (0.0.0.0:" + port + ")");
-				_isStarted = true;
-				_isServer = true;
-				NetworkTransport.Init();
-				Application.targetFrameRate = 20;
-				
-				//add 2 host one for udp another for websocket, as websocket works via tcp we can do this
-				m_WebSocketHostId = NetworkTransport.AddWebsocketHost(topology, int.Parse(port), null);
-				//m_GenericHostId = NetworkTransport.AddHost(topology, int.Parse(port), null);
-			}
-
 			if (GUI.Button(new Rect(PADDING, PADDING, BOX_WIDTH, BOX_HEIGHT), "Connect"))
 			{
 				Debug.Log("Connecting to (" + ip + ":" + port + ")");
 				_isStarted = true;
 				_isServer = false;
-				NetworkTransport.Init();
+                //NetworkTransport.Init();
 
-				//any port for udp client, for websocket second parameter is ignored, as webgl based game can be client only
-				m_GenericHostId = NetworkTransport.AddHost(topology, int.Parse(port));
-				byte error;
-				m_ConnectionId = NetworkTransport.Connect(m_GenericHostId, ip, int.Parse(port), 0, out error);
+                ////any port for udp client, for websocket second parameter is ignored, as webgl based game can be client only
+                //m_GenericHostId = NetworkTransport.AddHost(topology, int.Parse(port));
+                //byte error;
+                //m_ConnectionId = NetworkTransport.Connect(m_GenericHostId, ip, int.Parse(port), 0, out error);
+
+				Connect(ip, port);
+				byte[] temp = Encoding.ASCII.GetBytes("Hello, this is the client speaking");
+				Send (temp, temp.Length);
 			}
 		} else {
 			//GUI.Label(new Rect(BOX_WIDTH + PADDING, 20, 250, 500), "Min: " + minReceivedPing);
@@ -150,7 +133,7 @@ public class GameManager : NetworkBehaviour {
 	public void Shutdown()
 	{
 		Debug.Log("Shutting down");
-		NetworkTransport.Shutdown();
+		Close();
 		_isStarted = false;
 	}
 	
@@ -168,90 +151,102 @@ public class GameManager : NetworkBehaviour {
 
 		if (!_isServer) {
 
-			bool reinstantiateChunks = false;
+			byte[] messageB = new byte[1<<13];
+			int received = Receive(messageB, messageB.Length);
+			if (received > 0) {
+				byte[] temp = new byte[received];
+				Array.Copy(messageB, temp, received);
+				string value = ASCIIEncoding.ASCII.GetString(temp);
+				Console.WriteLine(value);
+				value += "0";
+				temp = Encoding.ASCII.GetBytes(value);
+				Send (temp, temp.Length); 
+			}
+
+            //bool reinstantiateChunks = false;
 			
 
-			while (true) {
+            //while (true) {
 
-				NetworkEventType recData = NetworkTransport.Receive(out recHostId, out connectionId, out channelId, recBuffer, recBuffer.Length, out dataSize, out error);
-				if(error != 0)
-				{
-					Debug.Log ((NetworkError)error + " " + dataSize + " ");
-					return;
-				}
-				if (recData == NetworkEventType.Nothing) {
-					break;
-				}
+            //    NetworkEventType recData = NetworkTransport.Receive(out recHostId, out connectionId, out channelId, recBuffer, recBuffer.Length, out dataSize, out error);
+            //    if(error != 0)
+            //    {
+            //        Debug.Log ((NetworkError)error + " " + dataSize + " ");
+            //        return;
+            //    }
+            //    if (recData == NetworkEventType.Nothing) {
+            //        break;
+            //    }
 				
-				switch(recData) {
-				case NetworkEventType.ConnectEvent:
-				{
-					Debug.Log("Successfully connected to server");
-					clientConnectionId = connectionId;
-					break;
-				}
-				case NetworkEventType.DataEvent:  //if server will receive echo it will send it back to client, when client will receive echo from serve wit will send other message
-				{
-					NetworkReader nr = new NetworkReader(recBuffer);
+            //    switch(recData) {
+            //    case NetworkEventType.ConnectEvent:
+            //    {
+            //        Debug.Log("Successfully connected to server");
+            //        clientConnectionId = connectionId;
+            //        break;
+            //    }
+            //    case NetworkEventType.DataEvent:  //if server will receive echo it will send it back to client, when client will receive echo from serve wit will send other message
+            //    {
+            //        NetworkReader nr = new NetworkReader(recBuffer);
 					
-					while (true) {
-						try {
-							switch ((ServerMessageType)nr.ReadUInt16()) {
-							case ServerMessageType.SetChunk:
-								currentVessel.ReadSetChunkMessage(nr);
-								reinstantiateChunks = true;
-								break;
-							case ServerMessageType.SyncVessel:
-								uint vesselIndex = nr.ReadUInt32();
-								ClientVessel cv;
-								if (!clientVessels.TryGetValue(vesselIndex, out cv)) {
-									cv = new ClientVessel(vesselIndex, nr);
-								} else {
-									cv.Sync(nr);
-								}
+            //        while (true) {
+            //            try {
+            //                switch ((ServerMessageType)nr.ReadUInt16()) {
+            //                case ServerMessageType.SetChunk:
+            //                    currentVessel.ReadSetChunkMessage(nr);
+            //                    reinstantiateChunks = true;
+            //                    break;
+            //                case ServerMessageType.SyncVessel:
+            //                    uint vesselIndex = nr.ReadUInt32();
+            //                    ClientVessel cv;
+            //                    if (!clientVessels.TryGetValue(vesselIndex, out cv)) {
+            //                        cv = new ClientVessel(vesselIndex, nr);
+            //                    } else {
+            //                        cv.Sync(nr);
+            //                    }
 
-								currentVessel = cv;
-								break;
-							default:
-								break;
-							}
-						} catch (System.Exception ex) {
-							break;
-						}
-					}
+            //                    currentVessel = cv;
+            //                    break;
+            //                default:
+            //                    break;
+            //                }
+            //            } catch (System.Exception ex) {
+            //                break;
+            //            }
+            //        }
 					
-					if (reinstantiateChunks) {
-						currentVessel.ReinstantiateChunks();
-					}
-					break;
-				}
-				case NetworkEventType.DisconnectEvent:
-				{
-					Debug.Log("Disconnect from host");
-					_isStarted = false;
-					break;
-				}
-				default:
-					break;
-				}
-			}
+            //        if (reinstantiateChunks) {
+            //            currentVessel.ReinstantiateChunks();
+            //        }
+            //        break;
+            //    }
+            //    case NetworkEventType.DisconnectEvent:
+            //    {
+            //        Debug.Log("Disconnect from host");
+            //        _isStarted = false;
+            //        break;
+            //    }
+            //    default:
+            //        break;
+            //    }
+            //}
 			
-			NetworkWriter nw = new NetworkWriter();
+            //NetworkWriter nw = new NetworkWriter();
 
-			if (Input.GetMouseButtonDown(0)) {
-				nw.Write((ushort)ClientMessageType.FillAt);
-				nw.Write(MainCamera.CursorPosition);
-			}
+            //if (Input.GetMouseButtonDown(0)) {
+            //    nw.Write((ushort)ClientMessageType.FillAt);
+            //    nw.Write(MainCamera.CursorPosition);
+            //}
 
-			currentPlayer.WriteInputMessage(nw);
+            //currentPlayer.WriteInputMessage(nw);
 
-			if (nw.Position != 0) {
-				if (Initialized) {
-					NetworkTransport.Send(recHostId, clientConnectionId, ChannelId, nw.AsArray(), nw.Position, out error);
-				}
-			}     
-			if(error != 0)
-				Debug.Log ((NetworkError)error);
+            //if (nw.Position != 0) {
+            //    if (Initialized) {
+            //        NetworkTransport.Send(recHostId, clientConnectionId, ChannelId, nw.AsArray(), nw.Position, out error);
+            //    }
+            //}     
+            //if(error != 0)
+            //    Debug.Log ((NetworkError)error);
 		} else {
 			try {
 				NetworkReader nr = new NetworkReader(recBuffer);

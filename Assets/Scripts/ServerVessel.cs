@@ -656,12 +656,7 @@ public class ServerVessel : Vessel
 
 		if (GameManager.Instance.Initialized) {
 			WriteSyncVessel(nw);
-			byte error;
-			NetworkTransport.Send(player.hostId, player.connectionId, GameManager.ChannelId, nw.AsArray(), nw.Position, out error);    
-			if(error != 0){
-				Debug.Log ((NetworkError)error);
-				GameManager.Instance.Shutdown();
-			}
+			//send
 		}
 		if (GameManager.Instance.Initialized) {
 			nw.SeekZero();
@@ -670,12 +665,7 @@ public class ServerVessel : Vessel
 			nw.Write((Vector2)player.transform.position);
 			//TODO: write player info here
 			for (int i = 0; i < playersOnBoard.Count; i++) {
-				byte error;
-				NetworkTransport.Send(playersOnBoard[i].hostId, playersOnBoard[i].connectionId, GameManager.ChannelId, nw.AsArray(), nw.Position, out error);    
-				if(error != 0){
-					Debug.Log ((NetworkError)error);
-					GameManager.Instance.Shutdown();
-				}
+				//send
 			}
 		}
 	}
@@ -694,13 +684,7 @@ public class ServerVessel : Vessel
 			nw.Write((ushort)ServerMessageType.RemovePlayer);
 			nw.Write((ushort)id);
 			for (int i = 0; i < playersOnBoard.Count; i++) {
-				byte error;
-				NetworkTransport.Send(playersOnBoard[i].hostId, playersOnBoard[i].connectionId, GameManager.ChannelId, nw.AsArray(), nw.Position, out error);    
-				if(error != 0)
-				{
-					Debug.Log ((NetworkError)error);
-					GameManager.Instance.Shutdown();
-				}
+				//send
 			}
 		}
 	}

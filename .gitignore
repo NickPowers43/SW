@@ -267,6 +267,10 @@ _Pvt_Extensions
 #Unity3D Generated File On Crash Reports
 sysinfo.txt
 
+# Netbeans Stuff
+SW_Client/nbproject
+
+
 # =========================
 # Operating System Files
 # =========================
@@ -313,3 +317,4 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+/SW_Client/nbproject/private/
