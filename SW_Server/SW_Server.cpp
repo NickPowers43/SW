@@ -2,41 +2,78 @@
 //
 
 #include "stdafx.h"
+#include <websocketpp/config/asio_no_tls.hpp>
+#include <websocketpp\server.hpp>
 
 using namespace std;
-using namespace SimpleWeb;
+
+typedef websocketpp::server<websocketpp::config::asio> server;
+
+using websocketpp::lib::placeholders::_1;
+using websocketpp::lib::placeholders::_2;
+using websocketpp::lib::bind;
+
+// pull out the type of messages sent by our config
+typedef server::message_ptr message_ptr;
+
+// Define a callback to handle incoming messages
+void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
+	std::cout << "on_message called with hdl: " << hdl.lock().get()
+		<< " and message: " << msg->get_payload()
+		<< std::endl;
+
+	// check for a special command to instruct the server to stop listening so
+	// it can be cleanly exited.
+	if (msg->get_payload() == "stop-listening") {
+		s->stop_listening();
+		return;
+	}
+
+	try {
+		s->send(hdl, msg->get_payload(), msg->get_opcode());
+	}
+	catch (const websocketpp::lib::error_code& e) {
+		std::cout << "Echo failed because: " << e
+			<< "(" << e.message() << ")" << std::endl;
+	}
+}
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	string portS = string((char*)argv[1]);
-	int port = stoi(portS);
-	string ipS = string((char*)argv[1]);
-	int ip = stoi(ipS);
+	//string portS = string((char*)argv[1]);
+	//int port = stoi(portS);
+	//string ipS = string((char*)argv[1]);
+	//int ip = stoi(ipS);
 
-	SocketServer<WS> server(8080, 4);
+	// Create a server endpoint
+	server echo_server;
 
-	auto& echo = server.endpoint["^/echo/?$"];
+	try {
+		// Set logging settings
+		echo_server.set_access_channels(websocketpp::log::alevel::all);
+		echo_server.clear_access_channels(websocketpp::log::alevel::frame_payload);
 
-	//C++14, lambda parameters declared with auto
-	//For C++11 use: (shared_ptr<Server<WS>::Connection> connection, shared_ptr<Server<WS>::Message> message)
-	//echo.onmessage = [&server](shared_ptr<Server<WS>::Connection> connection, shared_ptr<Server<WS>::Message> message) {
-	//	//To receive message from client as string (data_ss.str())
-	//	stringstream data_ss;
-	//	message->data >> data_ss.rdbuf();
+		// Initialize ASIO
+		echo_server.init_asio();
 
-	//	cout << "Server: Message received: \"" << data_ss.str() << "\" from " << (size_t)connection.get() << endl;
+		// Register our message handler
+		echo_server.set_message_handler(bind(&on_message, &echo_server, ::_1, ::_2));
 
-	//	cout << "Server: Sending message \"" << data_ss.str() << "\" to " << (size_t)connection.get() << endl;
+		// Listen on port 7778
+		echo_server.listen(7778);
 
-	//	//server.send is an asynchronous function
-	//	server.send(connection, data_ss, [](const boost::system::error_code& ec){
-	//		if (ec) {
-	//			cout << "Server: Error sending message. " <<
-	//				//See http://www.boost.org/doc/libs/1_55_0/doc/html/boost_asio/reference.html, Error Codes for error code meanings
-	//				"Error: " << ec << ", error message: " << ec.message() << endl;
-	//		}
-	//	});
-	//};
+		// Start the server accept loop
+		echo_server.start_accept();
+
+		// Start the ASIO io_service run loop
+		echo_server.run();
+	}
+	catch (websocketpp::exception const & e) {
+		std::cout << e.what() << std::endl;
+	}
+	catch (...) {
+		std::cout << "other exception" << std::endl;
+	}
 
 	return 0;
 }

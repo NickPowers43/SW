@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <tchar.h>
 #include <vector>
+#include <iostream>
 
 #include <glm/geometric.hpp>
 #include <glm\common.hpp>
@@ -17,8 +18,6 @@
 
 #include "NetworkWriter.h"
 
-//#include "crypto.hpp"
-#include "server_ws.hpp"
 
 
 // TODO: reference additional headers your program requires here

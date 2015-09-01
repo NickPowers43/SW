@@ -1,16 +1,19 @@
 #include "stdafx.h"
 #include "NetworkWriter.h"
 
-NetworkWriter::NetworkWriter()
+namespace SW_Server
 {
-	data = new char[MB_CAPACITY];
-}
-NetworkWriter::~NetworkWriter()
-{
-	delete data;
-}
-void NetworkWriter::reset()
-{
-	size = 0;
-	temp = data;
+	NetworkWriter::NetworkWriter()
+	{
+		data = new char[MB_CAPACITY];
+	}
+	NetworkWriter::~NetworkWriter()
+	{
+		delete data;
+	}
+	void NetworkWriter::reset()
+	{
+		size = 0;
+		temp = data;
+	}
 }

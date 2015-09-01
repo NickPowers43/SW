@@ -33,7 +33,7 @@ namespace SW_Server
 			return false;
 		}*/
 
-		//check if foundations have been set and walls nodes are not too close
+		//check if walls nodes are not too close
 		//to the new wall
 		if (!(type == WallType_OneByZero || type == WallType_ZeroByOne)) {
 
@@ -41,107 +41,44 @@ namespace SW_Server
 			int diff = abs(type - WallType_ZeroByOne);
 
 			if (hDir < 0) {
-				if ((tile = TryGetTile(glm::ivec2(index.x - 1, index.y))) == NULL) {
+				if (ContainsWall(glm::ivec2(index.x + hDir, index.y))) {
 					return false;
 				}
-				/*else {
-					if (tile->blockT != BlockType.None)
-						return false;
-				}
-				if (((tile = TryGetTile(glm::ivec2(index.x - 1, index.y - 1))) != NULL && tile->blockT != BlockType.None) ||
-					((tile = TryGetTile(glm::ivec2(index.x - 2, index.y))) != NULL && tile->blockT != BlockType.None) ||
-					((tile = TryGetTile(glm::ivec2(index.x - 1, index.y + 1))) != NULL && tile->blockT != BlockType.None) ||
-					((tile = TryGetTile(glm::ivec2(index.x, index.y))) != NULL && tile->blockT != BlockType.None) ||
-					((tile = TryGetTile(glm::ivec2(index.x - 2, index.y - 1))) != NULL && tile->blockT != BlockType.None) ||
-					((tile = TryGetTile(glm::ivec2(index.x, index.y + 1))) != NULL && tile->blockT != BlockType.None)) {
-					return false;
-				}*/
 				if (diff != 2) {
-					/*if (((tile = TryGetTile(glm::ivec2(index.x - 1, index.y + 1))) != NULL && tile->blockT != BlockType.None) ||
-						ContainsWall(glm::ivec2(index.x - 1, index.y + 1))) {
-						return false;
-					}*/
 					if (ContainsWall(glm::ivec2(index.x - 1, index.y + 1))) {
 						return false;
 					}
-				}
-				if (diff == 3) {
-					if (TryGetTile(glm::ivec2(index.x - 2, index.y)) == NULL ||
-						ContainsWall(glm::ivec2(index.x - 2, index.y))) {
-						return false;
+					if (diff == 3) {
+						if (ContainsWall(glm::ivec2(index.x - 2, index.y))) {
+							return false;
+						}
 					}
-					/*if (((tile = TryGetTile(glm::ivec2(index.x - 3, index.y - 1))) != NULL && tile->blockT != BlockType.None) ||
-						((tile = TryGetTile(glm::ivec2(index.x - 3, index.y))) != NULL && tile->blockT != BlockType.None)) {
-						return false;
-					}*/
-				}
-				else if (diff == 1) {
-					if (TryGetTile(glm::ivec2(index.x - 1, index.y + 1)) == NULL ||
-						ContainsWall(glm::ivec2(index.x, index.y + 2))) {
-						return false;
+					else if (diff == 1) {
+						if (ContainsWall(glm::ivec2(index.x, index.y + 2))) {
+							return false;
+						}
 					}
-					/*if (((tile = TryGetTile(glm::ivec2(index.x - 2, index.y + 2))) != NULL && tile->blockT != BlockType.None) ||
-						((tile = TryGetTile(glm::ivec2(index.x - 1, index.y + 2))) != NULL && tile->blockT != BlockType.None)) {
-						return false;
-					}*/
 				}
 			}
 			else {
-				if ((tile = TryGetTile(glm::ivec2(index.x, index.y))) == NULL) {
+				if (ContainsWall(glm::ivec2(index.x, index.y + 1))) {
 					return false;
 				}
-				/*else {
-					if (tile->blockT != BlockType.None)
-						return false;
-				}
-				if ((tile = TryGetTile(glm::ivec2(index.x, index.y - 1))) != NULL && tile->blockT != BlockType.None) {
-					return false;
-				}
-				if (((tile = TryGetTile(glm::ivec2(index.x, index.y - 1))) != NULL && tile->blockT != BlockType.None) ||
-					((tile = TryGetTile(glm::ivec2(index.x + 1, index.y))) != NULL && tile->blockT != BlockType.None) ||
-					((tile = TryGetTile(glm::ivec2(index.x, index.y + 1))) != NULL && tile->blockT != BlockType.None) ||
-					((tile = TryGetTile(glm::ivec2(index.x - 1, index.y))) != NULL && tile->blockT != BlockType.None) ||
-					((tile = TryGetTile(glm::ivec2(index.x + 1, index.y - 1))) != NULL && tile->blockT != BlockType.None) ||
-					((tile = TryGetTile(glm::ivec2(index.x - 1, index.y + 1))) != NULL && tile->blockT != BlockType.None)) {
-					return false;
-				}*/
 				if (diff != 2) {
-					/*if (((tile = TryGetTile(glm::ivec2(index.x + 1, index.y + 1))) != NULL && tile->blockT != BlockType.None)) {
-						return false;
-					}*/
 					if (ContainsWall(glm::ivec2(index.x + 1, index.y + 1))) {
 						return false;
 					}
-				}
-				if (diff == 3) {
-					if (ContainsWall(glm::ivec2(index.x + 2, index.y))) {
-						return false;
+					if (diff == 3) {
+						if (ContainsWall(glm::ivec2(index.x + 2, index.y))) {
+							return false;
+						}
 					}
-					/*if (((tile = TryGetTile(glm::ivec2(index.x + 2, index.y - 1))) != NULL && tile->blockT != BlockType.None) ||
-						((tile = TryGetTile(glm::ivec2(index.x + 2, index.y))) != NULL && tile->blockT != BlockType.None)) {
-						return false;
-					}*/
-				}
-				else if (diff == 1) {
-					if (TryGetTile(glm::ivec2(index.x, index.y + 1)) == NULL ||
-						ContainsWall(glm::ivec2(index.x, index.y + 2))) {
-						return false;
+					else if (diff == 1) {
+						if (ContainsWall(glm::ivec2(index.x, index.y + 2))) {
+							return false;
+						}
 					}
-					/*if (((tile = TryGetTile(glm::ivec2(index.x - 1, index.y + 2))) != NULL && tile->blockT != BlockType.None) ||
-						((tile = TryGetTile(glm::ivec2(index.x, index.y + 2))) != NULL && tile->blockT != BlockType.None)) {
-						return false;
-					}*/
 				}
-			}
-
-
-			if (ContainsWall(glm::ivec2(index.x, index.y + 1)) || ContainsWall(glm::ivec2(index.x + hDir, index.y))) {
-				return false;
-			}
-		}
-		else {
-			if (TryGetTile(index) == NULL) {
-				return false;
 			}
 		}
 

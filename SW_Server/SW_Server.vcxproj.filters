@@ -42,12 +42,6 @@
     <ClInclude Include="AABBi.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="crypto.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="server_ws.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ServerVC.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -81,6 +75,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="NetworkWriter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
