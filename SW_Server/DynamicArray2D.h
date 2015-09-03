@@ -24,10 +24,6 @@ namespace SW_Server
 		void GrowBottomLeft(glm::ivec2 amount);
 		bool Contains(int x, int y);
 		bool Contains(glm::ivec2 index);
-		int indexOf(glm::ivec2 index);
-		static int indexOf(glm::ivec2 index, int columns);
-		int indexOf(int x, int y);
-		static int indexOf(int x, int y, int columns);
 		void Set(glm::ivec2 index, T* val);
 		void Set(int x, int y, T* val);
 		bool TryGet(int x, int y, T** val);
@@ -102,7 +98,7 @@ namespace SW_Server
 	for (int i = 0; i < rangeT; i++) {
 	for (int j = 0; j < rangeT; j++) {
 
-	glm::ivec2 temp = inside + new glm::ivec2(i - range, j - range);
+	glm::ivec2 temp = inside + glm::ivec2(i - range, j - range);
 
 	if (!((temp - outside) <= range)) {
 	T temp2 = null;
@@ -121,7 +117,7 @@ namespace SW_Server
 	for (int i = 0; i < rangeT; i++) {
 	for (int j = 0; j < rangeT; j++) {
 
-	glm::ivec2 temp = origin + new glm::ivec2(i - range, j - range);
+	glm::ivec2 temp = origin + glm::ivec2(i - range, j - range);
 
 	T* temp2 = null;
 	if (TryGet(temp.x, temp.y, ref temp2)) {
@@ -137,11 +133,15 @@ namespace SW_Server
 		//UnityEngine.Debug.Log("GrowTopRight: " + amount.ToString());
 
 		glm::ivec2 newDim = dim + amount;
-		T**[] newData = new T*[newDim.x * newDim.y];
+		T** newData = new T*[newDim.x * newDim.y];
+		for (size_t i = 0; i < newDim.x * newDim.y; i++)
+		{
+			newData[i] = NULL;
+		}
 
 		for (int i = 0; i < dim.y; i++) {
 			for (int j = 0; j < dim.x; j++) {
-				newData[indexOf(j, i, newDim.x)] = data[indexOf(j, i, dim.x)];
+				newData[(i * newDim.x) + j] = data[(i * dim.x) + j];
 			}
 		}
 
@@ -155,11 +155,15 @@ namespace SW_Server
 		//UnityEngine.Debug.Log("GrowBottomLeft: " + amount.ToString());
 
 		glm::ivec2 newDim = dim + amount;
-		T**[] newData = new T*[newDim.x * newDim.y];
+		T** newData = new T*[newDim.x * newDim.y];
+		for (size_t i = 0; i < newDim.x * newDim.y; i++)
+		{
+			newData[i] = NULL;
+		}
 
 		for (int i = amount.y; i < newDim.y; i++) {
 			for (int j = amount.x; j < newDim.x; j++) {
-				newData[indexOf(j, i, newDim.x)] = data[indexOf(j - amount.x, i - amount.y, dim.x)];
+				newData[(i * newDim.x) + j] = data[(i - amount.y * dim.x) + j - amount.x];
 			}
 		}
 
@@ -181,30 +185,6 @@ namespace SW_Server
 	}
 
 	template<typename T>
-	int DynamicArray2D<typename T>::indexOf(glm::ivec2 index)
-	{
-		return (index.y * dim.x) + index.x;
-	}
-
-	template<typename T>
-	int DynamicArray2D<typename T>::indexOf(glm::ivec2 index, int columns)
-	{
-		return (index.y * columns) + index.x;
-	}
-
-	template<typename T>
-	int DynamicArray2D<typename T>::indexOf(int x, int y)
-	{
-		return (y * dim.x) + x;
-	}
-
-	template<typename T>
-	int DynamicArray2D<typename T>::indexOf(int x, int y, int columns)
-	{
-		return (y * columns) + x;
-	}
-
-	template<typename T>
 	void DynamicArray2D<typename T>::Set(glm::ivec2 index, T* val)
 	{
 		Set(index.x, index.y, val);
@@ -216,47 +196,47 @@ namespace SW_Server
 		if (x < origin.x) {
 			if (y < origin.y) {
 				//expand bottom left
-				GrowBottomLeft(new glm::ivec2(origin.x - x, origin.y - y));
+				GrowBottomLeft(glm::ivec2(origin.x - x, origin.y - y));
 			}
 			else if (y >= dim.y + origin.y) {
 				//expand top left
-				GrowTopRight(new glm::ivec2(0, y - (dim.y + origin.y) + 1));
-				GrowBottomLeft(new glm::ivec2(origin.x - x, 0));
+				GrowTopRight(glm::ivec2(0, y - (dim.y + origin.y) + 1));
+				GrowBottomLeft(glm::ivec2(origin.x - x, 0));
 			}
 			else {
 				//expand left
-				GrowBottomLeft(new glm::ivec2(origin.x - x, 0));
+				GrowBottomLeft(glm::ivec2(origin.x - x, 0));
 			}
 		}
 		else if (x >= dim.x + origin.x) {
 			if (y < origin.y) {
 				//expand bottom right
-				GrowTopRight(new glm::ivec2(x - (dim.x + origin.x) + 1, 0));
-				GrowBottomLeft(new glm::ivec2(0, origin.y - y));
+				GrowTopRight(glm::ivec2(x - (dim.x + origin.x) + 1, 0));
+				GrowBottomLeft(glm::ivec2(0, origin.y - y));
 			}
 			else if (y >= dim.y + origin.y) {
 				//expand top right
-				GrowTopRight(new glm::ivec2(x - (dim.x + origin.x) + 1, y - (dim.y + origin.y) + 1));
+				GrowTopRight(glm::ivec2(x - (dim.x + origin.x) + 1, y - (dim.y + origin.y) + 1));
 			}
 			else {
 				//expand right
-				GrowTopRight(new glm::ivec2(x - (dim.x + origin.x) + 1, 0));
+				GrowTopRight(glm::ivec2(x - (dim.x + origin.x) + 1, 0));
 			}
 		}
 		else {
 			if (y < origin.y) {
 				//expand bottom
-				GrowBottomLeft(new glm::ivec2(0, origin.y - y));
+				GrowBottomLeft(glm::ivec2(0, origin.y - y));
 			}
 			else if (y >= dim.y + origin.y) {
 				//expand top
-				GrowTopRight(new glm::ivec2(0, y - (dim.y + origin.y) + 1));
+				GrowTopRight(glm::ivec2(0, y - (dim.y + origin.y) + 1));
 			}
 		}
 
 		x -= origin.x;
 		y -= origin.y;
-		data[indexOf(x, y)] = val;
+		data[(y * dim.x) + x] = val;
 	}
 
 	template<typename T>
@@ -267,7 +247,7 @@ namespace SW_Server
 
 		x -= origin.x;
 		y -= origin.y;
-		*val = data[indexOf(x, y)];
+		*val = data[(y * dim.x) + x];
 
 		return true;
 	}
@@ -280,7 +260,7 @@ namespace SW_Server
 
 		x -= origin.x;
 		y -= origin.y;
-		return data[indexOf(x, y)];
+		return data[(y * dim.x) + x];
 	}
 
 	template<typename T>
@@ -290,7 +270,7 @@ namespace SW_Server
 			return NULL;
 
 		index -= origin;
-		return data[indexOf(index)];
+		return data[(index.y * dim.x) + index.x];
 	}
 
 	template<typename T>
@@ -298,19 +278,19 @@ namespace SW_Server
 	{
 		x -= origin.x;
 		y -= origin.y;
-		return data[indexOf(x, y)];
+		return data[(y * dim.x) + x];
 	}
 
 	template<typename T>
 	T* DynamicArray2D<typename T>::Get(glm::ivec2 index)
 	{
 		index -= origin;
-		return data[indexOf(index.x, index.y)];
+		return data[(index.y * dim.x) + index.x];
 	}
 
 	template<typename T>
 	T* DynamicArray2D<typename T>::Get2(int x, int y)
 	{
-		return data[indexOf(x, y)];
+		return data[(y * dim.x) + x];
 	}
 }

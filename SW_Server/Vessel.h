@@ -4,6 +4,8 @@
 #include "VesselTile.h"
 #include "VesselChunk.h"
 #include "DynamicArray2D.h"
+#include "Player.h"
+#include "VesselObject.h"
 
 namespace SW_Server
 {
@@ -27,6 +29,8 @@ namespace SW_Server
 
 	static float WALL_RADIUS = 0.15f;
 
+	class AdjacentTiles;
+
 	class Vessel
 	{
 	public:
@@ -35,6 +39,25 @@ namespace SW_Server
 
 		Vessel();
 		~Vessel();
+
+		int GetMessageBytes(void* & ref);
+
+		void InstantiateNearbyChunks(Player* player);
+		void AddPlayerVessel(Player* player, glm::vec2 position);
+		void RemovePlayer(Player* player);
+		virtual void BuildFoundation(glm::ivec2 origin, glm::ivec2 size);
+		//virtual void PlaceBlock(uint16_t type, glm::ivec2 location);
+		VesselChunk* CreateChunk(glm::ivec2 index);
+		void AddModifiedChunk(VesselChunk* vc);
+		void SetTile(glm::ivec2 index, VesselTile* val);
+		void BuildWall(glm::ivec2 index, int count, WallType::WallType type);
+		void BuildWall(glm::ivec2 index, int count, WallType::WallType type, bool reverse);
+		void BuildWall(glm::ivec2* index, int count, WallType::WallType type, bool reverse);
+		void FillTile(AdjacentTiles* t);
+		void RebuildCompartments();
+		Compartment* CompartmentAt(glm::vec2 world);
+		void SetCompartmentFloor(uint8_t type, Compartment* c);
+		virtual VesselObject* PlaceObject(ObjectType::ObjectType type, glm::vec2 location);
 
 		bool IsWallLegal(glm::ivec2 index, uint8_t wallType);
 		bool ContainsWall(glm::ivec2 index);
@@ -64,15 +87,24 @@ namespace SW_Server
 		glm::vec2 ChunkIToWorld(glm::ivec2 chunkI);
 		glm::vec2 TileIToWorld(glm::ivec2 tileI);
 
-	private:
+	protected:
 		
+		bool updateMessageBytes;
+		void* messageBytes;
+		int messageBytesCount;
+
 		uint32_t nextChunkIndex;
 
 		static uint32_t nextIndex;
+		uint32_t nextCompartmentIndex;
 
 		AABBi aabb;
 		bool interiorExists;
+		bool noPlayers;
+		float timeEmpty;
 
+		std::vector<VesselObject*> objects;
+		std::vector<Player*> playersOnBoard;
 		std::vector<VesselChunk*> modifiedChunks;
 	};
 }

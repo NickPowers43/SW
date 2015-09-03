@@ -1,16 +1,23 @@
 #include "stdafx.h"
 #include "Vessel.h"
-
+#include "AdjacentTiles.h"
 
 namespace SW_Server
 {
 	uint32_t Vessel::nextIndex = 0;
 
-	Vessel::Vessel()
+	Vessel::Vessel() : aabb(glm::ivec2(0, 0), glm::ivec2(0, 0))
 	{
+		noPlayers = true;
+		timeEmpty = 0.0f;
+
+		messageBytes = NULL;
+		updateMessageBytes = true;
+
+		nextCompartmentIndex = 0;
+
 		nextChunkIndex = 0;
 		index = nextIndex++;
-		aabb = AABBi();
 		interiorExists = false;
 		modifiedChunks.reserve(10);
 		Vessel::index = index;
@@ -20,25 +27,441 @@ namespace SW_Server
 	{
 	}
 
+	int Vessel::GetMessageBytes(void* & ref)
+	{
+		if (updateMessageBytes)
+		{
+			//TODO:
+			messageBytes = malloc(32);
+			messageBytesCount = 32;
+		}
+
+		ref = messageBytes;
+		return messageBytesCount;
+	}
+
+	void Vessel::AddPlayerVessel(Player* player, glm::vec2 position)
+	{
+		player->pos = position;
+		player->chunkI = WorldToChunkI(position);
+		player->currentVessel = this;
+		playersOnBoard.push_back(player);
+		InstantiateNearbyChunks(player);
+
+		noPlayers = false;
+		timeEmpty = 0.0f;
+	}
+	void Vessel::InstantiateNearbyChunks(Player* player)
+	{
+
+	}
+	void Vessel::RemovePlayer(Player* player)
+	{
+		uint16_t id = (1 << 17) - 1;
+		for (size_t i = 0; i < playersOnBoard.size(); i++)
+		{
+			if (player == playersOnBoard[i])
+			{
+				id = i;
+				break;
+			}
+		} 
+		if (id != ((1 << 17) - 1))
+		{
+			for (size_t i = id; i < playersOnBoard.size() - 1; i++)
+			{
+				playersOnBoard[i] = playersOnBoard[i + 1];
+			}
+			playersOnBoard.pop_back();
+
+			player->currentVessel = NULL;
+
+			if (playersOnBoard.size() == 0) {
+				noPlayers = true;
+			}
+
+			//if (GameManager.Instance.Initialized) {
+			//	nw.SeekZero();
+			//	nw.Write((ushort)ServerMessageType.RemovePlayer);
+			//	nw.Write((ushort)id);
+			//	for (int i = 0; i < playersOnBoard.Count; i++) {
+			//		//send
+			//	}
+			//}
+		}
+	}
+	void Vessel::BuildFoundation(glm::ivec2 origin, glm::ivec2 size)
+	{
+		VesselTile* tile;
+
+		for (int i = 0; i < size.y; i++) {
+			for (int j = 0; j < size.x; j++) {
+
+				glm::ivec2 temp = origin + glm::ivec2(j, i);
+				if ((tile = TryGetTile(temp)) == NULL) {
+					SetTile(temp, new VesselTile());
+				}
+			}
+		}
+	}
+	//virtual void Vessel::PlaceBlock(uint16_t type, glm::ivec2 location){}
+	VesselChunk* Vessel::CreateChunk(glm::ivec2 index)
+	{
+		VesselChunk* temp = new VesselChunk(index);
+		chunks.Set(index.x, index.y, temp);
+
+		aabb.FitWhole(index);
+
+		return temp;
+	}
+	void Vessel::AddModifiedChunk(VesselChunk* vc)
+	{
+		vc->modified = true;
+
+		if (modifiedChunks.size() != 0) {
+			for (int i = 0; i < modifiedChunks.size(); i++) {
+				if (modifiedChunks[i] == vc)
+				{
+					vc = modifiedChunks[0];
+					modifiedChunks[0] = modifiedChunks[i];
+					modifiedChunks[i] = vc;
+					return;
+				}
+			}
+
+			int j = modifiedChunks.size();
+			modifiedChunks.push_back(vc);
+			vc = modifiedChunks[0];
+			modifiedChunks[0] = modifiedChunks[j];
+			modifiedChunks[j] = vc;
+		}
+		else {
+			modifiedChunks.push_back(vc);
+		}
+	}
+	void Vessel::SetTile(glm::ivec2 index, VesselTile* val)
+	{
+		glm::ivec2 index2 = index;
+		glm::ivec2 chunkI = TileIToChunkI(index);
+		VesselChunk* vc = chunks.TryGet(chunkI);
+
+		if (vc == NULL) {
+			vc = CreateChunk(chunkI);
+		}
+
+		try {
+			index -= vc->OriginTileIndex();
+			vc->SetTile(index, val);
+
+			AddModifiedChunk(vc);
+		}
+		catch (std::exception ex) {
+			//Debug.Log("Failed to set tile at " + index2.ToString() + "/" + index.ToString() + " at chunk " + chunkI.ToString());
+		}
+	}
+	void Vessel::BuildWall(glm::ivec2 index, int count, WallType::WallType type)
+	{
+		VesselTile* tile;
+
+		for (int i = 0; i < count; i++) {
+
+			if (IsWallLegal(index, type)) {
+
+				tile = TryGetTile(index);
+				if (tile == NULL) {
+					tile = new VesselTile();
+					SetTile(index, tile);
+				}
+
+				tile->wallMask |= (byte)(1 << ((byte)type - 1));
+				tile->flags |= TileFlag::TileFlag::WallNode;
+
+				index += wallOffsets[(byte)type];
+
+				tile = TryGetTile(index);
+				if (tile == NULL) {
+					tile = new VesselTile();
+					SetTile(index, tile);
+				}
+				tile->flags |= TileFlag::TileFlag::WallNode;
+			}
+			else {
+				index += wallOffsets[(byte)type];
+			}
+		}
+	}
+	void Vessel::BuildWall(glm::ivec2 index, int count, WallType::WallType type, bool reverse)
+	{
+		if (reverse) {
+			index -= wallOffsets[type] * count;
+		}
+
+		BuildWall(index, count, type);
+
+		if (!reverse) {
+			index += wallOffsets[type] * count;
+		}
+	}
+	void Vessel::BuildWall(glm::ivec2* index, int count, WallType::WallType type, bool reverse)
+	{
+		if (reverse) {
+			*index -= wallOffsets[type] * count;
+		}
+
+		BuildWall(*index, count, type);
+
+		if (!reverse) {
+			*index += wallOffsets[type] * count;
+		}
+	}
+	void Vessel::FillTile(AdjacentTiles* t)
+	{
+		if ((t->tile->flags & TileFlag::TileFlag::SolidBlock) > 0) {
+			t->tile->c0 = NULL;
+			t->tile->c1 = NULL;
+		}
+
+		//take the compartments from left or bottom no matter what in these cases
+		if ((t->bTile != NULL && t->bTile->Contains(WallTypeMask::WallTypeMask::OneByTwo)) || (t->brTile != NULL && t->brTile->Contains(WallTypeMask::WallTypeMask::OneByTwoFlipped))) {
+			t->tile->c0 = t->bTile->c0->Instance();
+			t->tile->c1 = t->bTile->c1->Instance();
+			return;
+		}
+		if ((t->lTile != NULL && t->lTile->Contains(WallTypeMask::WallTypeMask::TwoByOne)) || (t->rTile != NULL && t->rTile->Contains(WallTypeMask::WallTypeMask::TwoByOneFlipped))) {
+			t->tile->c0 = t->lTile->c0->Instance();
+			t->tile->c1 = t->lTile->c1->Instance();
+			return;
+		}
+		//
+
+		//try take from bottom
+		Compartment* b = NULL;
+		if (t->bTile != NULL) {
+			if ((t->bTile->flags & TileFlag::TileFlag::SolidBlock) > 0)
+				b = NULL;
+			else if (!t->tile->Contains(WallTypeMask::WallTypeMask::OneByZero)) {
+				//set the appropriate compartment field depending on how "bTile" is cut
+				if (
+					(t->blTile != NULL && t->blTile->Contains(WallTypeMask::WallTypeMask::TwoByOne)) ||
+					(t->bTile->Contains(WallTypeMask::WallTypeMask::OneByOne)) ||
+					(t->b2Tile != NULL && t->b2Tile->Contains(WallTypeMask::WallTypeMask::OneByTwo))) {
+					b = t->bTile->c1->Instance();
+					//} else if (
+					//	(t->b2rTile != NULL && t->b2rTile->Contains(WallTypeMask::WallTypeMask::OneByTwoFlipped)) ||
+					//	(t->brTile != NULL && t->brTile->Contains(WallTypeMask::WallTypeMask::OneByOneFlipped)) ||
+					//	(t->br2Tile != NULL && t->br2Tile->Contains(WallTypeMask::WallTypeMask::TwoByOneFlipped))){
+					//	b = t->bTile.c0->Instance();
+				}
+				else {
+					b = t->bTile->c0->Instance();
+				}
+			}
+		}
+		Compartment* l = NULL;
+		if (t->lTile != NULL) {
+			if ((t->lTile->flags & TileFlag::TileFlag::SolidBlock) > 0)
+				l = NULL;
+			else if (!t->tile->Contains(WallTypeMask::WallTypeMask::ZeroByOne)) {
+				l = t->lTile->c0->Instance();
+			}
+		}
+
+		if (
+			(t->r2Tile != NULL && t->r2Tile->Contains(WallTypeMask::WallTypeMask::TwoByOneFlipped)) ||
+			(t->rTile != NULL && t->rTile->Contains((WallTypeMask::WallTypeMask)(WallTypeMask::WallTypeMask::OneByOneFlipped | WallTypeMask::WallTypeMask::OneByTwoFlipped)))) {
+			if (l != NULL && b != NULL) {
+				l->Combine(b);
+			}
+			if (b != NULL) {
+				t->tile->c1 = b;
+			}
+			else if (l != NULL) {
+				t->tile->c1 = l;
+			}
+
+			t->tile->c0 = new Compartment(nextCompartmentIndex++);
+
+			return;
+		}
+		else if (t->tile->Contains((WallTypeMask::WallTypeMask)(WallTypeMask::WallTypeMask::TwoByOne | WallTypeMask::WallTypeMask::OneByOne | WallTypeMask::WallTypeMask::OneByTwo))) {
+			if (b == NULL) {
+				b = new Compartment(nextCompartmentIndex++);
+			}
+			t->tile->c0 = b;
+			if (l == NULL) {
+				l = new Compartment(nextCompartmentIndex++);
+			}
+			t->tile->c1 = l;
+			return;
+		}
+		else {
+			if (l != NULL && b != NULL) {
+				l->Combine(b);
+			}
+
+			l = (l == NULL) ? b : l;
+			if (l == NULL) {
+				l = new Compartment(nextCompartmentIndex++);
+			}
+			t->tile->c0 = l->Instance();
+		}
+	}
+	void Vessel::RebuildCompartments()
+	{
+		glm::ivec2 start = ChunkIToTileI(aabb.bl);
+		glm::ivec2 end = ChunkIToTileI(aabb.tr);
+
+		AdjacentTiles* at = new AdjacentTiles(this);
+
+		for (int i = start.y; i < end.y; i++) {
+
+			at->Reset(glm::ivec2(start.x, i));
+
+			for (int j = start.x; j < end.x; j++) {
+				if (at->tile != NULL) {
+
+					FillTile(at);
+
+				}
+				at->MoveRight();
+			}
+		}
+
+		return;
+	}
+	Compartment* Vessel::CompartmentAt(glm::vec2 world)
+	{
+		glm::ivec2 tileI = WorldToTileI(world);
+		glm::vec2 diff = world - TileIToWorld(tileI);
+
+		VesselTile* oTile = TryGetTile(tileI);
+		VesselTile* tile = oTile;
+
+		if (tile != NULL) {
+			for (int i = (int)WallType::WallType::TwoByOne; i < (int)WallType::WallType::ZeroByOne; i++) {
+				if (tile->Contains((WallType::WallType)i)) {
+					if (glm::dot(diff, glm::vec2(-wallOffsets[i].y, wallOffsets[i].x)) > 0.0f) {
+						return oTile->c1->Instance();
+					}
+					else {
+						return oTile->c0->Instance();
+					}
+				}
+			}
+
+			glm::ivec2 tempI = glm::ivec2(tileI.x, tileI.y - 1);
+			if ((tile = TryGetTile(tempI)) != NULL && tile->Contains(WallType::WallType::OneByTwo)) {
+				diff = world - TileIToWorld(tempI);
+				if (glm::dot(diff, glm::vec2(-wallOffsets[(int)WallType::WallType::OneByTwo].y, wallOffsets[(int)WallType::WallType::OneByTwo].x)) > 0.0f) {
+					return oTile->c1->Instance();
+				}
+				else {
+					return oTile->c0->Instance();
+				}
+			}
+			tempI = glm::ivec2(tileI.x + 1, tileI.y - 1);
+			if (((tile = TryGetTile(tempI))) != NULL && tile->Contains(WallType::WallType::OneByTwoFlipped)) {
+				diff = world - TileIToWorld(tempI);
+				if (glm::dot(diff, glm::vec2(-wallOffsets[(int)WallType::WallType::OneByTwoFlipped].y, wallOffsets[(int)WallType::WallType::OneByTwoFlipped].x)) > 0.0f) {
+					return oTile->c1->Instance();
+				}
+				else {
+					return oTile->c0->Instance();
+				}
+			}
+			tempI = glm::ivec2(tileI.x + 1, tileI.y);
+			if ((tile = TryGetTile(tempI)) != NULL && tile->Contains(WallType::WallType::OneByOneFlipped)) {
+				diff = world - TileIToWorld(tempI);
+				if (glm::dot(diff, glm::vec2(-wallOffsets[(int)WallType::WallType::OneByOneFlipped].y, wallOffsets[(int)WallType::WallType::OneByOneFlipped].x)) > 0.0f) {
+					return oTile->c1->Instance();
+				}
+				else {
+					return oTile->c0->Instance();
+				}
+			}
+
+			tempI = glm::ivec2(tileI.x - 1, tileI.y);
+			if ((tile = TryGetTile(tempI)) != NULL && tile->Contains(WallType::WallType::TwoByOne)) {
+				diff = world - TileIToWorld(tempI);
+				if (glm::dot(diff, glm::vec2(-wallOffsets[(int)WallType::WallType::TwoByOne].y, wallOffsets[(int)WallType::WallType::TwoByOne].x)) > 0.0f) {
+					return oTile->c1->Instance();
+				}
+				else {
+					return oTile->c0->Instance();
+				}
+			}
+
+			for (int i = 1; i < 3; i++) {
+				tempI = glm::ivec2(tileI.x + i, tileI.y);
+				if ((tile = TryGetTile(tempI)) != NULL && tile->Contains(WallType::WallType::TwoByOneFlipped)) {
+					diff = world - TileIToWorld(tempI);
+					if (glm::dot(diff, glm::vec2(-wallOffsets[(int)WallType::WallType::TwoByOneFlipped].y, wallOffsets[(int)WallType::WallType::TwoByOneFlipped].x)) > 0.0f) {
+						return oTile->c1->Instance();
+					}
+					else {
+						return oTile->c0->Instance();
+					}
+				}
+			}
+
+			return oTile->c0->Instance();
+		}
+
+		return NULL;
+	}
+	void Vessel::SetCompartmentFloor(uint8_t type, Compartment* c)
+	{
+		glm::ivec2 start = ChunkIToTileI(aabb.bl);
+		glm::ivec2 end = ChunkIToTileI(aabb.tr);
+
+		for (int i = start.y; i < end.y; i++) {
+			for (int j = start.x; j < end.x; j++) {
+				glm::ivec2 tileI = glm::ivec2(j, i);
+				VesselTile* tile;
+				if ((tile = TryGetTile(tileI)) != NULL) {
+					bool modified = false;
+					if (tile->c0 != NULL && tile->c0->Instance() == c) {
+						tile->floor0 = type;
+						modified = true;
+					}
+					if (tile->c1 != NULL && tile->c1->Instance() == c) {
+						tile->floor1 = type;
+						modified |= true;
+					}
+
+					if (modified) {
+						AddModifiedChunk(chunks.Get(TileIToChunkI(tileI)));
+					}
+				}
+			}
+		}
+	}
+	VesselObject* Vessel::PlaceObject(ObjectType::ObjectType type, glm::vec2 location)
+	{
+		VesselObject* obj = new VesselObject(type, location);
+
+		return obj;
+	}
+
 	bool Vessel::IsWallLegal(glm::ivec2 index, uint8_t type)
 	{
 		VesselTile* tile = TryGetTile(index);
 		if (!tile)
 			return false;
 
-		/*if ((tile = TryGetTile(index)) != NULL && tile->blockT != BlockType.None) {
+		/*if ((tile = TryGetTile(index)) != NULL && tile->blockT != ObjectType.None) {
 			return false;
 		}
-		if ((tile = TryGetTile(glm::ivec2(index.x - 1, index.y))) != NULL  && tile->blockT != BlockType.None) {
+		if ((tile = TryGetTile(glm::ivec2(index.x - 1, index.y))) != NULL  && tile->blockT != ObjectType.None) {
 			return false;
 		}*/
 
 		//check if walls nodes are not too close
 		//to the new wall
-		if (!(type == WallType_OneByZero || type == WallType_ZeroByOne)) {
+		if (!(type == WallType::WallType::OneByZero || type == WallType::WallType::ZeroByOne)) {
 
-			int hDir = (type < WallType_ZeroByOne) ? 1 : -1;
-			int diff = abs(type - WallType_ZeroByOne);
+			int hDir = (type < WallType::WallType::ZeroByOne) ? 1 : -1;
+			int diff = abs(type - WallType::WallType::ZeroByOne);
 
 			if (hDir < 0) {
 				if (ContainsWall(glm::ivec2(index.x + hDir, index.y))) {
@@ -95,7 +518,7 @@ namespace SW_Server
 		VesselTile* tile = TryGetTile(index);
 
 		if (tile != NULL) {
-			if (tile->flags & TileFlag_WallNode) {
+			if (tile->flags & TileFlag::TileFlag::WallNode) {
 				return true;
 			}
 			else {
@@ -112,8 +535,8 @@ namespace SW_Server
 
 		if (tile != NULL) {
 
-			uint8_t wall0;
-			uint8_t wall1;
+			WallType::WallType wall0;
+			WallType::WallType wall1;
 			int wallCount = tile->GetWalls(&wall0, &wall1);
 
 			if (wallCount > 1) {
@@ -129,7 +552,7 @@ namespace SW_Server
 		for (uint8_t  i = 1; i < 9; i++) {
 			VesselTile* otherTile = TryGetTile(index - wallOffsets[i]);
 			if (otherTile != NULL) {
-				if (otherTile->Contains((uint8_t)i)) {
+				if (otherTile->Contains((WallType::WallType)i)) {
 					if (!NonAcuteSequence((uint8_t)i, type)) {
 						return false;
 					}
@@ -147,61 +570,61 @@ namespace SW_Server
 		//0
 		tile = TryGetTile(glm::ivec2(index.x - 1, index.y));
 		if (tile != NULL) {
-			if (tile->ContainsMask(WallTypeMask_OneByOne | WallTypeMask_TwoByOne | WallTypeMask_OneByTwo)) {
+			if (tile->Contains((WallTypeMask::WallTypeMask)(WallTypeMask::WallTypeMask::OneByOne | WallTypeMask::WallTypeMask::TwoByOne | WallTypeMask::WallTypeMask::OneByTwo))) {
 				return true;
 			}
 		}
 		//1
 		tile = TryGetTile(glm::ivec2(index.x, index.y - 1));
 		if (tile != NULL) {
-			if (tile->ContainsMask(WallTypeMask_OneByOne |
-				WallTypeMask_OneByTwo |
-				WallTypeMask_OneByOneFlipped |
-				WallTypeMask_OneByTwoFlipped |
-				WallTypeMask_TwoByOne |
-				WallTypeMask_TwoByOneFlipped)) {
+			if (tile->Contains((WallTypeMask::WallTypeMask)(WallTypeMask::WallTypeMask::OneByOne |
+				WallTypeMask::WallTypeMask::OneByTwo |
+				WallTypeMask::WallTypeMask::OneByOneFlipped |
+				WallTypeMask::WallTypeMask::OneByTwoFlipped |
+				WallTypeMask::WallTypeMask::TwoByOne |
+				WallTypeMask::WallTypeMask::TwoByOneFlipped))) {
 				return true;
 			}
 		}
 		//2
 		tile = TryGetTile(glm::ivec2(index.x + 1, index.y));
 		if (tile != NULL) {
-			if (tile->ContainsMask(WallTypeMask_OneByOneFlipped | WallTypeMask_TwoByOneFlipped | WallTypeMask_OneByTwoFlipped)) {
+			if (tile->Contains((WallTypeMask::WallTypeMask)(WallTypeMask::WallTypeMask::OneByOneFlipped | WallTypeMask::WallTypeMask::TwoByOneFlipped | WallTypeMask::WallTypeMask::OneByTwoFlipped))) {
 				return true;
 			}
 		}
 		//3
 		tile = TryGetTile(glm::ivec2(index.x - 1, index.y - 1));
 		if (tile != NULL) {
-			if (tile->ContainsMask(WallTypeMask_OneByTwo | WallTypeMask_TwoByOne)) {
+			if (tile->Contains((WallTypeMask::WallTypeMask)(WallTypeMask::WallTypeMask::OneByTwo | WallTypeMask::WallTypeMask::TwoByOne))) {
 				return true;
 			}
 		}
 		//4
 		tile = TryGetTile(glm::ivec2(index.x + 1, index.y - 1));
 		if (tile != NULL) {
-			if (tile->ContainsMask(WallTypeMask_TwoByOneFlipped | WallTypeMask_OneByTwoFlipped)) {
+			if (tile->Contains((WallTypeMask::WallTypeMask)(WallTypeMask::WallTypeMask::TwoByOneFlipped | WallTypeMask::WallTypeMask::OneByTwoFlipped))) {
 				return true;
 			}
 		}
 		//5
 		tile = TryGetTile(glm::ivec2(index.x - 2, index.y));
 		if (tile != NULL) {
-			if (tile->ContainsMask(WallTypeMask_TwoByOne)) {
+			if (tile->Contains(WallTypeMask::WallTypeMask::TwoByOne)) {
 				return true;
 			}
 		}
 		//6
 		tile = TryGetTile(glm::ivec2(index.x + 2, index.y));
 		if (tile != NULL) {
-			if (tile->ContainsMask(WallTypeMask_TwoByOneFlipped)) {
+			if (tile->Contains(WallTypeMask::WallTypeMask::TwoByOneFlipped)) {
 				return true;
 			}
 		}
 		//7
 		tile = TryGetTile(glm::ivec2(index.x, index.y - 2));
 		if (tile != NULL) {
-			if (tile->ContainsMask(WallTypeMask_OneByTwoFlipped | WallTypeMask_OneByTwo)) {
+			if (tile->Contains((WallTypeMask::WallTypeMask)(WallTypeMask::WallTypeMask::OneByTwoFlipped | WallTypeMask::WallTypeMask::OneByTwo))) {
 				return true;
 			}
 		}
@@ -220,8 +643,8 @@ namespace SW_Server
 
 				if (tile != NULL) {
 					if (!EmptyTile(index) ||
-						((i != 0) && tile->ContainsMask(WallTypeMask_OneByZero)) ||
-						((j != 0) && tile->ContainsMask(WallTypeMask_ZeroByOne))) {
+						((i != 0) && tile->Contains(WallTypeMask::WallTypeMask::OneByZero)) ||
+						((j != 0) && tile->Contains(WallTypeMask::WallTypeMask::ZeroByOne))) {
 						return false;
 					}
 				}
@@ -244,37 +667,37 @@ namespace SW_Server
 
 		tile = TryGetTile(loc);
 		if (tile != NULL) {
-			if (tile->ContainsMask(WallTypeMask_OneByOne | WallTypeMask_TwoByOne | WallTypeMask_OneByTwo)) {
+			if (tile->Contains((WallTypeMask::WallTypeMask)(WallTypeMask::WallTypeMask::OneByOne | WallTypeMask::WallTypeMask::TwoByOne | WallTypeMask::WallTypeMask::OneByTwo))) {
 				return false;
 			}
 		}
 		tile = TryGetTile(glm::ivec2(loc.x - 1, loc.y));
 		if (tile != NULL) {
-			if (tile->ContainsMask(WallTypeMask_TwoByOne)) {
+			if (tile->Contains(WallTypeMask::WallTypeMask::TwoByOne)) {
 				return false;
 			}
 		}
 		tile = TryGetTile(glm::ivec2(loc.x + 1, loc.y));
 		if (tile != NULL) {
-			if (tile->ContainsMask(WallTypeMask_OneByOneFlipped | WallTypeMask_TwoByOneFlipped)) {
+			if (tile->Contains((WallTypeMask::WallTypeMask)(WallTypeMask::WallTypeMask::OneByOneFlipped | WallTypeMask::WallTypeMask::TwoByOneFlipped))) {
 				return false;
 			}
 		}
 		tile = TryGetTile(glm::ivec2(loc.x + 2, loc.y));
 		if (tile != NULL) {
-			if (tile->ContainsMask(WallTypeMask_TwoByOneFlipped)) {
+			if (tile->Contains(WallTypeMask::WallTypeMask::TwoByOneFlipped)) {
 				return false;
 			}
 		}
 		tile = TryGetTile(glm::ivec2(loc.x, loc.y - 1));
 		if (tile != NULL) {
-			if (tile->ContainsMask(WallTypeMask_OneByTwo)) {
+			if (tile->Contains(WallTypeMask::WallTypeMask::OneByTwo)) {
 				return false;
 			}
 		}
 		tile = TryGetTile(glm::ivec2(loc.x + 1, loc.y - 1));
 		if (tile != NULL) {
-			if (tile->ContainsMask(WallTypeMask_OneByTwoFlipped)) {
+			if (tile->Contains(WallTypeMask::WallTypeMask::OneByTwoFlipped)) {
 				return false;
 			}
 		}
@@ -288,8 +711,8 @@ namespace SW_Server
 
 		if (tile != NULL) {
 
-			uint8_t wall0;
-			uint8_t wall1;
+			WallType::WallType wall0;
+			WallType::WallType wall1;
 			int wallCount = tile->GetWalls(&wall0, &wall1);
 
 			//check with the walls originating from index
@@ -309,7 +732,7 @@ namespace SW_Server
 		for (uint8_t  i = 1; i < 9; i++) {
 			VesselTile* otherTile = TryGetTile(index - wallOffsets[i]);
 			if (otherTile != NULL) {
-				if (otherTile->Contains((uint8_t)i)) {
+				if (otherTile->Contains((WallType::WallType)i)) {
 					if (abs((uint8_t )type - (uint8_t )i) < 4) {
 						return false;
 					}
@@ -322,12 +745,12 @@ namespace SW_Server
 
 	bool Vessel::NonAcuteSequence(uint8_t wall0, uint8_t wall1)
 	{
-		if (wall1 < WallType_ZeroByOne) {
+		if (wall1 < WallType::WallType::ZeroByOne) {
 			if ((uint8_t )wall0 > 4 + (uint8_t )wall1) {
 				return false;
 			}
 		}
-		else if (wall1 > WallType_ZeroByOne) {
+		else if (wall1 > WallType::WallType::ZeroByOne) {
 			if ((uint8_t )wall0 < (uint8_t )wall1 - 4) {
 				return false;
 			}

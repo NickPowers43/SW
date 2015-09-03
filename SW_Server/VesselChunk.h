@@ -32,6 +32,8 @@ namespace SW_Server
 		void Instantiate(VesselChunk* t, VesselChunk* l, VesselChunk* r, VesselChunk* b, VesselChunk* br, glm::vec2 position);
 		void Destroy();
 
+		bool modified;
+
 	private:
 		char* messageBytes;
 		int messageBytesSize;

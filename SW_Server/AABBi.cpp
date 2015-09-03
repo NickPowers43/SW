@@ -4,8 +4,10 @@
 
 namespace SW_Server
 {
-	AABBi::AABBi()
+	AABBi::AABBi(glm::ivec2 bl, glm::ivec2 tr)
 	{
+		AABBi::bl = bl;
+		AABBi::tr = tr;
 	}
 
 

@@ -4,12 +4,11 @@
 
 namespace SW_Server
 {
-	Compartment::Compartment(uint32_t index)
+	Compartment::Compartment(uint32_t index) : aabb(glm::ivec2(0, 0), glm::ivec2(0, 0))
 	{
 		isPtr = false;
 		ptrValue = NULL;
 
-		aabb = AABBi();
 		Compartment::index = index;
 		area = 0.0f;
 		oxygen = 0.0f;

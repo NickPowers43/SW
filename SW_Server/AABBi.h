@@ -10,7 +10,7 @@ namespace SW_Server
 		glm::ivec2 bl;
 		glm::ivec2 tr;
 
-		AABBi();
+		AABBi(glm::ivec2 bl, glm::ivec2 tr);
 		~AABBi();
 
 		void AABBi::FitWhole(glm::ivec2 point);

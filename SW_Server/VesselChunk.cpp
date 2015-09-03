@@ -6,9 +6,14 @@ namespace SW_Server
 {
 	VesselChunk::VesselChunk(glm::ivec2 index)
 	{
+		modified = true;
 		VesselChunk::version = 0;
 		VesselChunk::index = index;
 		data = new VesselTile*[CHUNK_SIZE * CHUNK_SIZE];
+		for (size_t i = 0; i < CHUNK_SIZE * CHUNK_SIZE; i++)
+		{
+			data[i] = NULL;
+		}
 	}
 
 

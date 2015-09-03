@@ -2,19 +2,9 @@
 //
 
 #include "stdafx.h"
-#include <websocketpp/config/asio_no_tls.hpp>
-#include <websocketpp\server.hpp>
+#include "Vessel.h"
+#include "StartingVessel.h"
 
-using namespace std;
-
-typedef websocketpp::server<websocketpp::config::asio> server;
-
-using websocketpp::lib::placeholders::_1;
-using websocketpp::lib::placeholders::_2;
-using websocketpp::lib::bind;
-
-// pull out the type of messages sent by our config
-typedef server::message_ptr message_ptr;
 
 // Define a callback to handle incoming messages
 void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
@@ -38,6 +28,31 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 	}
 }
 
+// Define a callback to handle new connections
+void on_open(websocketpp::connection_hdl hdl) {
+	
+	Player* player = new Player();
+	players[hdl._Get()] = player;
+	
+	if (startingVessels.size() < 1)
+	{
+		startingVessels.push_back(new StartingVessel());
+		startingVessels[0]->Initialize();
+	}
+
+	startingVessels[0]->AddPlayer(player);
+}
+
+// Define a callback to handle new connections
+void on_close(websocketpp::connection_hdl hdl) {
+	Player* player = players[hdl._Get()];
+	player->currentVessel->RemovePlayer(player);
+	delete player;
+	players.erase(hdl._Get());
+}
+
+
+
 int _tmain(int argc, _TCHAR* argv[])
 {
 	//string portS = string((char*)argv[1]);
@@ -46,33 +61,39 @@ int _tmain(int argc, _TCHAR* argv[])
 	//int ip = stoi(ipS);
 
 	// Create a server endpoint
-	server echo_server;
-
 	try {
 		// Set logging settings
-		echo_server.set_access_channels(websocketpp::log::alevel::all);
-		echo_server.clear_access_channels(websocketpp::log::alevel::frame_payload);
+		myServer.set_access_channels(websocketpp::log::alevel::all);
+		myServer.clear_access_channels(websocketpp::log::alevel::frame_payload);
 
 		// Initialize ASIO
-		echo_server.init_asio();
+		myServer.init_asio();
 
 		// Register our message handler
-		echo_server.set_message_handler(bind(&on_message, &echo_server, ::_1, ::_2));
+		myServer.set_open_handler(&on_open);
+		myServer.set_message_handler(bind(&on_message, &myServer, ::_1, ::_2));
+		myServer.set_close_handler(&on_close);
 
 		// Listen on port 7778
-		echo_server.listen(7778);
+		myServer.listen(7778);
 
 		// Start the server accept loop
-		echo_server.start_accept();
+		myServer.start_accept();
 
 		// Start the ASIO io_service run loop
-		echo_server.run();
+		myServer.run();
 	}
 	catch (websocketpp::exception const & e) {
 		std::cout << e.what() << std::endl;
 	}
 	catch (...) {
 		std::cout << "other exception" << std::endl;
+	}
+
+
+	while (true)
+	{
+		
 	}
 
 	return 0;

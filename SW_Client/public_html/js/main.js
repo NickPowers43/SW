@@ -5,22 +5,38 @@
 
 
 //Scene initialization
-var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera( 75, 800.0 / 600.0, 0.1, 1000 );
 
-var renderer = new THREE.WebGLRenderer();
-renderer.setSize( 800, 600 );
-document.body.appendChild( renderer.domElement );
-
-var geometry = new THREE.BoxGeometry( 1, 1, 1 );
-var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-var cube = new THREE.Mesh( geometry, material );
-scene.add( cube );
 
 camera.position.z = 5;
 
+window.performance.mark('physics_update');
+
 function render() {
-	requestAnimationFrame( render );
-	renderer.render( scene, camera );
+    
+    var elapsedTime = window.performance.measure('physics_update');
+    window.performance.clearMarks();
+    window.performance.mark('physics_update');
+    if (connected) {
+        
+        var message = Receive();
+        if (message !== null) {
+            var byteOffset = 0;
+            while(byteOffset != message.byteLength) {
+                var messageIndex = message.getUint8(byteOffset);
+                switch (messageIndex) {
+                    case 0:
+                        
+                        break;
+                    default:
+                        console.log("unrecognized message type from server");
+                        break;
+                }
+            }
+        }
+        //send messages back
+    }
+    
+    requestAnimationFrame( render );
+    renderer.render( scene, camera );
 }
 render();

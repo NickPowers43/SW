@@ -1,83 +1,27 @@
 
+//Physics
+var physicsWorld = new b2World();
+
+//Network
 var server_address;
 var socket = null;
 var socket_started = false;
 var messages_out = [];
 var messages_in = [];
 
-var Connect = function(address)
-{
-    server_address = address;
-    socket = new WebSocket('ws://' + address);
-    socket.binaryType = 'arraybuffer';
-
-    // Open the socket
-    socket.onopen = function(event) {
-        
-        console.log('Connection established with server at: ' + server_address);
-
-        socket_started = true;
-
-        while (messages_out.length > 0){
-            socket.send(messages_out.shift());
-        }
-
-        // Listen for messages
-        socket.onmessage = function(event) {
-            var data = event.data;
-            messages_in.push(data);
-        };
-
-        // Listen for socket closes
-        socket.onclose = function(event) {
-            console.log('Client notified socket has closed',event);
-        };
-    };
-};
-var Send = function(data)
-{
-    if(socket_started)
-    {
-        socket.send(data);
-    }
-    else
-    {
-        messages_out.push(data);
-    }
-};
-var Close = function()
-{
-   socket.close();
-   socket = null;
-   socket_started = false;
-   messages_out = [];
-   message_in = [];
-};
-var Receive = function()
-{
-    if(messages_in.length > 0){
-        return messages_in.shift();
-    } else {
-            return null;
-    }
-};
-
-
-
-
-
+//WebGL
 var floorTexResolution = 256.0;
+var renderer = new THREE.WebGLRenderer();
+renderer.setSize( 800, 600 );
+document.body.appendChild( renderer.domElement );
+var scene = new THREE.Scene();
+var camera = new THREE.PerspectiveCamera( 75, 800.0 / 600.0, 0.1, 1000 );
+var floorMaterial = null;
 
-//dim0 - floor0 type
-//dim1 - floor1 type
-//dim2 - wall type
-//dim3 - offset along wall
-var floorMeshes = [];
-
-var floorUVRects = [];
-floorUVRects.push(new Rect(0.0, 0.0, 32.0, 32.0));
-floorUVRects.push(new Rect(32.0, 0.0, 32.0, 32.0));
-
+//static floor and wall data
+var VesselChunkSize = 8;
+var VesselChunkSizeF = parseFloat(VesselChunkSize);
+var VesselChunkDataLength = VesselChunkSize * VesselChunkSize;
 var wallOffsets = [
     new Vec2i(0,0),
     new Vec2i(1,0),
@@ -89,15 +33,20 @@ var wallOffsets = [
     new Vec2i(-1,1),
     new Vec2i(-2,1)
 ];
+//dim0 - floor0 type
+//dim1 - floor1 type
+//dim2 - wall type
+//dim3 - offset along wall
+var floorMeshes = [];
+var floorUVRects = [];
+floorUVRects.push(new Rect(0.0, 0.0, 32.0, 32.0));
+floorUVRects.push(new Rect(32.0, 0.0, 32.0, 32.0));
 
-var VesselChunkSize = 8;
-var VesselChunkSizeF = parseFloat(VesselChunkSize);
+//Game data
+var connected = false;
+var vessels = [];
 
-var VesselChunkDataLength = VesselChunkSize * VesselChunkSize;
-
-
-
-
+//Constructors
 function Vec2i(x, y) {
     this.x = x;
     this.y = y;
@@ -182,46 +131,86 @@ var MatToLinear = function(x, y, columns) {
     return (y * columns) + x;
 };
 
+//static Networking functions
 
+var Connect = function(address)
+{
+    server_address = address;
+    socket = new WebSocket('ws://' + address);
+    socket.binaryType = 'arraybuffer';
 
+    // Open the socket
+    socket.onopen = function(event) {
+        
+        console.log('Connection established with server at: ' + server_address);
+        connected = true;
 
+        socket_started = true;
 
-var InitializeMeshData = function() {
-    
-    var scale = 1.0 / floorTexResolution;
-    
-    for(i = 0; i < floorUVRects.length; i++) {
-        var rect = floorUVRects[i];
-        rect.x *= scale;
-        rect.y *= scale;
-        rect.width *= scale;
-        rect.height *= scale;
+        while (messages_out.length > 0){
+            socket.send(messages_out.shift());
+        }
+
+        // Listen for messages
+        socket.onmessage = function(event) {
+            var data = event.data;
+            messages_in.push(new DataView(data));
+        };
+
+        // Listen for socket closes
+        socket.onclose = function(event) {
+            console.log('Client notified socket has closed',event);
+            socket = null;
+            Close();
+        };
+    };
+};
+var Send = function(data)
+{
+    if(socket_started)
+    {
+        socket.send(data);
     }
+    else
+    {
+        messages_out.push(data);
+    }
+};
+var Close = function()
+{
+    //Reset networking data
+    if (socket !== null) {
+        socket.close();
+    }
+    socket = null;
+    socket_started = false;
+    messages_out = [];
+    message_in = [];
+    connected = false;
     
-    GenerateFloorMeshes();
+    //Reset game data
+    vessels = [];
+};
+var Receive = function()
+{
+    if(messages_in.length > 0){
+        return messages_in.shift();
+    } else {
+        return null;
+    }
 };
 
-var GenerateFloorMeshes = function() {
-    for (i = 0; i < floorUVRects.length; i++) {
-        var temp = [];
-        for (j = 0; j < floorUVRects.length; j++) {
-            temp.push([]);
-        }
-        floorMeshes.push(temp);
+var AppendMeshData = function(floorMesh, vertices, uv, indices, offset)
+{
+    var startI = vertices.length;
+    for (i = 0; i < floorMesh.i.length; i++) {
+        indices.Add(mesh.i[i] + startI);
     }
-    
-    
-    for (i = 0; i < floorUVRects.length; i++) {
-        for (j = 0; j < floorUVRects.length; j++) {
-            for (k = 0; k < 9; k++) {
-                floorMeshes[i][j].push(GenerateMeshes(
-                    k,
-                    (i === 0) ? floorUVRects[i] : floorUVRects[i-1],
-                    i === 0,
-                    (j === 0) ? floorUVRects[j] : floorUVRects[j-1],
-                    j === 0));
-            }
-        }
+
+
+    for (i = 0; i < mesh.v.length; i++) {
+        vertices.Add(THREE.Vector3.add(mesh.v[i].pos, offset));
+        uv.Add(mesh.v[i].uv);
     }
 };
 
@@ -248,39 +237,39 @@ var GenerateBaseVertices = function(a) {
     
     output.push(new PosUVPair(
         new THREE.Vector3(0.0,0.0,0.0),
-        new THREE.Vector(a.x, a.y)));
+        new THREE.Vector2(a.x, a.y)));
     
     output.push(new PosUVPair(
         new THREE.Vector3(0.0,1.0,0.0),
-        new THREE.Vector(a.x, a.y + a.height)));
+        new THREE.Vector2(a.x, a.y + a.height)));
     
     output.push(new PosUVPair(
         new THREE.Vector3(1.0,0.0,0.0),
-        new THREE.Vector(a.x + a.width, a.y)));
+        new THREE.Vector2(a.x + a.width, a.y)));
     
     output.push(new PosUVPair(
         new THREE.Vector3(1.0,1.0,0.0),
-        new THREE.Vector(a.x + a.width, a.y + a.height)));
+        new THREE.Vector2(a.x + a.width, a.y + a.height)));
     
     output.push(new PosUVPair(
         new THREE.Vector3(0.0,0.5,0.0),
-        new THREE.Vector(a.x, a.y + (a.height * 0.5))));
+        new THREE.Vector2(a.x, a.y + (a.height * 0.5))));
     
     output.push(new PosUVPair(
         new THREE.Vector3(0.5,1.0,0.0),
-        new THREE.Vector(a.x + (a.width * 0.5), a.y + a.height)));
+        new THREE.Vector2(a.x + (a.width * 0.5), a.y + a.height)));
     
     output.push(new PosUVPair(
         new THREE.Vector3(0.5,0.0,0.0),
-        new THREE.Vector(a.x + (a.width * 0.5), a.y)));
+        new THREE.Vector2(a.x + (a.width * 0.5), a.y)));
     
     output.push(new PosUVPair(
         new THREE.Vector3(0.0,0.0,0.0),
-        new THREE.Vector(a.x, a.y)));
+        new THREE.Vector2(a.x, a.y)));
     
     output.push(new PosUVPair(
         new THREE.Vector3(1.0,0.5,0.0),
-        new THREE.Vector(a.x + a.width, a.y + (a.height * 0.5))));
+        new THREE.Vector2(a.x + a.width, a.y + (a.height * 0.5))));
 };
 
 var GenerateMeshes = function(type, rightFloor, none0, leftFloor, none1) {
@@ -467,6 +456,54 @@ var GenerateMeshes = function(type, rightFloor, none0, leftFloor, none1) {
     return output;
 };
 
+var GenerateFloorMeshes = function() {
+    for (i = 0; i < floorUVRects.length; i++) {
+        var temp = [];
+        for (j = 0; j < floorUVRects.length; j++) {
+            temp.push([]);
+        }
+        floorMeshes.push(temp);
+    }
+    
+    
+    for (i = 0; i < floorUVRects.length; i++) {
+        for (j = 0; j < floorUVRects.length; j++) {
+            for (k = 0; k < 9; k++) {
+                floorMeshes[i][j].push(GenerateMeshes(
+                    k,
+                    (i === 0) ? floorUVRects[i] : floorUVRects[i-1],
+                    i === 0,
+                    (j === 0) ? floorUVRects[j] : floorUVRects[j-1],
+                    j === 0));
+            }
+        }
+    }
+};
+
+var InitializeMeshData = function() {
+    
+    var scale = 1.0 / floorTexResolution;
+    
+    for(i = 0; i < floorUVRects.length; i++) {
+        var rect = floorUVRects[i];
+        rect.x *= scale;
+        rect.y *= scale;
+        rect.width *= scale;
+        rect.height *= scale;
+    }
+    
+    GenerateFloorMeshes();
+};
+
+var InitializeGame = function() {
+    
+    InitializeMeshData();
+    
+    var texture = THREE.ImageUtils.loadTexture('crate.gif')
+    floorMaterial = THREE.MeshBasicMaterial({map:texture});
+    
+};
+
 //VesselChunk method definitions
 
 VesselChunk.prototype.SetTile = function(offset, val) {
@@ -475,6 +512,110 @@ VesselChunk.prototype.SetTile = function(offset, val) {
 
 VesselChunk.prototype.TileAt = function(offset) {
     return this.data[offset.x + (offset.y * VesselChunkSize)];
+};
+
+VesselChunk.prototype.ChunkIToLocal = function()
+{
+    return new Vector2(
+        this.index.x * VesselChunkSizeF,
+        this.index.y * VesselChunkSizeF);
+};
+
+VesselChunk.prototype.Destroy = function(offset) {
+    return this.data[offset.x + (offset.y * VesselChunkSize)];
+};
+
+VesselChunk.prototype.GenerateFloorMesh = function(t, l, r, b, br) {
+    var vertices = [];
+    var uv = [];
+    var indices = [];
+
+    for (i = 0; i < VesselChunkSize; i++) {
+        for (j = 0; j < VesselChunkSize; j++) {
+
+            var tile = this.TileAt(i, j);
+
+            if (tile !== null) {
+
+                if (tile.floor0 !== 0 || tile.floor1 !== 0) {
+
+                    var offset = THREE.Vector3(i, j, 0.0);
+
+                    //VesselTile tTile = (j === VesselChunkSize-1) ? (t !== null) ? t.TileAt(i,0) : null : TileAt(i,j+1);
+                    var lTile = (i === 0) ? (l !== null) ? l.TileAt(VesselChunkSize-1,j) : null : TileAt(i-1,j);
+                    var rTile = (i === VesselChunkSize-1) ? (r !== null) ? r.TileAt(0,j) : null : TileAt(i+1,j);
+                    var r2Tile = (i >= VesselChunkSize-2) ? (r !== null) ? r.TileAt(i-(VesselChunkSize-2),j) : null : TileAt(i+2,j);
+                    var bTile = (j === 0) ? (b !== null) ? b.TileAt(i,VesselChunkSize-1) : null : TileAt(i,j-1);
+                    var brTile = null;
+                    if (j === 0) {
+                        if (i < VesselChunkSize-1) {
+                            brTile = (b !== null) ? b.TileAt(i+1,VesselChunkSize-1) : null;
+                        } else {
+                            brTile = (br !== null) ? br.TileAt(0,VesselChunkSize-1) : null;
+                        }
+                    } else {
+                        if (i !== VesselChunkSize-1) {
+                            brTile = TileAt(i+1,j-1);
+                        } else {
+                            brTile = (r !== null) ? r.TileAt(0,j-1) : null;
+                        }
+                    }
+
+                    if (tile.floor0 === tile.floor1) {
+                        AppendMeshData(floorMeshes[tile.floor0][0][0][0],vertices,uv,indices,offset);
+                    } else {
+                        var floorCombMeshes = floorMeshes[tile.floor0][tile.floor1];
+
+                        if (tile.ContainsWallMask(2)) { //this tile contains a TwoByOne
+                            AppendMeshData(floorCombMeshes[2][0],vertices,uv,indices,offset);
+                        } else if (tile.ContainsWallMask(8)) { //this tile contains a OneByTwo
+                            AppendMeshData(floorCombMeshes[4][0],vertices,uv,indices,offset);
+                        } else if (tile.ContainsWallMask(4)) { //this tile contains a OneByOne
+                            AppendMeshData(floorCombMeshes[3][0],vertices,uv,indices,offset);
+                        } 
+                        else if (lTile !== null && lTile.ContainsWallMask(2)) { //left tile contains a TwoByOne
+                            AppendMeshData(floorCombMeshes[2][1],vertices,uv,indices,offset);
+                        } else if (bTile !== null && bTile.ContainsWallMask(8)) { //bottom tile contains a OneByTwo
+                            AppendMeshData(floorCombMeshes[4][1],vertices,uv,indices,offset);
+                        } else if (brTile !== null && brTile.ContainsWallMask(32)) { //br tile contains a OneByTwoFlipped
+                            AppendMeshData(floorCombMeshes[6][1],vertices,uv,indices,offset);
+                        } else if (rTile !== null && rTile.ContainsWallMask(128)) { //r tile contains a TwoByOneFlipped
+                            AppendMeshData(floorCombMeshes[8][0],vertices,uv,indices,offset);
+                        } else if (rTile !== null && rTile.ContainsWallMask(64)) { //r tile contains a OneByOneFlipped
+                            AppendMeshData(floorCombMeshes[7][0],vertices,uv,indices,offset);
+                        } else if (rTile !== null && rTile.ContainsWallMask(32)) { //r tile contains a OneByTwoFlipped
+                            AppendMeshData(floorCombMeshes[6][0],vertices,uv,indices,offset);
+                        } else if (r2Tile !== null && r2Tile.ContainsWallMask(128)) { //r2 tile contains a TwoByOneFlipped
+                            AppendMeshData(floorCombMeshes[8][1],vertices,uv,indices,offset);
+                        } else {
+                            //no walls cut this tile
+                            AppendMeshData(floorMeshes[tile.floor0][0][0][0],vertices,uv,indices,offset);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    var output = new THREE.Geometry();
+
+    output.vertices = vertices;
+    output.faceVertexUvs[0] = uv;
+    output.faces = indices;
+    
+    output.verticesNeedUpdate();
+    output.uvsNeedUpdate();
+    output.elementsNeedUpdate();
+
+    return output;
+};
+
+VesselChunk.prototype.Instantiate = function(t, l, r, b, br) {
+    var chunkOffset = this.ChunkIToLocal(chunk.index);
+    var floorMesh = this.GenerateFloorMesh(t,l,r,b,br);
+    
+    var mesh = THREE.Mesh(floorMesh, floorMaterial);
+    scene.add(mesh);
 };
 
 VesselChunk.prototype.OriginTileIndex = function() {
@@ -725,14 +866,12 @@ Vessel.prototype.BottomRight = function (chunk) { return this.chunks.TryGet(new 
 
 Vessel.prototype.InstantiateChunk = function(chunk)
 {
-    var chunkOffset = ChunkIToLocal(chunk.index);
     chunk.Instantiate(
             Top(chunk), 
             Left(chunk), 
             Right(chunk), 
             Bottom(chunk), 
-            BottomRight(chunk), 
-            chunkOffset);
+            BottomRight(chunk));
 };
 
 
@@ -778,7 +917,8 @@ DynamicArray2D.prototype.GrowBottomLeft = function(amount) {
 
 DynamicArray2D.prototype.Contains = function(index) {
     
-    return (index.x >= this.origin.x && index.x < this.dim.x + this.origin.x) && (index.y >= this.origin.y && index.y < this.dim.y + this.origin.y);
+    return ((index.x >= this.origin.x) && (index.x < (this.dim.x + this.origin.x))) && 
+        ((index.y >= this.origin.y) && (index.y < (this.dim.y + this.origin.y)));
 };
 
 DynamicArray2D.prototype.Set = function(x, y, val) {
