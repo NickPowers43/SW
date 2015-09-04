@@ -1,4 +1,5 @@
 #pragma once
+
 namespace SW_Server
 {
 	class Vessel;
@@ -6,9 +7,10 @@ namespace SW_Server
 	class Player
 	{
 	public:
-		Player();
+		Player(websocketpp::connection_hdl hdl);
 		~Player();
 
+		websocketpp::connection_hdl hdl;
 		Vessel* currentVessel;
 		glm::vec2 pos;
 		glm::ivec2 chunkI;

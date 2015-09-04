@@ -1,41 +1,37 @@
 #pragma once
 
-#define MB_CAPACITY 16384
-
 namespace SW_Server
 {
 	class NetworkWriter
 	{
 	public:
-		NetworkWriter();
+		NetworkWriter(size_t capacity);
 		~NetworkWriter();
 
-		int size;
-		void* data;
-		void* temp;
+		size_t capacity;
+		void* buffer;
+		void* cursor;
 
-		template<typename T> void* append_to_R(T & new_data)
+		template<typename T> void Write(T val)
 		{
-			if ((char*)temp - (char*)data >= MB_CAPACITY)
-				throw std::exception("buffer overflow");
+			if (capacity - Position() < sizeof(val))
+				Grow();
 
-			void* beginning = temp;
-			*((T*)temp) = new_data;
-			temp = (char*)temp + sizeof(new_data);
-			size += sizeof(new_data);
-			return beginning;
+			*((T*)cursor) = val;
+			cursor = (void*)((size_t)cursor + sizeof(val));
 		}
-		template<typename T> void* append_to_V(T new_data)
+		template<typename T> void WriteRef(T* val)
 		{
-			if ((char*)temp - (char*)data >= MB_CAPACITY)
-				throw std::exception("buffer overflow");
+			if (capacity - Position() < sizeof(*val))
+				Grow();
 
-			void* beginning = temp;
-			*((T*)temp) = new_data;
-			temp = (char*)temp + sizeof(new_data);
-			size += sizeof(new_data);
-			return beginning;
+			*((T*)cursor) = *val;
+			cursor = (void*)((size_t)cursor + sizeof(val));
 		}
+
+		void Reset();
+		void Grow();
+		size_t Position();
 
 		void reset();
 	};

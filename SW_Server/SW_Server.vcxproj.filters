@@ -60,6 +60,9 @@
     <ClInclude Include="VesselObject.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="NetworkReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SW_Server.cpp">
@@ -102,6 +105,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="VesselObject.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkReader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

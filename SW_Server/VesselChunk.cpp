@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "VesselChunk.h"
 #include "Vessel.h"
+#include "NetworkWriter.h"
 
 namespace SW_Server
 {
@@ -19,6 +20,23 @@ namespace SW_Server
 
 	VesselChunk::~VesselChunk()
 	{
+	}
+
+	void VesselChunk::WriteSetChunkMessage(NetworkWriter* nw)
+	{
+		nw->Write((uint16_t)index.x);
+		nw->Write((uint16_t)index.y);
+
+		uint16_t* tile_count = (uint16_t*)nw->cursor;
+		nw->Write((uint16_t)0);
+		for (size_t i = 0; i < CHUNK_SIZE * CHUNK_SIZE; i++)
+		{
+			if (data[i])
+			{
+				*tile_count++;
+				data[i]->WriteSetChunkMessage(nw);
+			}
+		}
 	}
 
 	void VesselChunk::SetTile(glm::ivec2 offset, VesselTile* val)

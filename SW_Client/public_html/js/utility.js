@@ -1,4 +1,59 @@
 
+var ServerMessageType = {
+    SetChunk : 0,
+    SyncVessel : 1,
+    UpdatePlayer : 2,
+    RemovePlayer : 3,
+    AddPlayer : 4,
+    AddYourself : 5,
+    MakeVesselActive : 6
+};
+
+
+var ClientMessageType = {
+    RequestChunk : 0,
+    Inputs : 1,
+    FillAt : 2
+};
+
+
+var ObjectType = {
+    Spawner : 0,
+    Turret : 1
+};
+
+var WallType = {
+    None : 0,
+    OneByZero : 1,
+    TwoByOne : 2,
+    OneByOne : 3,
+    OneByTwo : 4,
+    ZeroByOne : 5,
+    OneByTwoFlipped : 6,
+    OneByOneFlipped : 7,
+    TwoByOneFlipped : 8
+};
+
+var WallTypeMask = {
+    None : 0,
+    OneByZero : 1,
+    TwoByOne : 2,
+    OneByOne : 4,
+    OneByTwo : 8,
+    ZeroByOne : 16,
+    OneByTwoFlipped : 32,
+    OneByOneFlipped : 64,
+    TwoByOneFlipped : 128
+};
+
+var FloorType = {
+    None : 0,
+    Basic : 1,
+    SmoothWhite : 2
+};
+
+var THREE = THREE;
+
 //Physics
 var physicsWorld = new b2World();
 
@@ -19,6 +74,7 @@ var camera = new THREE.PerspectiveCamera( 75, 800.0 / 600.0, 0.1, 1000 );
 var floorMaterial = null;
 
 //static floor and wall data
+var PlayerChunkRange = 2;
 var VesselChunkSize = 8;
 var VesselChunkSizeF = parseFloat(VesselChunkSize);
 var VesselChunkDataLength = VesselChunkSize * VesselChunkSize;
@@ -44,7 +100,11 @@ floorUVRects.push(new Rect(32.0, 0.0, 32.0, 32.0));
 
 //Game data
 var connected = false;
+var currentVessel = null;
+var myPlayer = null;
+var players = [];
 var vessels = [];
+var instantiatedChunks = [];
 
 //Constructors
 function Vec2i(x, y) {
@@ -87,6 +147,10 @@ function VesselChunk(index, version) {
     this.version = version;
 }
 
+function Player(pos) {
+    this.pos = pos;
+}
+
 function Rect(x, y, width, height) {
     this.x = x;
     this.y = y;
@@ -117,8 +181,8 @@ var SubVec2i = function(a, b) {
 
 var WorldToChunkI = function(world) {
     return new Vec2i(
-        (localPosition.x < 0.0) ? -1 - parseInt(localPosition.x / -VesselChunkSizeF) : parseInt(localPosition.x / VesselChunkSizeF),
-        (localPosition.y < 0.0) ? -1 - parseInt(localPosition.y / -VesselChunkSizeF) : parseInt(localPosition.y / VesselChunkSizeF));
+        (world.x < 0.0) ? -1 - parseInt(world.x / -VesselChunkSizeF) : parseInt(world.x / VesselChunkSizeF),
+        (world.y < 0.0) ? -1 - parseInt(world.y / -VesselChunkSizeF) : parseInt(world.y / VesselChunkSizeF));
 };
 
 var TileToChunkI = function(tileI) {
@@ -179,7 +243,7 @@ var Send = function(data)
 var Close = function()
 {
     //Reset networking data
-    if (socket !== null) {
+    if (socket != null) {
         socket.close();
     }
     socket = null;
@@ -499,7 +563,7 @@ var InitializeGame = function() {
     
     InitializeMeshData();
     
-    var texture = THREE.ImageUtils.loadTexture('crate.gif')
+    var texture = THREE.ImageUtils.loadTexture('crate.gif');
     floorMaterial = THREE.MeshBasicMaterial({map:texture});
     
 };
@@ -514,8 +578,7 @@ VesselChunk.prototype.TileAt = function(offset) {
     return this.data[offset.x + (offset.y * VesselChunkSize)];
 };
 
-VesselChunk.prototype.ChunkIToLocal = function()
-{
+VesselChunk.prototype.ChunkIToWorld = function() {
     return new Vector2(
         this.index.x * VesselChunkSizeF,
         this.index.y * VesselChunkSizeF);
@@ -535,29 +598,29 @@ VesselChunk.prototype.GenerateFloorMesh = function(t, l, r, b, br) {
 
             var tile = this.TileAt(i, j);
 
-            if (tile !== null) {
+            if (tile != null) {
 
-                if (tile.floor0 !== 0 || tile.floor1 !== 0) {
+                if (tile.floor0 != 0 || tile.floor1 != 0) {
 
                     var offset = THREE.Vector3(i, j, 0.0);
 
-                    //VesselTile tTile = (j === VesselChunkSize-1) ? (t !== null) ? t.TileAt(i,0) : null : TileAt(i,j+1);
-                    var lTile = (i === 0) ? (l !== null) ? l.TileAt(VesselChunkSize-1,j) : null : TileAt(i-1,j);
-                    var rTile = (i === VesselChunkSize-1) ? (r !== null) ? r.TileAt(0,j) : null : TileAt(i+1,j);
-                    var r2Tile = (i >= VesselChunkSize-2) ? (r !== null) ? r.TileAt(i-(VesselChunkSize-2),j) : null : TileAt(i+2,j);
-                    var bTile = (j === 0) ? (b !== null) ? b.TileAt(i,VesselChunkSize-1) : null : TileAt(i,j-1);
+                    //VesselTile tTile = (j === VesselChunkSize-1) ? (t != null) ? t.TileAt(i,0) : null : TileAt(i,j+1);
+                    var lTile = (i === 0) ? (l != null) ? l.TileAt(VesselChunkSize-1,j) : null : TileAt(i-1,j);
+                    var rTile = (i === VesselChunkSize-1) ? (r != null) ? r.TileAt(0,j) : null : TileAt(i+1,j);
+                    var r2Tile = (i >= VesselChunkSize-2) ? (r != null) ? r.TileAt(i-(VesselChunkSize-2),j) : null : TileAt(i+2,j);
+                    var bTile = (j === 0) ? (b != null) ? b.TileAt(i,VesselChunkSize-1) : null : TileAt(i,j-1);
                     var brTile = null;
                     if (j === 0) {
                         if (i < VesselChunkSize-1) {
-                            brTile = (b !== null) ? b.TileAt(i+1,VesselChunkSize-1) : null;
+                            brTile = (b != null) ? b.TileAt(i+1,VesselChunkSize-1) : null;
                         } else {
-                            brTile = (br !== null) ? br.TileAt(0,VesselChunkSize-1) : null;
+                            brTile = (br != null) ? br.TileAt(0,VesselChunkSize-1) : null;
                         }
                     } else {
-                        if (i !== VesselChunkSize-1) {
+                        if (i != VesselChunkSize-1) {
                             brTile = TileAt(i+1,j-1);
                         } else {
-                            brTile = (r !== null) ? r.TileAt(0,j-1) : null;
+                            brTile = (r != null) ? r.TileAt(0,j-1) : null;
                         }
                     }
 
@@ -573,19 +636,19 @@ VesselChunk.prototype.GenerateFloorMesh = function(t, l, r, b, br) {
                         } else if (tile.ContainsWallMask(4)) { //this tile contains a OneByOne
                             AppendMeshData(floorCombMeshes[3][0],vertices,uv,indices,offset);
                         } 
-                        else if (lTile !== null && lTile.ContainsWallMask(2)) { //left tile contains a TwoByOne
+                        else if (lTile != null && lTile.ContainsWallMask(2)) { //left tile contains a TwoByOne
                             AppendMeshData(floorCombMeshes[2][1],vertices,uv,indices,offset);
-                        } else if (bTile !== null && bTile.ContainsWallMask(8)) { //bottom tile contains a OneByTwo
+                        } else if (bTile != null && bTile.ContainsWallMask(8)) { //bottom tile contains a OneByTwo
                             AppendMeshData(floorCombMeshes[4][1],vertices,uv,indices,offset);
-                        } else if (brTile !== null && brTile.ContainsWallMask(32)) { //br tile contains a OneByTwoFlipped
+                        } else if (brTile != null && brTile.ContainsWallMask(32)) { //br tile contains a OneByTwoFlipped
                             AppendMeshData(floorCombMeshes[6][1],vertices,uv,indices,offset);
-                        } else if (rTile !== null && rTile.ContainsWallMask(128)) { //r tile contains a TwoByOneFlipped
+                        } else if (rTile != null && rTile.ContainsWallMask(128)) { //r tile contains a TwoByOneFlipped
                             AppendMeshData(floorCombMeshes[8][0],vertices,uv,indices,offset);
-                        } else if (rTile !== null && rTile.ContainsWallMask(64)) { //r tile contains a OneByOneFlipped
+                        } else if (rTile != null && rTile.ContainsWallMask(64)) { //r tile contains a OneByOneFlipped
                             AppendMeshData(floorCombMeshes[7][0],vertices,uv,indices,offset);
-                        } else if (rTile !== null && rTile.ContainsWallMask(32)) { //r tile contains a OneByTwoFlipped
+                        } else if (rTile != null && rTile.ContainsWallMask(32)) { //r tile contains a OneByTwoFlipped
                             AppendMeshData(floorCombMeshes[6][0],vertices,uv,indices,offset);
-                        } else if (r2Tile !== null && r2Tile.ContainsWallMask(128)) { //r2 tile contains a TwoByOneFlipped
+                        } else if (r2Tile != null && r2Tile.ContainsWallMask(128)) { //r2 tile contains a TwoByOneFlipped
                             AppendMeshData(floorCombMeshes[8][1],vertices,uv,indices,offset);
                         } else {
                             //no walls cut this tile
@@ -611,7 +674,7 @@ VesselChunk.prototype.GenerateFloorMesh = function(t, l, r, b, br) {
 };
 
 VesselChunk.prototype.Instantiate = function(t, l, r, b, br) {
-    var chunkOffset = this.ChunkIToLocal(chunk.index);
+    var chunkOffset = this.ChunkIToWorld();
     var floorMesh = this.GenerateFloorMesh(t,l,r,b,br);
     
     var mesh = THREE.Mesh(floorMesh, floorMaterial);
@@ -626,12 +689,12 @@ VesselChunk.prototype.OriginTileIndex = function() {
 
 //Vessel method definitions
 
-VesselTile.prototype.ContainsWall = function(tile, wall) {
-    return (tile.wallMask & (1 << (wall - 1))) > 0;
+VesselTile.prototype.ContainsWall = function(wall) {
+    return (this.wallMask & (1 << (wall - 1))) > 0;
 };
 
-VesselTile.prototype.ContainsWallMask = function(tile, wall) {
-    return (tile.wallMask & wall) > 0;
+VesselTile.prototype.ContainsWallMask = function(wall) {
+    return (this.wallMask & wall) > 0;
 };
 
 Vessel.prototype.IsWallLegal = function(index, type)
@@ -647,7 +710,7 @@ Vessel.prototype.IsWallLegal = function(index, type)
             if (this.ContainsWall(new Vec2i(index.x+hDir,index.y))) {
                 return false;
             }
-            if (diff !== 2) {
+            if (diff != 2) {
                 if (this.ContainsWall(new Vec2i(index.x-1,index.y+1))) {
                     return false;
                 }
@@ -665,7 +728,7 @@ Vessel.prototype.IsWallLegal = function(index, type)
             if (this.ContainsWall(new Vec2i(index.x,index.y+1))) {
                 return false;
             }
-            if (diff !== 2) {
+            if (diff != 2) {
                 if (this.ContainsWall(new Vec2i(index.x+1,index.y+1))) {
                     return false;
                 }
@@ -694,7 +757,7 @@ Vessel.prototype.IsWallLegal = function(index, type)
 Vessel.prototype.ContainsWall = function(index) {
     var tile = this.TryGetTile(index);
 		
-    if (tile !== null) {
+    if (tile != null) {
         if (tile.wallNode) {
             return true;
         } else {
@@ -708,7 +771,7 @@ Vessel.prototype.ContainsWall = function(index) {
 Vessel.prototype.LegalWallStart = function(type, index) {
     
     var tile = TryGetTile(index);
-    if (tile !== null) {
+    if (tile != null) {
         var walls = tile.GetWalls();
 
         if (walls.count > 1) {
@@ -723,7 +786,7 @@ Vessel.prototype.LegalWallStart = function(type, index) {
 
     for (i = 1; i < 9; i++) {
         tile = TryGetTile(SubVec2i(index, wallOffsets[i]));
-        if (tile !== null) {
+        if (tile != null) {
             if (tile.ContainsWall(i)) {
                 if (!this.NonAcuteSequence(i, type)) {
                     return false;
@@ -738,7 +801,7 @@ Vessel.prototype.LegalWallStart = function(type, index) {
 Vessel.prototype.LegalWallEnd = function(type, index) {
     
     var tile = TryGetTile(index);
-    if (tile !== null) {
+    if (tile != null) {
         var walls = tile.GetWalls();
 
         if (walls.count > 0) {
@@ -755,7 +818,7 @@ Vessel.prototype.LegalWallEnd = function(type, index) {
 
     for (i = 1; i < 9; i++) {
         tile = TryGetTile(SubVec2i(index, wallOffsets[i]));
-        if (tile !== null) {
+        if (tile != null) {
             if (tile.ContainsWall(i)) {
                 if (Math.abs(type - i) < 4) {
                     return false;
@@ -773,56 +836,56 @@ Vessel.prototype.TooCloseToWall = function(index) {
     //0
     tile = TryGetTile(new Vec2i(index.x-1, index.y));
     if (tile != null) {
-        if (tile.Contains(3 | 2 | 4)) {
+        if (tile.ContainsWallMask(WallTypeMask.OneByOne | WallTypeMask.TwoByOne | WallTypeMask.OneByTwo)) {
             return true;
         }
     }
     //1
     tile = TryGetTile(new Vec2i(index.x, index.y-1));
     if (tile != null) {
-        if (tile.Contains(3 | 4 | 7 | 6 | 2 | 8)) {
+        if (tile.ContainsWallMask(WallTypeMask.OneByOne | WallTypeMask.OneByTwo | WallTypeMask.OneByOneFlipped | WallTypeMask.OneByTwoFlipped | WallTypeMask.TwoByOne | WallTypeMask.TwoByOneFlipped)) {
             return true;
         }
     }
-    //2
+    //WallTypeMask.TwoByOne
     tile = TryGetTile(new Vec2i(index.x+1, index.y));
     if (tile != null) {
-        if (tile.Contains(7 | 8 | 6)) {
+        if (tile.ContainsWallMask(WallTypeMask.OneByOneFlipped | WallTypeMask.TwoByOneFlipped | WallTypeMask.OneByTwoFlipped)) {
             return true;
         }
     }
     //3
     tile = TryGetTile(new Vec2i(index.x-1, index.y-1));
     if (tile != null) {
-        if (tile.Contains(4 | 2)) {
+        if (tile.ContainsWallMask(WallTypeMask.OneByTwo | WallTypeMask.TwoByOne)) {
             return true;
         }
     }
     //4
     tile = TryGetTile(new Vec2i(index.x+1, index.y-1));
     if (tile != null) {
-        if (tile.Contains(8 | 6)) {
+        if (tile.ContainsWallMask(WallTypeMask.TwoByOneFlipped | WallTypeMask.OneByTwoFlipped)) {
             return true;
         }
     }
     //5
-    tile = TryGetTile(new Vec2i(index.x-2, index.y));
+    tile = TryGetTile(new Vec2i(index.x-WallTypeMask.TwoByOne, index.y));
     if (tile != null) {
-        if (tile.Contains(2)) {
+        if (tile.ContainsWallMask(WallTypeMask.TwoByOne)) {
             return true;
         }
     }
     //6
-    tile = TryGetTile(new Vec2i(index.x+2, index.y));
+    tile = TryGetTile(new Vec2i(index.x+WallTypeMask.TwoByOne, index.y));
     if (tile != null) {
-        if (tile.Contains(8)) {
+        if (tile.ContainsWallMask(WallTypeMask.TwoByOneFlipped)) {
             return true;
         }
     }
     //7
-    tile = TryGetTile(new Vec2i(index.x, index.y-2));
+    tile = TryGetTile(new Vec2i(index.x, index.y-WallTypeMask.TwoByOne));
     if (tile != null) {
-        if (tile.Contains(6 | 4)) {
+        if (tile.ContainsWallMask(WallTypeMask.OneByTwoFlipped | WallTypeMask.OneByTwo)) {
             return true;
         }
     }
@@ -831,11 +894,11 @@ Vessel.prototype.TooCloseToWall = function(index) {
 };
 
 Vessel.prototype.NonAcuteSequence = function(wall0, wall1) {
-    if (wall1 < 5) {
+    if (wall1 < WallType.ZeroByOne) {
         if (wall0 > (4 + wall1)) {
             return false;
         }
-    } else if (wall1 > 5) {
+    } else if (wall1 > WallType.ZeroByOne) {
         if (wall0 < (wall1 - 4)) {
             return false;
         }
@@ -1021,3 +1084,228 @@ DynamicArray2D.prototype.TryGet = function(x, y) {
 Vessel.prototype.NonAcuteSequence = function(wall0, wall1) {
     
 };
+
+
+var ClearCurrentVessel = function() {
+    //clear players properly
+    players = [];
+};
+
+var UpdateChunks = function(reset) {
+    
+    var rangeT = (PlayerChunkRange * 2) + 1;
+    
+    if (reset) {
+        while (instantiatedChunks.length > 0) {
+            var chunk = instantiatedChunks.shift();
+            //delete chunk data
+        }
+        
+        myPlayer.chunkI = WorldToChunkI(myPlayer.pos);
+        
+        var buffer = new DataView(new ArrayBuffer(1 << 14));
+        var byteOffset = 0;
+        buffer.setUint8(byteOffset, 0);//ClientMessageType::RequestChunk
+        byteOffset += 1;
+        var requestLength = 0;
+        var lengthOffset = byteOffset;
+        byteOffset += 1;
+
+        for (i = 0; i < rangeT; i++) {
+            for (j = 0; j < rangeT; j++) {
+
+                var diffCurr = new Vec2i(i - PlayerChunkRange, j - PlayerChunkRange);
+                var temp = AddVec2i(myPlayer.chunkI, diffCurr);
+                
+                requestLength++;
+
+                var temp2 = currentVessel.chunks.TryGet(temp.x, temp.y);
+
+                buffer.setInt32(byteOffset, temp.x);
+                byteOffset += 4;
+                buffer.setInt32(byteOffset, temp.y);
+                byteOffset += 4;
+
+                if (temp2 != null) {
+                    buffer.setUint32(byteOffset, temp2.version);
+                    byteOffset += 4;
+                } else {
+                    buffer.setUint32(byteOffset, (1 << 33) - 1);
+                    byteOffset += 4;
+                }
+            }
+        }
+
+        buffer.setInt8(lengthOffset, requestLength);
+        Send(buffer.buffer.slice(0, byteOffset));
+        
+    } else {
+        var orgChunkI = myPlayer.chunkI;
+        myPlayer.chunkI = WorldToChunkI(myPlayer.pos);
+        
+        if ((orgChunkI.x != myPlayer.chunkI.x) || (orgChunkI.y != myPlayer.chunkI.y)) {
+            
+            var buffer = new DataView(new ArrayBuffer(1 << 14));
+            var byteOffset = 0;
+            buffer.setUint8(byteOffset, 0);//ClientMessageType::RequestChunk
+            byteOffset += 1;
+            var requestLength = 0;
+            var lengthOffset = byteOffset;
+            byteOffset += 1;
+
+            for (i = 0; i < rangeT; i++) {
+                for (j = 0; j < rangeT; j++) {
+                    
+                    var diffCurr = new Vec2i(i - PlayerChunkRange, j - PlayerChunkRange);
+                    var temp = AddVec2i(player.chunkI, diffCurr);
+                    var diffOrg = SubVec2i(temp, orgChunkI);
+                    if (Math.abs(diffOrg.x) > PlayerChunkRange || Math.abs(diffOrg.y) > PlayerChunkRange) {
+                        
+                        requestLength++;
+                        
+                        var temp2 = currentVessel.chunks.TryGet(temp.x, temp.y);
+
+                        buffer.setInt32(byteOffset, temp.x);
+                        byteOffset += 4;
+                        buffer.setInt32(byteOffset, temp.y);
+                        byteOffset += 4;
+
+                        if (temp2 != null) {
+                            buffer.setUint32(byteOffset, temp2.version);
+                            byteOffset += 4;
+                        } else {
+                            buffer.setUint32(byteOffset, (1 << 33) - 1);
+                            byteOffset += 4;
+                        }
+                    }
+                }
+            }
+            
+            buffer.setInt8(lengthOffset, requestLength);
+            Send(buffer.buffer.slice(0, byteOffset));
+        }
+    }
+    
+    
+    
+};
+
+//Main Loop
+
+camera.position.z = 5;
+
+window.performance.mark('physics_update');
+
+function render() {
+    
+    var elapsedTime = window.performance.measure('physics_update');
+    window.performance.clearMarks();
+    window.performance.mark('physics_update');
+    if (connected) {
+        
+        var message = Receive();
+        if (message != null) {
+            var byteOffset = 0;
+            while(byteOffset != message.byteLength) {
+                var messageIndex = message.getUint8(byteOffset);
+                byteOffset += 1;
+                switch (messageIndex) {
+                    case ServerMessageType.SetChunk://SetChunk
+                        var chunkCount = message.getUint8(byteOffset);
+                        byteOffset += 1;
+                        for (var i = 0; i < chunkCount; i++) {
+                            var x = message.getInt16(byteOffset);
+                            byteOffset += 2;
+                            var y = message.getInt16(byteOffset);
+                            byteOffset += 2;
+                            var version = message.getUint32(byteOffset);
+                            byteOffset += 4;
+                            
+                            var chunk = new VesselChunk(new Vec2i(x, y), version);
+                            
+                            console.log("Received chunk at (" + x + ", " + y + ")");
+                            
+                            var tile_count = message.getUInt16(byteOffset);
+                            byteOffset += 2;
+                            for (var j = 0; i < tile_count; j++) {
+                                x = message.getUint8(byteOffset);
+                                byteOffset += 1;
+                                y = message.getUint8(byteOffset);
+                                byteOffset += 1;
+                                
+                                var flags = message.getUint16(byteOffset);
+                                byteOffset += 2;
+                                var wallMask = message.getUint8(byteOffset);
+                                byteOffset += 1;
+                                var floor0 = message.getUint8(byteOffset);
+                                byteOffset += 1;
+                                var floor1 = message.getUint8(byteOffset);
+                                byteOffset += 1;
+                                var c0 = message.getUint32(byteOffset);
+                                byteOffset += 4;
+                                var c1 = message.getUint32(byteOffset);
+                                byteOffset += 4;
+                                
+                                var tile = new VesselTile(flags, wallMask, c0, c1, floor0, floor1);
+                                
+                                chunk.SetTile(new Vec2i(x, y), tile);
+                            }
+                        }
+                        
+                        //Reinstantiate chunks
+                        
+                        break;
+                    case ServerMessageType.MakeVesselActive://MakeVesselActive
+                        var vIndex = message.getUint32(byteOffset);
+                        byteOffset += 4;
+                        
+                        var vessel = vessels[vIndex];
+                        
+                        if (vessel == null) {
+                            vessel = new Vessel(vIndex);
+                            vessels[vIndex] = vessel;
+                        }
+                        
+                        if (currentVessel != null) {
+                            //clear currentVessel information
+                            ClearCurrentVessel();
+                        }
+                        
+                        currentVessel = vessel;
+                        
+                        var otherPlayerCount = message.getUint16(byteOffset);
+                        byteOffset += 2;
+                        for(i = 0; i < otherPlayerCount;i++) {
+                            //add the ith player
+                            var x = message.getFloat32(byteOffset);
+                            byteOffset += 4;
+                            var y = message.getFloat32(byteOffset);
+                            byteOffset += 4;
+                            players.push(new Player(new THREE.Vector2(x,y)));
+                        }
+                        //add ourselves
+                        var x = message.getFloat32(byteOffset);
+                        byteOffset += 4;
+                        var y = message.getFloat32(byteOffset);
+                        byteOffset += 4;
+                        myPlayer = new Player(new THREE.Vector2(x,y));
+                        
+                        UpdateChunks(true);
+                        break;
+                    default:
+                        console.log("unrecognized message type from server");
+                        break;
+                }
+            }
+        }
+        //send messages back
+    }
+    
+    if (myPlayer != null && currentVessel != null) {
+        UpdateChunks(false);
+    }
+    
+    requestAnimationFrame( render );
+    renderer.render( scene, camera );
+}
+render();

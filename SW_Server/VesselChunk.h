@@ -1,6 +1,5 @@
 #pragma once
 
-#include <glm\vec2.hpp>
 #include "VesselTile.h"
 
 namespace SW_Server
@@ -24,6 +23,7 @@ namespace SW_Server
 		VesselChunk(glm::ivec2 index);
 		~VesselChunk();
 
+		void WriteSetChunkMessage(NetworkWriter* nw);
 		void SetTile(glm::ivec2 offset, VesselTile* val);
 		VesselTile* TileAt(int x, int y);
 		VesselTile* TileAt(glm::ivec2 index);

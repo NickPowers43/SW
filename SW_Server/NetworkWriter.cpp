@@ -3,17 +3,29 @@
 
 namespace SW_Server
 {
-	NetworkWriter::NetworkWriter()
+	NetworkWriter::NetworkWriter(size_t capacity)
 	{
-		data = new char[MB_CAPACITY];
+		NetworkWriter::capacity = capacity;
+		NetworkWriter::buffer = new char[capacity];
+		NetworkWriter::cursor = buffer;
 	}
 	NetworkWriter::~NetworkWriter()
 	{
-		delete data;
+		delete buffer;
 	}
-	void NetworkWriter::reset()
+
+	void NetworkWriter::Grow()
 	{
-		size = 0;
-		temp = data;
+		void* temp = new char[capacity + (capacity >> 1)];
+		memcpy(temp, buffer, capacity);
+		capacity += capacity >> 1;
+	}
+	void NetworkWriter::Reset()
+	{
+		cursor = buffer;
+	}
+	size_t NetworkWriter::Position()
+	{
+		return ((size_t)cursor - (size_t)buffer);
 	}
 }

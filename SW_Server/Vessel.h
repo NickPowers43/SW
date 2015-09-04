@@ -43,6 +43,7 @@ namespace SW_Server
 		int GetMessageBytes(void* & ref);
 
 		void InstantiateNearbyChunks(Player* player);
+		void ReadChunkRequestMessage(Player* player, NetworkReader* nr);
 		void AddPlayerVessel(Player* player, glm::vec2 position);
 		void RemovePlayer(Player* player);
 		virtual void BuildFoundation(glm::ivec2 origin, glm::ivec2 size);
@@ -50,9 +51,9 @@ namespace SW_Server
 		VesselChunk* CreateChunk(glm::ivec2 index);
 		void AddModifiedChunk(VesselChunk* vc);
 		void SetTile(glm::ivec2 index, VesselTile* val);
-		void BuildWall(glm::ivec2 index, int count, WallType::WallType type);
-		void BuildWall(glm::ivec2 index, int count, WallType::WallType type, bool reverse);
-		void BuildWall(glm::ivec2* index, int count, WallType::WallType type, bool reverse);
+		void BuildWall(glm::ivec2 index, int count, uint8_t type);
+		void BuildWall(glm::ivec2 index, int count, uint8_t type, bool reverse);
+		void BuildWall(glm::ivec2* index, int count, uint8_t type, bool reverse);
 		void FillTile(AdjacentTiles* t);
 		void RebuildCompartments();
 		Compartment* CompartmentAt(glm::vec2 world);

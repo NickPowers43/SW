@@ -5,7 +5,7 @@
 
 namespace SW_Server
 {
-	Player::Player()
+	Player::Player(websocketpp::connection_hdl hdl) : hdl(hdl)
 	{
 		Player::currentVessel = NULL;
 		Player::pos = glm::vec2(0.0f, 0.0f);

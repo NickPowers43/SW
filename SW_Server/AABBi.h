@@ -1,7 +1,5 @@
 #pragma once
 
-#include "stdafx.h"
-
 namespace SW_Server
 {
 	class AABBi

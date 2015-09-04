@@ -4,34 +4,68 @@
 #include "stdafx.h"
 #include "Vessel.h"
 #include "StartingVessel.h"
+#include "NetworkReader.h"
 
 
 // Define a callback to handle incoming messages
 void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
-	std::cout << "on_message called with hdl: " << hdl.lock().get()
-		<< " and message: " << msg->get_payload()
-		<< std::endl;
 
-	// check for a special command to instruct the server to stop listening so
-	// it can be cleanly exited.
-	if (msg->get_payload() == "stop-listening") {
-		s->stop_listening();
-		return;
-	}
+	Player* player = players[hdl._Get()];
 
-	try {
-		s->send(hdl, msg->get_payload(), msg->get_opcode());
+	if (player)
+	{
+		NetworkReader nr((void*)msg->get_raw_payload().c_str(), msg->get_raw_payload().size());
+
+		while (nr.Position() < nr.size)
+		{
+			ClientMessageType::ClientMessageType mt = (ClientMessageType::ClientMessageType)nr.ReadMessageType();
+
+			switch (mt)
+			{
+			case ClientMessageType::RequestChunk:
+				if (player->currentVessel)
+					player->currentVessel->ReadChunkRequestMessage(player, &nr);
+				//else
+					//throw std::exception("cannot read chunk request message for player not assigned a vessel");
+				break;
+			default:
+				break;
+			}
+
+			try	{
+				
+			}
+			catch (std::exception e) {
+				cout << e.what();
+				//Disconnect player
+				break;
+			}
+		}
 	}
-	catch (const websocketpp::lib::error_code& e) {
-		std::cout << "Echo failed because: " << e
-			<< "(" << e.message() << ")" << std::endl;
-	}
+	//std::cout << "on_message called with hdl: " << hdl.lock().get()
+	//	<< " and message: " << msg->get_payload()
+	//	<< std::endl;
+
+	//// check for a special command to instruct the server to stop listening so
+	//// it can be cleanly exited.
+	//if (msg->get_payload() == "stop-listening") {
+	//	s->stop_listening();
+	//	return;
+	//}
+
+	//try {
+	//	s->send(hdl, msg->get_payload(), msg->get_opcode());
+	//}
+	//catch (const websocketpp::lib::error_code& e) {
+	//	std::cout << "Echo failed because: " << e
+	//		<< "(" << e.message() << ")" << std::endl;
+	//}
 }
 
 // Define a callback to handle new connections
 void on_open(websocketpp::connection_hdl hdl) {
 	
-	Player* player = new Player();
+	Player* player = new Player(hdl);
 	players[hdl._Get()] = player;
 	
 	if (startingVessels.size() < 1)
