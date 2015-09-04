@@ -145,6 +145,7 @@ function VesselChunk(index, version) {
     this.modified = true;
     this.index = index;
     this.version = version;
+    this.data = [];
 }
 
 function Player(pos) {
@@ -1105,7 +1106,7 @@ var UpdateChunks = function(reset) {
         
         var buffer = new DataView(new ArrayBuffer(1 << 14));
         var byteOffset = 0;
-        buffer.setUint8(byteOffset, 0);//ClientMessageType::RequestChunk
+        buffer.setUint8(byteOffset, ClientMessageType.RequestChunk);
         byteOffset += 1;
         var requestLength = 0;
         var lengthOffset = byteOffset;
@@ -1121,10 +1122,10 @@ var UpdateChunks = function(reset) {
 
                 var temp2 = currentVessel.chunks.TryGet(temp.x, temp.y);
 
-                buffer.setInt32(byteOffset, temp.x);
-                byteOffset += 4;
-                buffer.setInt32(byteOffset, temp.y);
-                byteOffset += 4;
+                buffer.setInt16(byteOffset, temp.x);
+                byteOffset += 2;
+                buffer.setInt16(byteOffset, temp.y);
+                byteOffset += 2;
 
                 if (temp2 != null) {
                     buffer.setUint32(byteOffset, temp2.version);
@@ -1135,8 +1136,10 @@ var UpdateChunks = function(reset) {
                 }
             }
         }
+        
+        console.log("Requesting " + requestLength + " chunks from server");
 
-        buffer.setInt8(lengthOffset, requestLength);
+        buffer.setUint8(lengthOffset, requestLength);
         Send(buffer.buffer.slice(0, byteOffset));
         
     } else {
@@ -1147,7 +1150,7 @@ var UpdateChunks = function(reset) {
             
             var buffer = new DataView(new ArrayBuffer(1 << 14));
             var byteOffset = 0;
-            buffer.setUint8(byteOffset, 0);//ClientMessageType::RequestChunk
+            buffer.setUint8(byteOffset, ClientMessageType.RequestChunk);
             byteOffset += 1;
             var requestLength = 0;
             var lengthOffset = byteOffset;
@@ -1165,10 +1168,10 @@ var UpdateChunks = function(reset) {
                         
                         var temp2 = currentVessel.chunks.TryGet(temp.x, temp.y);
 
-                        buffer.setInt32(byteOffset, temp.x);
-                        byteOffset += 4;
-                        buffer.setInt32(byteOffset, temp.y);
-                        byteOffset += 4;
+                        buffer.setInt16(byteOffset, temp.x);
+                        byteOffset += 2;
+                        buffer.setInt16(byteOffset, temp.y);
+                        byteOffset += 2;
 
                         if (temp2 != null) {
                             buffer.setUint32(byteOffset, temp2.version);
@@ -1181,7 +1184,7 @@ var UpdateChunks = function(reset) {
                 }
             }
             
-            buffer.setInt8(lengthOffset, requestLength);
+            buffer.setUint8(lengthOffset, requestLength);
             Send(buffer.buffer.slice(0, byteOffset));
         }
     }
@@ -1225,13 +1228,11 @@ function render() {
                             
                             console.log("Received chunk at (" + x + ", " + y + ")");
                             
-                            var tile_count = message.getUInt16(byteOffset);
+                            var tile_count = message.getUint16(byteOffset);
                             byteOffset += 2;
-                            for (var j = 0; i < tile_count; j++) {
-                                x = message.getUint8(byteOffset);
-                                byteOffset += 1;
-                                y = message.getUint8(byteOffset);
-                                byteOffset += 1;
+                            for (var j = 0; j < tile_count; j++) {
+                                var tileLinearI = message.getUint16(byteOffset);
+                                byteOffset += 2;
                                 
                                 var flags = message.getUint16(byteOffset);
                                 byteOffset += 2;
@@ -1248,7 +1249,7 @@ function render() {
                                 
                                 var tile = new VesselTile(flags, wallMask, c0, c1, floor0, floor1);
                                 
-                                chunk.SetTile(new Vec2i(x, y), tile);
+                                chunk.SetTile(new Vec2i(tileLinearI % VesselChunkSize, tileLinearI / VesselChunkSize), tile);
                             }
                         }
                         

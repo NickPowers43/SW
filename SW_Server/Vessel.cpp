@@ -47,6 +47,7 @@ namespace SW_Server
 	void Vessel::ReadChunkRequestMessage(Player* player, NetworkReader* nr)
 	{
 		nw.Reset();
+		nw.Write((MessageType_t)ServerMessageType::SetChunk);
 		uint8_t* response_count = (uint8_t*)nw.cursor;
 		nw.Write((uint8_t)0);
 
@@ -55,7 +56,6 @@ namespace SW_Server
 		{
 			int16_t x = nr->ReadInt16();
 			int16_t y = nr->ReadInt16();
-
 			uint32_t version = nr->ReadUint32();
 
 			VesselChunk* vc = chunks.TryGet(glm::ivec2(x, y));
@@ -63,7 +63,7 @@ namespace SW_Server
 			{
 				if (version != vc->version)
 				{
-					*response_count++;
+					(*response_count)++;
 					vc->WriteSetChunkMessage(&nw);
 				}
 			}

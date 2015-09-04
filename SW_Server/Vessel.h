@@ -21,11 +21,6 @@ namespace SW_Server
 		glm::ivec2(-2, 1)
 	};
 
-	static int PLAYER_CHUNK_RANGE = 2;
-	static int CHUNK_SIZE_POW = 3;
-	static int CHUNK_SIZE = 1 << CHUNK_SIZE_POW;
-	static int CHUNK_DATA_COUNT = CHUNK_SIZE * CHUNK_SIZE;
-	static int CHUNK_OFFSET_MASK = (1 << (CHUNK_SIZE_POW + 1)) - 1;
 
 	static float WALL_RADIUS = 0.15f;
 

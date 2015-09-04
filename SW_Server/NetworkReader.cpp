@@ -30,92 +30,92 @@ namespace SW_Server
 	{
 	}
 
-	uint8_t NetworkReader::ReadMessageType()
+	MessageType_t NetworkReader::ReadMessageType()
 	{
-		if ((size - Position()) <= 1)
+		if ((size - Position()) >= 1)
 		{
-			return net_read<uint8_t>(&cursor);
+			return net_read<MessageType_t>(&cursor);
 		}
 		else
 		{
-			throw std::exception();
+			throw std::exception("Read buffer overflown");
 		}
 	}
 	uint8_t NetworkReader::ReadUint8()
 	{
-		if ((size - Position()) <= 1)
+		if ((size - Position()) >= 1)
 		{
 			return net_read<uint8_t>(&cursor);
 		}
 		else
 		{
-			throw std::exception();
+			throw std::exception("Read buffer overflown");
 		}
 	}
 	uint16_t NetworkReader::ReadUint16()
 	{
-		if ((size - Position()) <= 2)
+		if ((size - Position()) >= 2)
 		{
 			return net_read<uint16_t>(&cursor);
 		}
 		else
 		{
-			throw std::exception();
+			throw std::exception("Read buffer overflown");
 		}
 	}
 	uint32_t NetworkReader::ReadUint32()
 	{
-		if ((size - Position()) <= 4)
+		if ((size - Position()) >= 4)
 		{
 			return net_read<uint32_t>(&cursor);
 		}
 		else
 		{
-			throw std::exception();
+			throw std::exception("Read buffer overflown");
 		}
 	}
 	int8_t NetworkReader::ReadInt8()
 	{
-		if ((size - Position()) <= 1)
+		if ((size - Position()) >= 1)
 		{
 			return net_read<uint32_t>(&cursor);
 		}
 		else
 		{
-			throw std::exception();
+			throw std::exception("Read buffer overflown");
 		}
 	}
 	int16_t NetworkReader::ReadInt16()
 	{
-		if ((size - Position()) <= 2)
+		if ((size - Position()) >= 2)
 		{
 			return net_read<int16_t>(&cursor);
 		}
 		else
 		{
-			throw std::exception();
+			throw std::exception("Read buffer overflown");
 		}
 	}
 	int32_t NetworkReader::ReadInt32()
 	{
-		if ((size - Position()) <= 4)
+		if ((size - Position()) >= 4)
 		{
 			return net_read<int32_t>(&cursor);
 		}
 		else
 		{
-			throw std::exception();
+			throw std::exception("Read buffer overflown");
 		}
 	}
 	float NetworkReader::ReadSingle()
 	{
-		if ((size - Position()) <= 4)
+		if ((size - Position()) >= 4)
 		{
 			return net_read<float>(&cursor);
 		}
 		else
 		{
-			throw std::exception();
+			throw std::exception("Read buffer overflown");
 		}
 	}
 

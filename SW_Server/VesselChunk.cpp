@@ -24,16 +24,18 @@ namespace SW_Server
 
 	void VesselChunk::WriteSetChunkMessage(NetworkWriter* nw)
 	{
-		nw->Write((uint16_t)index.x);
-		nw->Write((uint16_t)index.y);
+		nw->Write((int16_t)index.x);
+		nw->Write((int16_t)index.y);
+		nw->Write((uint32_t)version);
 
 		uint16_t* tile_count = (uint16_t*)nw->cursor;
 		nw->Write((uint16_t)0);
-		for (size_t i = 0; i < CHUNK_SIZE * CHUNK_SIZE; i++)
+		for (size_t i = 0; i < CHUNK_DATA_COUNT; i++)
 		{
 			if (data[i])
 			{
-				*tile_count++;
+				(*tile_count)++;
+				nw->Write((uint16_t)i);
 				data[i]->WriteSetChunkMessage(nw);
 			}
 		}

@@ -9,6 +9,10 @@ namespace SW_Server
 	{
 		flags = 0;
 		wallMask = 0;
+		floor0 = FloorType::None;
+		floor1 = FloorType::None;
+		c0 = NULL;
+		c1 = NULL;
 	}
 
 
@@ -18,12 +22,28 @@ namespace SW_Server
 
 	void VesselTile::WriteSetChunkMessage(NetworkWriter* nw)
 	{
-		nw->Write(flags);
-		nw->Write(wallMask);
-		nw->Write(floor0);
-		nw->Write(floor1);
-		nw->Write(c0->index);
-		nw->Write(c1->index);
+		nw->Write((uint16_t)flags);
+		nw->Write((uint8_t)wallMask);
+		nw->Write((uint8_t)floor0);
+		nw->Write((uint8_t)floor1);
+
+		if (c0)
+		{
+			nw->Write((uint32_t)c0->index);
+		}
+		else
+		{
+			nw->Write((uint32_t)((1 << 33) - 1));
+		}
+
+		if (c1)
+		{
+			nw->Write((uint32_t)c1->index);
+		}
+		else
+		{
+			nw->Write(((uint32_t)(1 << 33) - 1));
+		}
 
 	}
 	int VesselTile::WallCount()

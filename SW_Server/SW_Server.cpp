@@ -18,22 +18,20 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 
 		while (nr.Position() < nr.size)
 		{
-			ClientMessageType::ClientMessageType mt = (ClientMessageType::ClientMessageType)nr.ReadMessageType();
-
-			switch (mt)
-			{
-			case ClientMessageType::RequestChunk:
-				if (player->currentVessel)
-					player->currentVessel->ReadChunkRequestMessage(player, &nr);
-				//else
-					//throw std::exception("cannot read chunk request message for player not assigned a vessel");
-				break;
-			default:
-				break;
-			}
-
 			try	{
-				
+				MessageType_t mt = (MessageType_t)nr.ReadMessageType();
+
+				switch (mt)
+				{
+				case ClientMessageType::RequestChunk:
+					if (player->currentVessel)
+						player->currentVessel->ReadChunkRequestMessage(player, &nr);
+					//else
+					//throw std::exception("cannot read chunk request message for player not assigned a vessel");
+					break;
+				default:
+					break;
+				}
 			}
 			catch (std::exception e) {
 				cout << e.what();

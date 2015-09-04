@@ -30,6 +30,12 @@ typedef server::message_ptr message_ptr;
 
 namespace SW_Server
 {
+	static int PLAYER_CHUNK_RANGE = 2;
+	static int CHUNK_SIZE_POW = 3;
+	static int CHUNK_SIZE = 1 << CHUNK_SIZE_POW;
+	static int CHUNK_DATA_COUNT = CHUNK_SIZE * CHUNK_SIZE;
+	static int CHUNK_OFFSET_MASK = (1 << (CHUNK_SIZE_POW + 1)) - 1;
+
 	class Vessel;
 	class Player;
 	class StartingVessel;
@@ -116,3 +122,4 @@ namespace FloorType
 	};
 }
 
+typedef uint8_t MessageType_t;
