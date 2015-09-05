@@ -4,7 +4,7 @@
 
 namespace SW_Server
 {
-	Compartment::Compartment(uint32_t index) : aabb(glm::ivec2(0, 0), glm::ivec2(0, 0))
+	Compartment::Compartment(CompartmentIndex_t index) : aabb(glm::ivec2(0, 0), glm::ivec2(0, 0))
 	{
 		isPtr = false;
 		ptrValue = NULL;

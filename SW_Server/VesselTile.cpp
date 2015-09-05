@@ -29,20 +29,20 @@ namespace SW_Server
 
 		if (c0)
 		{
-			nw->Write((uint32_t)c0->index);
+			nw->Write((CompartmentIndex_t)c0->index);
 		}
 		else
 		{
-			nw->Write((uint32_t)((1 << 33) - 1));
+			nw->Write((CompartmentIndex_t)((1 << 33) - 1));
 		}
 
 		if (c1)
 		{
-			nw->Write((uint32_t)c1->index);
+			nw->Write((CompartmentIndex_t)c1->index);
 		}
 		else
 		{
-			nw->Write(((uint32_t)(1 << 33) - 1));
+			nw->Write(((CompartmentIndex_t)(1 << 33) - 1));
 		}
 
 	}

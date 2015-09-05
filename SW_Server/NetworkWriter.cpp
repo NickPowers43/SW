@@ -28,4 +28,12 @@ namespace SW_Server
 	{
 		return ((size_t)cursor - (size_t)buffer);
 	}
+	size_t NetworkWriter::Remaining()
+	{
+		return (capacity - Position());
+	}
+	std::string NetworkWriter::StringCopy()
+	{
+		return std::string((char*)buffer, Position());
+	}
 }

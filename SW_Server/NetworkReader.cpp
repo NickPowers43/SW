@@ -15,14 +15,36 @@ template<typename T> T net_read(void** buffer)
 	return output;
 }
 
+void swap_16(void* val)
+{
+	char temp = *(char*)val;
+	char* temp0 = (char*)((size_t)val + 1);
+	*(char*)val = *temp0;
+	*temp0 = temp;
+}
+
+void swap_32(void* val)
+{
+	char temp = *(char*)val;
+	char* temp0 = (char*)((size_t)val + 3);
+	*(char*)val = *temp0;
+	*temp0 = temp;
+
+	temp = *(char*)((size_t)val + 1);
+	temp0 = (char*)((size_t)val + 2);
+	*(char*)((size_t)val + 1) = *temp0;
+	*temp0 = temp;
+}
+
 namespace SW_Server
 {
 
-	NetworkReader::NetworkReader(void* buffer, size_t size)
+	NetworkReader::NetworkReader(void* buffer, size_t size, bool littleEndian)
 	{
 		NetworkReader::buffer = buffer;
 		NetworkReader::cursor = buffer;
 		NetworkReader::size = size;
+		NetworkReader::littleEndian = littleEndian;
 	}
 
 
@@ -38,7 +60,7 @@ namespace SW_Server
 		}
 		else
 		{
-			throw std::exception("Read buffer overflown");
+			throw std::exception("End of read buffer reached");
 		}
 	}
 	uint8_t NetworkReader::ReadUint8()
@@ -49,29 +71,39 @@ namespace SW_Server
 		}
 		else
 		{
-			throw std::exception("Read buffer overflown");
+			throw std::exception("End of read buffer reached");
 		}
 	}
 	uint16_t NetworkReader::ReadUint16()
 	{
 		if ((size - Position()) >= 2)
 		{
-			return net_read<uint16_t>(&cursor);
+			uint16_t val = net_read<uint16_t>(&cursor);
+
+			if (littleEndian)
+				swap_16((void*)&val);
+
+			return val;
 		}
 		else
 		{
-			throw std::exception("Read buffer overflown");
+			throw std::exception("End of read buffer reached");
 		}
 	}
 	uint32_t NetworkReader::ReadUint32()
 	{
 		if ((size - Position()) >= 4)
 		{
-			return net_read<uint32_t>(&cursor);
+			uint32_t val = net_read<uint32_t>(&cursor);
+
+			if (littleEndian)
+				swap_16((void*)&val);
+
+			return val;
 		}
 		else
 		{
-			throw std::exception("Read buffer overflown");
+			throw std::exception("End of read buffer reached");
 		}
 	}
 	int8_t NetworkReader::ReadInt8()
@@ -82,40 +114,55 @@ namespace SW_Server
 		}
 		else
 		{
-			throw std::exception("Read buffer overflown");
+			throw std::exception("End of read buffer reached");
 		}
 	}
 	int16_t NetworkReader::ReadInt16()
 	{
 		if ((size - Position()) >= 2)
 		{
-			return net_read<int16_t>(&cursor);
+			int16_t val = net_read<int16_t>(&cursor);
+
+			if (littleEndian)
+				swap_16((void*)&val);
+
+			return val;
 		}
 		else
 		{
-			throw std::exception("Read buffer overflown");
+			throw std::exception("End of read buffer reached");
 		}
 	}
 	int32_t NetworkReader::ReadInt32()
 	{
 		if ((size - Position()) >= 4)
 		{
-			return net_read<int32_t>(&cursor);
+			int32_t val = net_read<int32_t>(&cursor);
+
+			if (littleEndian)
+				swap_32((void*)&val);
+
+			return val;
 		}
 		else
 		{
-			throw std::exception("Read buffer overflown");
+			throw std::exception("End of read buffer reached");
 		}
 	}
 	float NetworkReader::ReadSingle()
 	{
 		if ((size - Position()) >= 4)
 		{
-			return net_read<float>(&cursor);
+			float val = net_read<float>(&cursor);
+
+			if (littleEndian)
+				swap_32((void*)&val);
+
+			return val;
 		}
 		else
 		{
-			throw std::exception("Read buffer overflown");
+			throw std::exception("End of read buffer reached");
 		}
 	}
 

@@ -9,13 +9,13 @@ namespace SW_Server
 	{
 	public:
 
-		uint32_t index;
+		CompartmentIndex_t index;
 		AABBi aabb;
 		float area;
 		float pressure;
 		float oxygen;
 
-		Compartment(uint32_t index);
+		Compartment(CompartmentIndex_t index);
 		~Compartment();
 
 		Compartment* Instance();

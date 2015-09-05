@@ -4,8 +4,6 @@
 #include "NetworkReader.h"
 #include "NetworkWriter.h"
 
-NetworkWriter nw (1 << 14);
-
 namespace SW_Server
 {
 	uint32_t Vessel::nextIndex = 0;
@@ -44,12 +42,12 @@ namespace SW_Server
 		return messageBytesCount;
 	}
 
-	void Vessel::ReadChunkRequestMessage(Player* player, NetworkReader* nr)
+	void Vessel::ReadChunkRequestMessage(Player* player, NetworkWriter* nw, NetworkReader* nr)
 	{
-		nw.Reset();
-		nw.Write((MessageType_t)ServerMessageType::SetChunk);
-		uint8_t* response_count = (uint8_t*)nw.cursor;
-		nw.Write((uint8_t)0);
+		nw->Reset();
+		nw->Write((MessageType_t)ServerMessageType::SetChunk);
+		uint8_t* response_count = (uint8_t*)nw->cursor;
+		nw->Write((uint8_t)0);
 
 		uint8_t chunk_count = nr->ReadUint8();
 		for (size_t i = 0; i < chunk_count; i++)
@@ -58,30 +56,51 @@ namespace SW_Server
 			int16_t y = nr->ReadInt16();
 			uint32_t version = nr->ReadUint32();
 
+			cout << "Client requesting chunk at (" << x << ", " << y << ")\n";
+
 			VesselChunk* vc = chunks.TryGet(glm::ivec2(x, y));
 			if (vc)
 			{
 				if (version != vc->version)
 				{
+					if (nw->Remaining() < MAX_VESSELCHUNK_MESSAGE_SIZE)
+					{
+						//flush current buffer
+						try
+						{
+							myServer.send(player->hdl, nw->StringCopy(), websocketpp::frame::opcode::binary);
+						}
+						catch (const websocketpp::lib::error_code& e) {
+							std::cout << "Failed to flush buffer because: " << e << "(" << e.message() << ")" << std::endl;
+							throw websocketpp::lib::error_code(e);
+						}
+						//start a new message
+						nw->Reset();
+						nw->Write((MessageType_t)ServerMessageType::SetChunk);
+						response_count = (uint8_t*)nw->cursor;
+						nw->Write((uint8_t)0);
+					}
+
 					(*response_count)++;
-					vc->WriteSetChunkMessage(&nw);
+					vc->WriteSetChunkMessage(nw);
 				}
 			}
 		}
 
 		if (*response_count > 0)
 		{
-			try {
-				myServer.send(player->hdl, nw.buffer, nw.Position(), websocketpp::frame::opcode::binary);
+			try
+			{
+				myServer.send(player->hdl, nw->StringCopy(), websocketpp::frame::opcode::binary);
 			}
 			catch (const websocketpp::lib::error_code& e) {
-				std::cout << "Failed to send message " << std::endl;
-				//TODO: disconnect playersOnBoard[i]
+				std::cout << "Failed to flush buffer because: " << e << "(" << e.message() << ")" << std::endl;
+				throw websocketpp::lib::error_code(e);
 			}
 		}
 	}
 
-	void Vessel::AddPlayerVessel(Player* player, glm::vec2 position)
+	void Vessel::AddPlayerVessel(Player* player, NetworkWriter* nw, glm::vec2 position)
 	{
 		player->pos = position;
 		player->chunkI = WorldToChunkI(position);
@@ -89,14 +108,14 @@ namespace SW_Server
 
 		//tell onBoardPlayers to add player
 
-		nw.Reset();
-		nw.Write((uint8_t)ServerMessageType::AddPlayer);
-		nw.Write((float)player->pos.x);
-		nw.Write((float)player->pos.y);
+		nw->Reset();
+		nw->Write((uint8_t)ServerMessageType::AddPlayer);
+		nw->Write((float)player->pos.x);
+		nw->Write((float)player->pos.y);
 		for (size_t i = 0; i < playersOnBoard.size(); i++)
 		{
 			try {
-				myServer.send(playersOnBoard[i]->hdl, nw.buffer, nw.Position(), websocketpp::frame::opcode::binary);
+				myServer.send(playersOnBoard[i]->hdl, nw->buffer, nw->Position(), websocketpp::frame::opcode::binary);
 			}
 			catch (const websocketpp::lib::error_code& e) {
 				std::cout << "Failed to send message " << std::endl;
@@ -104,21 +123,21 @@ namespace SW_Server
 			}
 		}
 
-		nw.Reset();
-		nw.Write((uint8_t)ServerMessageType::MakeVesselActive);
-		nw.Write((uint32_t)index);
-		nw.Write((uint16_t)playersOnBoard.size());
+		nw->Reset();
+		nw->Write((uint8_t)ServerMessageType::MakeVesselActive);
+		nw->Write((uint32_t)index);
+		nw->Write((uint16_t)playersOnBoard.size());
 		for (size_t i = 0; i < playersOnBoard.size(); i++)
 		{
-			nw.Write((float)playersOnBoard[i]->pos.x);
-			nw.Write((float)playersOnBoard[i]->pos.y);
+			nw->Write((float)playersOnBoard[i]->pos.x);
+			nw->Write((float)playersOnBoard[i]->pos.y);
 		}
 		//write information for yourself
-		nw.Write((float)player->pos.x);
-		nw.Write((float)player->pos.y);
+		nw->Write((float)player->pos.x);
+		nw->Write((float)player->pos.y);
 
 		try {
-			myServer.send(player->hdl, nw.buffer, nw.Position(), websocketpp::frame::opcode::binary);
+			myServer.send(player->hdl, nw->buffer, nw->Position(), websocketpp::frame::opcode::binary);
 		}
 		catch (const websocketpp::lib::error_code& e) {
 			std::cout << "Failed to send message " << std::endl;
@@ -160,9 +179,9 @@ namespace SW_Server
 			}
 
 			//if (GameManager.Instance.Initialized) {
-			//	nw.SeekZero();
-			//	nw.Write((ushort)ServerMessageType.RemovePlayer);
-			//	nw.Write((ushort)id);
+			//	nw->SeekZero();
+			//	nw->Write((ushort)ServerMessageType.RemovePlayer);
+			//	nw->Write((ushort)id);
 			//	for (int i = 0; i < playersOnBoard.Count; i++) {
 			//		//send
 			//	}

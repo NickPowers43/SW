@@ -5,7 +5,7 @@ namespace SW_Server
 	class NetworkReader
 	{
 	public:
-		NetworkReader(void* buffer, size_t size);
+		NetworkReader(void* buffer, size_t size, bool littleEndian);
 		~NetworkReader();
 
 		uint8_t ReadMessageType();
@@ -17,6 +17,7 @@ namespace SW_Server
 		int32_t ReadInt32();
 		float ReadSingle();
 
+		bool littleEndian;
 		void* buffer;
 		void* cursor;
 		size_t size;

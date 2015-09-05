@@ -13,7 +13,7 @@ namespace SW_Server
 		~StartingVessel();
 
 		VesselObject* PlaceObject(ObjectType::ObjectType type, glm::vec2 location) override;
-		void AddPlayer(Player* player);
+		void AddPlayer(NetworkWriter* nw, Player* player);
 
 		void Initialize();
 

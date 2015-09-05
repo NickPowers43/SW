@@ -95,6 +95,8 @@ namespace SW_Server
 		PlaceObject(ObjectType::ObjectType::Spawner, glm::vec2(0.0f, 0.0f));
 
 		RebuildCompartments();
+
+		SetCompartmentFloor(FloorType::Basic, CompartmentAt(glm::vec2(0.0f, 0.0f)));
 	}
 	VesselObject* StartingVessel::PlaceObject(ObjectType::ObjectType type, glm::vec2 location)
 	{
@@ -105,8 +107,8 @@ namespace SW_Server
 		}
 		return obj;
 	}
-	void StartingVessel::AddPlayer(Player* player)
+	void StartingVessel::AddPlayer(NetworkWriter* nw, Player* player)
 	{
-		Vessel::AddPlayerVessel(player, spawnPoints[0]->pos);
+		Vessel::AddPlayerVessel(player, nw, spawnPoints[0]->pos);
 	}
 }

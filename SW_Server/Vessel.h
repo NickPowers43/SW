@@ -38,8 +38,8 @@ namespace SW_Server
 		int GetMessageBytes(void* & ref);
 
 		void InstantiateNearbyChunks(Player* player);
-		void ReadChunkRequestMessage(Player* player, NetworkReader* nr);
-		void AddPlayerVessel(Player* player, glm::vec2 position);
+		void ReadChunkRequestMessage(Player* player, NetworkWriter* nw, NetworkReader* nr);
+		void AddPlayerVessel(Player* player, NetworkWriter* nw, glm::vec2 position);
 		void RemovePlayer(Player* player);
 		virtual void BuildFoundation(glm::ivec2 origin, glm::ivec2 size);
 		//virtual void PlaceBlock(uint16_t type, glm::ivec2 location);

@@ -30,11 +30,31 @@ typedef server::message_ptr message_ptr;
 
 namespace SW_Server
 {
+	class VesselTile;
+	typedef uint8_t MessageType_t;
+	typedef uint16_t TileFlag_t;
+	typedef uint8_t FloorType_t;
+	typedef uint8_t WallType_t;
+	typedef uint8_t WallTypeMask_t;
+	typedef uint32_t CompartmentIndex_t;
+
 	static int PLAYER_CHUNK_RANGE = 2;
 	static int CHUNK_SIZE_POW = 3;
 	static int CHUNK_SIZE = 1 << CHUNK_SIZE_POW;
 	static int CHUNK_DATA_COUNT = CHUNK_SIZE * CHUNK_SIZE;
 	static int CHUNK_OFFSET_MASK = (1 << (CHUNK_SIZE_POW + 1)) - 1;
+
+	static int VESSEL_TILE_MESSAGE_SIZE = 
+		sizeof(uint16_t) + /*index*/
+		sizeof(TileFlag_t) + 
+		sizeof(WallTypeMask_t) + 
+		(sizeof(FloorType_t) * 2) + 
+		(sizeof(CompartmentIndex_t) * 2);
+	static int MAX_VESSELCHUNK_MESSAGE_SIZE = 
+		(sizeof(int16_t) * 2) + /*index*/
+		sizeof(uint32_t) + /*version*/
+		sizeof(uint16_t) + /*tile_count*/
+		(CHUNK_DATA_COUNT * VESSEL_TILE_MESSAGE_SIZE) /*tiles*/;
 
 	class Vessel;
 	class Player;
@@ -59,7 +79,8 @@ namespace ServerMessageType
 		RemovePlayer = 3,
 		AddPlayer = 4,
 		AddYourself = 5,
-		MakeVesselActive = 6
+		MakeVesselActive = 6,
+		PingMessage = 7
 	};
 }
 
@@ -68,7 +89,8 @@ namespace ClientMessageType
 	enum ClientMessageType : uint8_t {
 		RequestChunk = 0,
 		Inputs = 1,
-		FillAt = 2
+		FillAt = 2,
+		PingMessageResponse = 3
 	};
 }
 
@@ -122,4 +144,4 @@ namespace FloorType
 	};
 }
 
-typedef uint8_t MessageType_t;
+
