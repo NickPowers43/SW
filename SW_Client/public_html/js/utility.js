@@ -66,6 +66,7 @@ var messages_out = [];
 var messages_in = [];
 
 //WebGL
+THREE.ImageUtils.crossOrigin = 'anonymous';
 var floorTexResolution = 256.0;
 var renderer = new THREE.WebGLRenderer();
 renderer.setSize( 800, 600 );
@@ -148,6 +149,7 @@ function VesselChunk(index, version) {
     this.index = index;
     this.version = version;
     this.data = [];
+    this.mesh = null;
 }
 
 function Player(pos) {
@@ -284,56 +286,54 @@ var AppendMeshData = function(floorMesh, vertices, uv, indices, offset) {
 var AddTriangle = function(i) {
     var start = i.length;
     i.push(start + 0);
-    i.push(start + 1);
     i.push(start + 2);
+    i.push(start + 1);
 };
 
 var AddQuad = function(i) {
     var start = i.length;
     i.push(start + 0);
-    i.push(start + 1);
     i.push(start + 2);
     i.push(start + 1);
+    i.push(start + 1);
+    i.push(start + 2);
     i.push(start + 3);
-    i.push(start + 2);
 };
 
 var GenerateBaseVertices = function(a) {
     
-    output = [];
+    var output = [];
     
+    //0
     output.push(new PosUVPair(
         new THREE.Vector3(0.0,0.0,0.0),
         new THREE.Vector2(a.x, a.y)));
-    
+    //1
     output.push(new PosUVPair(
         new THREE.Vector3(0.0,1.0,0.0),
         new THREE.Vector2(a.x, a.y + a.height)));
-    
+    //2
     output.push(new PosUVPair(
         new THREE.Vector3(1.0,0.0,0.0),
         new THREE.Vector2(a.x + a.width, a.y)));
-    
+    //3
     output.push(new PosUVPair(
         new THREE.Vector3(1.0,1.0,0.0),
         new THREE.Vector2(a.x + a.width, a.y + a.height)));
     
+    //4
     output.push(new PosUVPair(
         new THREE.Vector3(0.0,0.5,0.0),
         new THREE.Vector2(a.x, a.y + (a.height * 0.5))));
-    
+    //5
     output.push(new PosUVPair(
         new THREE.Vector3(0.5,1.0,0.0),
         new THREE.Vector2(a.x + (a.width * 0.5), a.y + a.height)));
-    
+    //6
     output.push(new PosUVPair(
         new THREE.Vector3(0.5,0.0,0.0),
         new THREE.Vector2(a.x + (a.width * 0.5), a.y)));
-    
-    output.push(new PosUVPair(
-        new THREE.Vector3(0.0,0.0,0.0),
-        new THREE.Vector2(a.x, a.y)));
-    
+    //7
     output.push(new PosUVPair(
         new THREE.Vector3(1.0,0.5,0.0),
         new THREE.Vector2(a.x + a.width, a.y + (a.height * 0.5))));
@@ -355,190 +355,171 @@ var GenerateMeshes = function(type, rightFloor, none0, leftFloor, none1) {
     var iTemp = [];
     var vTemp = [];
     
-    switch (true) {
-        case type == WallType.None:
-            //wall type None (simple quad)
-            if (!none0) {
-                vTemp.push(v0[0]);
-                vTemp.push(v0[1]);
-                vTemp.push(v0[2]);
-                vTemp.push(v0[3]);
-                AddQuad(iTemp);
-            }
-            var tempFloorMesh = new FloorMesh(vTemp, iTemp);
-            output.push(tempFloorMesh);
-            break;
-        case type == WallType.TwoByOne:
-            if (!none0) {
-                vTemp.push(v0[0]);
-                vTemp.push(v0[7]);
-                vTemp.push(v0[2]);
-                AddTriangle(iTemp);
-            }
-            if (!none1) {
-                vTemp.push(v1[0]);
-                vTemp.push(v1[1]);
-                vTemp.push(v1[7]);
-                vTemp.push(v1[3]);
-                AddQuad(iTemp);
-            }
-            var tempFloorMesh = new FloorMesh(vTemp, iTemp);
-            output.push(tempFloorMesh);
-            vTemp = [];
-            iTemp = [];
-            if (!none0) {
-                vTemp.push(v0[0]);
-                vTemp.push(v0[4]);
-                vTemp.push(v0[2]);
-                vTemp.push(v0[3]);
-                AddQuad(iTemp);
-            }
-            if (!none1) {
-                vTemp.push(v1[4]);
-                vTemp.push(v1[1]);
-                vTemp.push(v1[3]);
-                AddTriangle(iTemp);
-            }
-            tempFloorMesh = new FloorMesh(vTemp, iTemp);
-            output.push(tempFloorMesh);
-            break;
-        case type == WallType.OneByOne:
-            if (!none0) {
-                vTemp.push(v0[0]);
-                vTemp.push(v0[3]);
-                vTemp.push(v0[2]);
-                AddTriangle(iTemp);
-            }
-            if (!none1) {
-                vTemp.push(v1[0]);
-                vTemp.push(v1[1]);
-                vTemp.push(v1[3]);
-                AddTriangle(iTemp);
-            }
-            var tempFloorMesh = new FloorMesh(vTemp, iTemp);
-            output.push(tempFloorMesh);
-            break;
-        case type == WallType.OneByTwo:
-            if (!none0) {
-                vTemp.push(v0[0]);
-                vTemp.push(v0[5]);
-                vTemp.push(v0[2]);
-                vTemp.push(v0[3]);
-                AddQuad(iTemp);
-            }
-            if (!none1) {
-                vTemp.push(v1[0]);
-                vTemp.push(v1[1]);
-                vTemp.push(v1[5]);
-                AddTriangle(iTemp);
-            }
-            var tempFloorMesh = new FloorMesh(vTemp, iTemp);
-            output.push(tempFloorMesh);
-            vTemp = [];
-            iTemp = [];
-            if (!none0) {
-                vTemp.push(v0[6]);
-                vTemp.push(v0[3]);
-                vTemp.push(v0[2]);
-                AddTriangle(iTemp);
-            }
-            if (!none1) {
-                vTemp.push(v1[0]);
-                vTemp.push(v1[1]);
-                vTemp.push(v1[6]);
-                vTemp.push(v1[3]);
-                AddQuad(iTemp);
-            }
-            tempFloorMesh = new FloorMesh(vTemp, iTemp);
-            output.push(tempFloorMesh);
-            break;
-        case type == WallType.OneByTwoFlipped:
-            if (!none0) {
-                vTemp.push(v0[2]);
-                vTemp.push(v0[5]);
-                vTemp.push(v0[3]);
-                AddTriangle(iTemp);
-            }
-            if (!none1) {
-                vTemp.push(v1[0]);
-                vTemp.push(v1[1]);
-                vTemp.push(v1[2]);
-                vTemp.push(v1[5]);
-                AddQuad(iTemp);
-            }
-            var tempFloorMesh = new FloorMesh(vTemp, iTemp);
-            output.push(tempFloorMesh);
-            vTemp = [];
-            iTemp = [];
-            if (!none0) {
-                vTemp.push(v0[6]);
-                vTemp.push(v0[1]);
-                vTemp.push(v0[2]);
-                vTemp.push(v0[3]);
-                AddQuad(iTemp);
-            }
-            if (!none1) {
-                vTemp.push(v1[0]);
-                vTemp.push(v1[1]);
-                vTemp.push(v1[6]);
-                AddTriangle(iTemp);
-            }
-            tempFloorMesh = new FloorMesh(vTemp, iTemp);
-            output.push(tempFloorMesh);
-            break;
-        case type == WallType.OneByOneFlipped:
-            //wall type None (simple quad)
-            if (!none0) {
-                vTemp.push(v0[2]);
-                vTemp.push(v0[1]);
-                vTemp.push(v0[3]);
-                AddTriangle(iTemp);
-            }
-            if (!none1) {
-                vTemp.push(v1[0]);
-                vTemp.push(v1[1]);
-                vTemp.push(v1[2]);
-                AddTriangle(iTemp);
-            }
-            var tempFloorMesh = new FloorMesh(vTemp, iTemp);
-            output.push(tempFloorMesh);
-            break;
-        case type == WallType.TwoByOneFlipped:
-            if (!none0) {
-                vTemp.push(v0[2]);
-                vTemp.push(v0[4]);
-                vTemp.push(v0[3]);
-                vTemp.push(v0[1]);
-                AddQuad(iTemp);
-            }
-            if (!none1) {
-                vTemp.push(v1[2]);
-                vTemp.push(v1[0]);
-                vTemp.push(v1[4]);
-                AddTriangle(iTemp);
-            }
-            var tempFloorMesh = new FloorMesh(vTemp, iTemp);
-            output.push(tempFloorMesh);
-            vTemp = [];
-            iTemp = [];
-            if (!none0) {
-                vTemp.push(v0[7]);
-                vTemp.push(v0[1]);
-                vTemp.push(v0[3]);
-                AddTriangle(iTemp);
-            }
-            if (!none1) {
-                vTemp.push(v1[2]);
-                vTemp.push(v1[0]);
-                vTemp.push(v1[7]);
-                vTemp.push(v1[1]);
-                AddQuad(iTemp);
-            }
-            tempFloorMesh = new FloorMesh(vTemp, iTemp);
-            output.push(tempFloorMesh);
-            break;
-        default:
-                return null;
+    if (type == WallType.None) {
+        //wall type None (simple quad)
+        if (!none0) {
+            vTemp.push(v0[0]);
+            vTemp.push(v0[1]);
+            vTemp.push(v0[2]);
+            vTemp.push(v0[3]);
+            AddQuad(iTemp);
+        }
+        output.push(new FloorMesh(vTemp, iTemp));
+    } else if (type == WallType.TwoByOne) {
+        if (!none0) {
+            vTemp.push(v0[0]);
+            vTemp.push(v0[7]);
+            vTemp.push(v0[2]);
+            AddTriangle(iTemp);
+        }
+        if (!none1) {
+            vTemp.push(v1[0]);
+            vTemp.push(v1[1]);
+            vTemp.push(v1[7]);
+            vTemp.push(v1[3]);
+            AddQuad(iTemp);
+        }
+        output.push(new FloorMesh(vTemp, iTemp));
+        vTemp = [];
+        iTemp = [];
+        if (!none0) {
+            vTemp.push(v0[0]);
+            vTemp.push(v0[4]);
+            vTemp.push(v0[2]);
+            vTemp.push(v0[3]);
+            AddQuad(iTemp);
+        }
+        if (!none1) {
+            vTemp.push(v1[4]);
+            vTemp.push(v1[1]);
+            vTemp.push(v1[3]);
+            AddTriangle(iTemp);
+        }
+        output.push(new FloorMesh(vTemp, iTemp));
+    } else if (type == WallType.OneByOne) {
+        if (!none0) {
+            vTemp.push(v0[0]);
+            vTemp.push(v0[3]);
+            vTemp.push(v0[2]);
+            AddTriangle(iTemp);
+        }
+        if (!none1) {
+            vTemp.push(v1[0]);
+            vTemp.push(v1[1]);
+            vTemp.push(v1[3]);
+            AddTriangle(iTemp);
+        }
+        output.push(new FloorMesh(vTemp, iTemp));
+    } else if (type == WallType.OneByTwo) {
+        if (!none0) {
+            vTemp.push(v0[0]);
+            vTemp.push(v0[5]);
+            vTemp.push(v0[2]);
+            vTemp.push(v0[3]);
+            AddQuad(iTemp);
+        }
+        if (!none1) {
+            vTemp.push(v1[0]);
+            vTemp.push(v1[1]);
+            vTemp.push(v1[5]);
+            AddTriangle(iTemp);
+        }
+        output.push(new FloorMesh(vTemp, iTemp));
+        vTemp = [];
+        iTemp = [];
+        if (!none0) {
+            vTemp.push(v0[6]);
+            vTemp.push(v0[3]);
+            vTemp.push(v0[2]);
+            AddTriangle(iTemp);
+        }
+        if (!none1) {
+            vTemp.push(v1[0]);
+            vTemp.push(v1[1]);
+            vTemp.push(v1[6]);
+            vTemp.push(v1[3]);
+            AddQuad(iTemp);
+        }
+        output.push(new FloorMesh(vTemp, iTemp));
+    } else if (type == WallType.OneByTwoFlipped) {
+        if (!none0) {
+            vTemp.push(v0[2]);
+            vTemp.push(v0[5]);
+            vTemp.push(v0[3]);
+            AddTriangle(iTemp);
+        }
+        if (!none1) {
+            vTemp.push(v1[0]);
+            vTemp.push(v1[1]);
+            vTemp.push(v1[2]);
+            vTemp.push(v1[5]);
+            AddQuad(iTemp);
+        }
+        output.push(new FloorMesh(vTemp, iTemp));
+        vTemp = [];
+        iTemp = [];
+        if (!none0) {
+            vTemp.push(v0[6]);
+            vTemp.push(v0[1]);
+            vTemp.push(v0[2]);
+            vTemp.push(v0[3]);
+            AddQuad(iTemp);
+        }
+        if (!none1) {
+            vTemp.push(v1[0]);
+            vTemp.push(v1[1]);
+            vTemp.push(v1[6]);
+            AddTriangle(iTemp);
+        }
+        output.push(new FloorMesh(vTemp, iTemp));
+    } else if (type == WallType.OneByOneFlipped) {
+        //wall type None (simple quad)
+        if (!none0) {
+            vTemp.push(v0[2]);
+            vTemp.push(v0[1]);
+            vTemp.push(v0[3]);
+            AddTriangle(iTemp);
+        }
+        if (!none1) {
+            vTemp.push(v1[0]);
+            vTemp.push(v1[1]);
+            vTemp.push(v1[2]);
+            AddTriangle(iTemp);
+        }
+        output.push(new FloorMesh(vTemp, iTemp));
+    } else if (type == WallType.TwoByOneFlipped) {
+        if (!none0) {
+            vTemp.push(v0[2]);
+            vTemp.push(v0[4]);
+            vTemp.push(v0[3]);
+            vTemp.push(v0[1]);
+            AddQuad(iTemp);
+        }
+        if (!none1) {
+            vTemp.push(v1[2]);
+            vTemp.push(v1[0]);
+            vTemp.push(v1[4]);
+            AddTriangle(iTemp);
+        }
+        output.push(new FloorMesh(vTemp, iTemp));
+        vTemp = [];
+        iTemp = [];
+        if (!none0) {
+            vTemp.push(v0[7]);
+            vTemp.push(v0[1]);
+            vTemp.push(v0[3]);
+            AddTriangle(iTemp);
+        }
+        if (!none1) {
+            vTemp.push(v1[2]);
+            vTemp.push(v1[0]);
+            vTemp.push(v1[7]);
+            vTemp.push(v1[1]);
+            AddQuad(iTemp);
+        }
+        output.push(new FloorMesh(vTemp, iTemp));
+    } else {
+        return null;
     }
     return output;
 };
@@ -586,8 +567,8 @@ var InitializeGame = function() {
     
     InitializeMeshData();
     
-    var texture = new THREE.ImageUtils.loadTexture('img/floors.png');
-    floorMaterial = new THREE.MeshBasicMaterial({wireframe: true, color: 0xffffff});
+    var texture = THREE.ImageUtils.loadTexture('img/floors.png');
+    floorMaterial = new THREE.MeshBasicMaterial({map: texture, color: 0xffffff});
     
 };
 
@@ -611,8 +592,11 @@ VesselChunk.prototype.ChunkIToWorld = function() {
         this.index.y * VesselChunkSizeF);
 };
 
-VesselChunk.prototype.Destroy = function(offset) {
-    return this.data[offset.x + (offset.y * VesselChunkSize)];
+VesselChunk.prototype.Destroy = function() {
+    if (this.mesh != null) {
+        scene.remove(this.mesh)
+        this.mesh = null;
+    }
 };
 
 VesselChunk.prototype.GenerateFloorMesh = function(t, l, r, b, br) {
@@ -652,7 +636,7 @@ VesselChunk.prototype.GenerateFloorMesh = function(t, l, r, b, br) {
                     }
                     
                     if (tile.floor0 == tile.floor1) {
-                        AppendMeshData(floorMeshes[tile.floor0][tile.floor0][FloorType.None][WallType.None],vertices,uv,indices,offset);
+                        AppendMeshData(floorMeshes[tile.floor0][FloorType.None][WallType.None][0],vertices,uv,indices,offset);
                     } else {
                         var floorCombMeshes = floorMeshes[tile.floor0][tile.floor1];
 
@@ -690,14 +674,19 @@ VesselChunk.prototype.GenerateFloorMesh = function(t, l, r, b, br) {
     var output = new THREE.Geometry();
 
     output.vertices = vertices;
-    output.faceVertexUvs[0] = uv;
     var faces = [];
+    var faceUVs = [];
     while(indices.length > 0) {
         var a = indices.shift();
         var b = indices.shift();
         var c = indices.shift();
         faces.push(new THREE.Face3(a, b, c));
+        //var uvA = uv.shift();
+        //var uvB = uv.shift();
+        //var uvC = uv.shift();
+        faceUVs.push([uv[a], uv[b], uv[c]]);
     }
+    output.faceVertexUvs[0] = faceUVs;
     output.faces = faces;
     
     output.verticesNeedUpdate = true;
@@ -710,12 +699,15 @@ VesselChunk.prototype.GenerateFloorMesh = function(t, l, r, b, br) {
 };
 
 VesselChunk.prototype.Instantiate = function(t, l, r, b, br) {
+    
+    this.Destroy();
+    
     var chunkOffset = this.ChunkIToWorld();
     var floorMesh = this.GenerateFloorMesh(t,l,r,b,br);
     
-    var mesh = new THREE.Mesh(floorMesh, floorMaterial);
-    mesh.position = new THREE.Vector3(chunkOffset.x, chunkOffset.y, 0.0);
-    scene.add(mesh);
+    this.mesh = new THREE.Mesh(floorMesh, floorMaterial);
+    this.mesh.position = new THREE.Vector3(chunkOffset.x, chunkOffset.y, 0.0);
+    scene.add(this.mesh);
 };
 
 VesselChunk.prototype.OriginTileIndex = function() {
@@ -963,8 +955,7 @@ Vessel.prototype.TopRight = function (chunk) { return this.chunks.TryGet(new Vec
 Vessel.prototype.BottomLeft = function (chunk) { return this.chunks.TryGet(new Vec2i(chunk.index.x-1, chunk.index.y-1)); };
 Vessel.prototype.BottomRight = function (chunk) { return this.chunks.TryGet(new Vec2i(chunk.index.x+1, chunk.index.y-1)); };
 
-Vessel.prototype.InstantiateChunk = function(chunk)
-{
+Vessel.prototype.InstantiateChunk = function(chunk) {
     chunk.Instantiate(
         this.Top(chunk), 
         this.Left(chunk), 
@@ -1077,7 +1068,7 @@ DynamicArray2D.prototype.TryGet = function(x, y) {
 };
 
 DynamicArray2D.prototype.TryGet = function(index) {
-    if (!this.Contains(index.x, index.y))
+    if (!this.Contains(index))
         return null;
 
     index.x -= this.origin.x;
@@ -1249,6 +1240,8 @@ function render() {
                         
                         console.log("Received " + chunkCount + " chunks from server");
                         
+                        var newChunks = [];
+                        
                         for (var i = 0; i < chunkCount; i++) {
                             var x = message.getInt16(byteOffset, littleEndian);
                             byteOffset += 2;
@@ -1285,19 +1278,24 @@ function render() {
                                 chunk.SetTile(new Vec2i(tileLinearI % VesselChunkSize, Math.floor(tileLinearI / VesselChunkSize)), tile);
                             }
                             
-                            var existingChunk = currentVessel.chunks.TryGet(chunk.index.x, chunk.index.y);
-                            if (existingChunk != null) {
-                                existingChunk.Destroy();
-                            }
+                            
                             currentVessel.chunks.Set(chunk.index.x, chunk.index.y, chunk);
                             var diff = SubVec2i(chunk.index, myPlayer.chunkI);
                             if ((Math.abs(diff.x) <= PlayerChunkRange) || (Math.abs(diff.y) <= PlayerChunkRange)) {
-                                chunk.Instantiate();
+                                newChunks.push(chunk);
                             }
                             
                         }
                         
                         //Reinstantiate chunks
+                        while (newChunks.length > 0) {
+                            var existingChunk = currentVessel.chunks.TryGet(newChunks[0].index);
+                            if (existingChunk != null) {
+                                existingChunk.Destroy();
+                            }
+                            console.log("Instantiating chunk (" + newChunks[0].index.x + "," + newChunks[0].index.y + ")", newChunks[0]);
+                            currentVessel.InstantiateChunk(newChunks.shift());
+                        }
                         
                         break;
                     case ServerMessageType.MakeVesselActive://MakeVesselActive

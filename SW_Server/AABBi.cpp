@@ -17,36 +17,18 @@ namespace SW_Server
 
 	void AABBi::FitWhole(glm::ivec2 point)
 	{
-		if (point.x < bl.x){
-			bl.x = point.x;
-		}
-		if (point.y < bl.y){
-			bl.y = point.y;
-		}
-
-		if (point.x >= tr.x){
-			tr.x = point.x + 1;
-		}
-		if (point.y >= tr.y){
-			tr.y = point.y + 1;
-		}
+		bl.x = glm::min(point.x++, bl.x);
+		bl.y = glm::min(point.y++, bl.y);
+		tr.x = glm::max(point.x, tr.x);
+		tr.y = glm::max(point.y, tr.y);
 	}
 
 	void AABBi::Fit(glm::ivec2 point)
 	{
-		if (point.x < bl.x){
-			bl.x = point.x;
-		}
-		if (point.y < bl.y){
-			bl.y = point.y;
-		}
-
-		if (point.x > tr.x){
-			tr.x = point.x;
-		}
-		if (point.y > tr.y){
-			tr.y = point.y;
-		}
+		bl.x = glm::min(point.x, bl.x);
+		bl.y = glm::min(point.y, bl.y);
+		tr.x = glm::max(point.x, tr.x);
+		tr.y = glm::max(point.y, tr.y);
 	}
 
 	void AABBi::FitAABB(AABBi & aabb)
