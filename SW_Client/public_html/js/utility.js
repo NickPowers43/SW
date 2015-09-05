@@ -78,7 +78,7 @@ var floorMaterial = null;
 //static floor and wall data
 var PlayerChunkRange = 2;
 var VesselChunkSize = 8;
-var VesselChunkSizeF = parseFloat(VesselChunkSize);
+var VesselChunkSizeF = 8.0;
 var VesselChunkDataLength = VesselChunkSize * VesselChunkSize;
 var wallOffsets = [
     new Vec2i(0,0),
@@ -587,9 +587,10 @@ VesselChunk.prototype.TileAt = function(x, y) {
 };
 
 VesselChunk.prototype.ChunkIToWorld = function() {
-    return new THREE.Vector2(
+    return new THREE.Vector3(
         this.index.x * VesselChunkSizeF,
-        this.index.y * VesselChunkSizeF);
+        this.index.y * VesselChunkSizeF,
+        0.0);
 };
 
 VesselChunk.prototype.Destroy = function() {
@@ -615,23 +616,61 @@ VesselChunk.prototype.GenerateFloorMesh = function(t, l, r, b, br) {
 
                     var offset = new THREE.Vector3(i, j, 0.0);
 
-                    //VesselTile tTile = (j === VesselChunkSize-1) ? (t != null) ? t.TileAt(i,0) : null : TileAt(i,j+1);
-                    var lTile = (i == 0) ? (l != null) ? l.TileAt(VesselChunkSize-1,j) : null : this.TileAt(i-1,j);
-                    var rTile = (i == VesselChunkSize-1) ? (r != null) ? r.TileAt(0,j) : null : this.TileAt(i+1,j);
-                    var r2Tile = (i >= VesselChunkSize-2) ? (r != null) ? r.TileAt(i-(VesselChunkSize-2),j) : null : this.TileAt(i+2,j);
-                    var bTile = (j == 0) ? (b != null) ? b.TileAt(i,VesselChunkSize-1) : null : this.TileAt(i,j-1);
+                    var lTile = null;
+                    var rTile = null;
+                    var r2Tile = null;
+                    var bTile = null;
                     var brTile = null;
+                    
+                    if (i == 0) {
+                        if (l != null) {
+                            lTile = l.TileAt(VesselChunkSize-1, j);
+                        } 
+                    } else {
+                        lTile = this.TileAt(i-1,j);
+                    }
+                    
+                    if (i == VesselChunkSize-1) {
+                        if (r != null) {
+                            rTile = r.TileAt(0,j);
+                        } 
+                    } else {
+                        rTile = this.TileAt(i+1,j);
+                    }
+                    
+                    if (i >= VesselChunkSize-2) {
+                        if (r != null) {
+                            r2Tile = r.TileAt(i-(VesselChunkSize-2),j);
+                        } 
+                    } else {
+                        r2Tile = this.TileAt(i+2,j);
+                    }
+                    
+                    if (j == 0) {
+                        if (b != null) {
+                            bTile = b.TileAt(i,VesselChunkSize-1);
+                        } 
+                    } else {
+                        bTile = this.TileAt(i,j-1);
+                    }
+                    
                     if (j == 0) {
                         if (i < VesselChunkSize-1) {
-                            brTile = (b != null) ? b.TileAt(i+1,VesselChunkSize-1) : null;
+                            if (b != null) {
+                                brTile = b.TileAt(i+1,VesselChunkSize-1);
+                            }
                         } else {
-                            brTile = (br != null) ? br.TileAt(0,VesselChunkSize-1) : null;
+                            if (br != null) {
+                                brTile = br.TileAt(0,VesselChunkSize-1);
+                            }
                         }
                     } else {
                         if (i != VesselChunkSize-1) {
                             brTile = this.TileAt(i+1,j-1);
                         } else {
-                            brTile = (r != null) ? r.TileAt(0,j-1) : null;
+                            if (r != null) {
+                                brTile = r.TileAt(0,j-1);
+                            }
                         }
                     }
                     
@@ -702,12 +741,14 @@ VesselChunk.prototype.Instantiate = function(t, l, r, b, br) {
     
     this.Destroy();
     
-    var chunkOffset = this.ChunkIToWorld();
     var floorMesh = this.GenerateFloorMesh(t,l,r,b,br);
     
     this.mesh = new THREE.Mesh(floorMesh, floorMaterial);
-    this.mesh.position = new THREE.Vector3(chunkOffset.x, chunkOffset.y, 0.0);
     scene.add(this.mesh);
+    var chunkOffset = this.ChunkIToWorld();
+    this.mesh.position.setX(chunkOffset.x);
+    this.mesh.position.setY(chunkOffset.y);
+    this.mesh.position.setZ(chunkOffset.z);
 };
 
 VesselChunk.prototype.OriginTileIndex = function() {
@@ -946,14 +987,14 @@ Vessel.prototype.TryGetTile = function(index) {
 };
 
 
-Vessel.prototype.Top = function (chunk) { return this.chunks.TryGet(new Vec2i(chunk.index.x, chunk.index.y+1)); };
-Vessel.prototype.Bottom = function (chunk) { return this.chunks.TryGet(new Vec2i(chunk.index.x, chunk.index.y-1)); };
-Vessel.prototype.Left = function (chunk) { return this.chunks.TryGet(new Vec2i(chunk.index.x-1, chunk.index.y)); };
-Vessel.prototype.Right = function (chunk) { return this.chunks.TryGet(new Vec2i(chunk.index.x+1, chunk.index.y)); };
-Vessel.prototype.TopLeft = function (chunk) { return this.chunks.TryGet(new Vec2i(chunk.index.x-1, chunk.index.y+1)); };
-Vessel.prototype.TopRight = function (chunk) { return this.chunks.TryGet(new Vec2i(chunk.index.x+1, chunk.index.y+1)); };
-Vessel.prototype.BottomLeft = function (chunk) { return this.chunks.TryGet(new Vec2i(chunk.index.x-1, chunk.index.y-1)); };
-Vessel.prototype.BottomRight = function (chunk) { return this.chunks.TryGet(new Vec2i(chunk.index.x+1, chunk.index.y-1)); };
+Vessel.prototype.Top = function (chunk) { return this.chunks.TryGet(chunk.index.x, chunk.index.y+1); };
+Vessel.prototype.Bottom = function (chunk) { return this.chunks.TryGet(chunk.index.x, chunk.index.y-1); };
+Vessel.prototype.Left = function (chunk) { return this.chunks.TryGet(chunk.index.x-1, chunk.index.y); };
+Vessel.prototype.Right = function (chunk) { return this.chunks.TryGet(chunk.index.x+1, chunk.index.y); };
+Vessel.prototype.TopLeft = function (chunk) { return this.chunks.TryGet(chunk.index.x-1, chunk.index.y+1); };
+Vessel.prototype.TopRight = function (chunk) { return this.chunks.TryGet(chunk.index.x+1, chunk.index.y+1); };
+Vessel.prototype.BottomLeft = function (chunk) { return this.chunks.TryGet(chunk.index.x-1, chunk.index.y-1); };
+Vessel.prototype.BottomRight = function (chunk) { return this.chunks.TryGet(chunk.index.x+1, chunk.index.y-1); };
 
 Vessel.prototype.InstantiateChunk = function(chunk) {
     chunk.Instantiate(
@@ -1012,9 +1053,7 @@ DynamicArray2D.prototype.Contains = function(index) {
 };
 
 DynamicArray2D.prototype.Contains = function(x, y) {
-    
-    return ((x >= this.origin.x) && (x < (this.dim.x + this.origin.x))) && 
-        ((y >= this.origin.y) && (y < (this.dim.y + this.origin.y)));
+    return ((x >= this.origin.x) && (x < (this.dim.x + this.origin.x))) &&  ((y >= this.origin.y) && (y < (this.dim.y + this.origin.y)));
 };
 
 DynamicArray2D.prototype.Set = function(x, y, val) {
@@ -1059,21 +1098,12 @@ DynamicArray2D.prototype.Set = function(x, y, val) {
 };
 
 DynamicArray2D.prototype.TryGet = function(x, y) {
-    if (!this.Contains(x, y))
+    if (this.Contains(x, y) == false)
         return null;
 
     x -= this.origin.x;
     y -= this.origin.y;
-    return data [MatToLinear(x, y, this.dim.x)];
-};
-
-DynamicArray2D.prototype.TryGet = function(index) {
-    if (!this.Contains(index))
-        return null;
-
-    index.x -= this.origin.x;
-    index.y -= this.origin.y;
-    return data [MatToLinear(index.x, index.y, this.dim.x)];
+    return this.data[MatToLinear(x, y, this.dim.x)];
 };
 
 //AABBi method definitions
@@ -1279,7 +1309,7 @@ function render() {
                             }
                             
                             
-                            currentVessel.chunks.Set(chunk.index.x, chunk.index.y, chunk);
+                            
                             var diff = SubVec2i(chunk.index, myPlayer.chunkI);
                             if ((Math.abs(diff.x) <= PlayerChunkRange) || (Math.abs(diff.y) <= PlayerChunkRange)) {
                                 newChunks.push(chunk);
@@ -1289,12 +1319,15 @@ function render() {
                         
                         //Reinstantiate chunks
                         while (newChunks.length > 0) {
-                            var existingChunk = currentVessel.chunks.TryGet(newChunks[0].index);
+                            var chunk = newChunks.shift();
+                            var existingChunk = currentVessel.chunks.TryGet(chunk.index);
                             if (existingChunk != null) {
                                 existingChunk.Destroy();
                             }
-                            console.log("Instantiating chunk (" + newChunks[0].index.x + "," + newChunks[0].index.y + ")", newChunks[0]);
-                            currentVessel.InstantiateChunk(newChunks.shift());
+                            console.log("Instantiating chunk (" + chunk.index.x + "," + chunk.index.y + ")", chunk);
+                            
+                            currentVessel.chunks.Set(chunk.index.x, chunk.index.y, chunk);
+                            currentVessel.InstantiateChunk(chunk);
                         }
                         
                         break;
