@@ -188,6 +188,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	//string ipS = string((char*)argv[1]);
 	//int ip = stoi(ipS);
 
+	Initialize();
 	SetConsoleCtrlHandler(OnUserClose, true);
 
 	std::thread game_thread(game_thread_run);

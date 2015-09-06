@@ -61,10 +61,14 @@ namespace SW_Server
 	class StartingVessel;
 	class NetworkReader;
 	class NetworkWriter;
+
+	void Initialize();
 }
 
 using namespace SW_Server;
 
+
+extern glm::ivec2* wallOffsets;
 extern server myServer;
 extern std::map<void*, Player*> players;
 extern std::vector<Vessel*> vessels;

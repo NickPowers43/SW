@@ -1305,7 +1305,7 @@ function render() {
                                 
                                 var tile = new VesselTile(flags, wallMask, c0, c1, floor0, floor1);
                                 
-                                chunk.SetTile(new Vec2i(tileLinearI % VesselChunkSize, Math.floor(tileLinearI / VesselChunkSize)), tile);
+                                chunk.SetTile(new Vec2i(tileLinearI % VesselChunkSize, (tileLinearI / VesselChunkSize))|0, tile);
                             }
                             
                             

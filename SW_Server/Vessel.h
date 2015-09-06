@@ -9,17 +9,7 @@
 
 namespace SW_Server
 {
-	static glm::ivec2* wallOffsets = new glm::ivec2[9] {
-		glm::ivec2(0, 0),
-		glm::ivec2(1, 0),
-		glm::ivec2(2, 1),
-		glm::ivec2(1, 1),
-		glm::ivec2(1, 2),
-		glm::ivec2(0, 1),
-		glm::ivec2(-1, 2),
-		glm::ivec2(-1, 1),
-		glm::ivec2(-2, 1)
-	};
+	
 
 
 	static float WALL_RADIUS = 0.15f;
