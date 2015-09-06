@@ -22,7 +22,7 @@ namespace SW_Server
 		QTNode();
 		~QTNode();
 
-		virtual void UpdateSurrounding(QTNode* tl, QTNode* t, QTNode* tr, QTNode* l, QTNode* r, QTNode* bl, QTNode* b, QTNode* br);
+		virtual void UpdateSurrounding(QTNode** adjacent);
 
 		QTNode* children [4];
 	};
