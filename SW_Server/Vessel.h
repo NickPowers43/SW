@@ -1,34 +1,36 @@
 #pragma once
 
-#include "AABBi.h"
-#include "VesselTile.h"
-#include "VesselChunk.h"
+#include "RigidBody.h"
+#include "LinkedListNode.h"
 #include "DynamicArray2D.h"
-#include "Player.h"
-#include "VesselObject.h"
+#include "AABBi.h"
 
 namespace SW_Server
 {
-	
-
-
 	static float WALL_RADIUS = 0.15f;
 
 	class AdjacentTiles;
 
-	class Vessel
+	class Vessel : 
+		public RigidBody<VesselValueType>,
+		public LinkedListNode<Vessel>
 	{
 	public:
 		uint32_t index;
 		DynamicArray2D<VesselChunk> chunks;
 
-		Vessel();
+		Vessel(VesselVecType vel, VesselValueType m, VesselVecType pos, VesselValueType rot, Vessel* next);
 		~Vessel();
 
 		int GetMessageBytes(void* & ref);
 
+		void IsModuleLegal();
+
 		void InstantiateNearbyChunks(Player* player);
+
 		void ReadChunkRequestMessage(Player* player, NetworkWriter* nw, NetworkReader* nr);
+		void ReadModuleRequestMessage(Player* player, NetworkWriter* nw, NetworkReader* nr);
+
 		void AddPlayerVessel(Player* player, NetworkWriter* nw, glm::vec2 position);
 		void RemovePlayer(Player* player);
 		virtual void BuildFoundation(glm::ivec2 origin, glm::ivec2 size);
@@ -89,6 +91,8 @@ namespace SW_Server
 		bool noPlayers;
 		float timeEmpty;
 
+		std::vector<VesselModule> modules;
+		uint32_t nextModuleIndex;
 		std::vector<VesselObject*> objects;
 		std::vector<Player*> playersOnBoard;
 		std::vector<VesselChunk*> modifiedChunks;

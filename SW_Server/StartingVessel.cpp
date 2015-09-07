@@ -1,10 +1,12 @@
 #include "stdafx.h"
 #include "StartingVessel.h"
+#include "VesselObject.h"
 
 
 namespace SW_Server
 {
-	StartingVessel::StartingVessel()
+	StartingVessel::StartingVessel(VesselVecType vel, VesselValueType m, VesselVecType pos, VesselValueType rot, Vessel* next) :
+		Vessel(vel, m, pos, rot, next)
 	{
 	}
 

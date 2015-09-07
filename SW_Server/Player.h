@@ -10,6 +10,8 @@ namespace SW_Server
 		Player(websocketpp::connection_hdl hdl);
 		~Player();
 
+		void FlushBuffer(NetworkWriter* nw);
+
 		websocketpp::connection_hdl hdl;
 		Vessel* currentVessel;
 		glm::vec2 pos;

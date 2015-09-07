@@ -1,5 +1,8 @@
 #include "stdafx.h"
 
+#include "VesselModuleTemplate.h"
+#include "WorldQTNode.h"
+
 glm::ivec2* wallOffsets = new glm::ivec2[9] {
 	glm::ivec2(0, 0),
 	glm::ivec2(1, 0),
@@ -24,6 +27,8 @@ glm::vec2* wallVectorsNormalized = new glm::vec2[9] {
 	glm::vec2(-2.0f, 1.0f)
 };
 
+VesselModuleTemplate* moduleTemplates = (VesselModuleTemplate*)malloc(sizeof(VesselModuleTemplate) * MODULE_TYPE_COUNT);
+
 namespace SW_Server
 {
 	void Initialize()
@@ -35,6 +40,7 @@ namespace SW_Server
 	}
 }
 
+WorldQTNode* qt = new WorldQTNode(0, VesselVecType(WORLD_SIZE * -0.5, WORLD_SIZE * -0.5), WORLD_SIZE, NULL);
 server myServer;
 std::map<void*, Player*> players;
 std::vector<Vessel*> vessels;

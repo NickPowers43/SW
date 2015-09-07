@@ -88,7 +88,9 @@
     <ClInclude Include="AdjacentTiles.h" />
     <ClInclude Include="Compartment.h" />
     <ClInclude Include="DynamicArray2D.h" />
-    <ClInclude Include="DynamicObject.h" />
+    <ClInclude Include="DynamicTileSet.h" />
+    <ClInclude Include="LinkedListNode.h" />
+    <ClInclude Include="RigidBody.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="NetworkReader.h" />
     <ClInclude Include="NetworkWriter.h" />
@@ -99,17 +101,23 @@
     <ClInclude Include="StartingVessel.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="TileSet.h" />
     <ClInclude Include="Vessel.h" />
     <ClInclude Include="VesselChunk.h" />
+    <ClInclude Include="VesselModule.h" />
+    <ClInclude Include="VesselModuleTemplate.h" />
     <ClInclude Include="VesselObject.h" />
     <ClInclude Include="VesselTile.h" />
+    <ClInclude Include="WorldQTNode.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AABBi.cpp" />
     <ClCompile Include="AdjacentTiles.cpp" />
     <ClCompile Include="Compartment.cpp" />
     <ClCompile Include="DynamicArray2D.cpp" />
-    <ClCompile Include="DynamicObject.cpp" />
+    <ClCompile Include="DynamicTileSet.cpp" />
+    <ClCompile Include="LinkedListNode.cpp" />
+    <ClCompile Include="RigidBody.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="NetworkReader.cpp" />
     <ClCompile Include="NetworkWriter.cpp" />
@@ -122,10 +130,14 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="SW_Server.cpp" />
+    <ClCompile Include="TileSet.cpp" />
     <ClCompile Include="Vessel.cpp" />
     <ClCompile Include="VesselChunk.cpp" />
+    <ClCompile Include="VesselModule.cpp" />
+    <ClCompile Include="VesselModuleTemplate.cpp" />
     <ClCompile Include="VesselObject.cpp" />
     <ClCompile Include="VesselTile.cpp" />
+    <ClCompile Include="WorldQTNode.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

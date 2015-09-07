@@ -1,14 +1,25 @@
 #include "stdafx.h"
 #include "Vessel.h"
+
+#include "VesselTile.h"
+#include "VesselChunk.h"
+#include "Player.h"
+#include "VesselObject.h"
+#include "VesselModule.h"
 #include "AdjacentTiles.h"
 #include "NetworkReader.h"
 #include "NetworkWriter.h"
+
 
 namespace SW_Server
 {
 	uint32_t Vessel::nextIndex = 0;
 
-	Vessel::Vessel() : aabb(glm::ivec2(0, 0), glm::ivec2(0, 0))
+	Vessel::Vessel(VesselVecType vel, VesselValueType m, VesselVecType pos, VesselValueType rot, Vessel* next) :
+		RigidBody<VesselValueType>(vel, m, pos, rot), 
+		LinkedListNode<Vessel>(next), 
+		aabb(glm::ivec2(0, 0), 
+		glm::ivec2(0, 0))
 	{
 		noPlayers = true;
 		timeEmpty = 0.0f;
@@ -17,6 +28,7 @@ namespace SW_Server
 		updateMessageBytes = true;
 
 		nextCompartmentIndex = 0;
+		nextModuleIndex = 0;
 
 		nextChunkIndex = 0;
 		index = nextIndex++;
@@ -44,7 +56,6 @@ namespace SW_Server
 
 	void Vessel::ReadChunkRequestMessage(Player* player, NetworkWriter* nw, NetworkReader* nr)
 	{
-		nw->Reset();
 		nw->Write((MessageType_t)ServerMessageType::SetChunk);
 		uint8_t* response_count = (uint8_t*)nw->cursor;
 		nw->Write((uint8_t)0);
@@ -65,16 +76,8 @@ namespace SW_Server
 				{
 					if (nw->Remaining() < MAX_VESSELCHUNK_MESSAGE_SIZE)
 					{
-						//flush current buffer
-						try
-						{
-							myServer.send(player->hdl, nw->StringCopy(), websocketpp::frame::opcode::binary);
-						}
-						catch (const websocketpp::lib::error_code& e) {
-							std::cout << "Failed to flush buffer because: " << e << "(" << e.message() << ")" << std::endl;
-							throw websocketpp::lib::error_code(e);
-						}
 						//start a new message
+						player->FlushBuffer(nw);
 						nw->Reset();
 						nw->Write((MessageType_t)ServerMessageType::SetChunk);
 						response_count = (uint8_t*)nw->cursor;
@@ -86,17 +89,60 @@ namespace SW_Server
 				}
 			}
 		}
+	}
+	void Vessel::ReadModuleRequestMessage(Player* player, NetworkWriter* nw, NetworkReader* nr)
+	{
+		nw->Write((MessageType_t)ServerMessageType::SetModule);
+		uint16_t* response_count = (uint16_t*)nw->cursor;
+		nw->Write((uint16_t)0);
 
-		if (*response_count > 0)
+		uint16_t module_count = nr->ReadUint16();
+		size_t j = 0;
+		for (size_t i = 0; i < module_count; i++)
 		{
-			try
+			uint32_t id = nr->ReadUint32();
+
+			if (modules[j].id != id)
 			{
-				myServer.send(player->hdl, nw->StringCopy(), websocketpp::frame::opcode::binary);
+				if (nw->Remaining() < sizeof(uint32_t))
+				{
+					//start a new message
+					player->FlushBuffer(nw);
+					nw->Reset();
+					nw->Write((MessageType_t)ServerMessageType::SetModule);
+					response_count = (uint16_t*)nw->cursor;
+					nw->Write((uint16_t)0);
+				}
+
+				//tell client to delete this one
+				(*response_count)++;
+				nw->Write((int32_t)(-((int32_t)i)));
+				i++;
 			}
-			catch (const websocketpp::lib::error_code& e) {
-				std::cout << "Failed to flush buffer because: " << e << "(" << e.message() << ")" << std::endl;
-				throw websocketpp::lib::error_code(e);
+			else
+			{
+				//skip this one it is up to date
+				j++;
 			}
+		}
+		response_count = (uint16_t*)nw->cursor;
+		nw->Write((uint16_t)0);
+		for (size_t i = j; i < modules.size(); i++)
+		{
+			if (nw->Remaining() < MAX_MODULE_MESSAGE_SIZE)
+			{
+				//start a new message
+				player->FlushBuffer(nw);
+				nw->Reset();
+				nw->Write((MessageType_t)ServerMessageType::SetModule);
+				nw->Write((uint16_t)0);//zero deletions
+				response_count = (uint16_t*)nw->cursor;
+				nw->Write((uint16_t)0);
+			}
+
+			//tell client to add this one
+			(*response_count)++;
+			modules[i].WriteSetModuleMessage(nw);
 		}
 	}
 

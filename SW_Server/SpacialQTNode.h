@@ -8,16 +8,24 @@ namespace SW_Server
 		public QTNode
 	{
 	public:
-		SpacialQTNode(glm::vec2 bl, float size);
+		SpacialQTNode(VesselVecType bl, VesselValueType size, QTNode* parent);
 		~SpacialQTNode();
 
-		SpacialQTNode bl_quadrant();
-		SpacialQTNode tl_quadrant();
-		SpacialQTNode br_quadrant();
-		SpacialQTNode tr_quadrant();
+		const SpacialQTNode bl_quadrant();
+		const SpacialQTNode tl_quadrant();
+		const SpacialQTNode br_quadrant();
+		const SpacialQTNode tr_quadrant();
 
-		glm::vec2 bl;
-		float size;
+		VesselValueType Left();
+		VesselValueType Right();
+		VesselValueType Bottom();
+		VesselValueType Top();
+
+		VesselValueType MiddleHorizontal();
+		VesselValueType MiddleVertical();
+
+		VesselVecType bl;
+		VesselValueType size;
 	};
 }
 

@@ -6,6 +6,9 @@
 #include "StartingVessel.h"
 #include "NetworkReader.h"
 #include "NetworkWriter.h"
+#include "WorldQTNode.h"
+#include "Player.h"
+#include "StartingVessel.h"
 
 #include <thread>
 #include <queue>
@@ -26,7 +29,25 @@ void SendPingMessage(websocketpp::connection_hdl hdl, NetworkWriter* nw, size_t 
 {
 	try	
 	{
-		nw->Reset();
+		if (nw->Remaining() < (sizeof(MessageType_t) + sizeof(uint32_t) + size))
+		{
+			try 
+			{
+				myServer.send(hdl, nw->StringCopy(), websocketpp::frame::opcode::binary);
+			}
+			catch (std::overflow_error & e)
+			{
+				std::cout << "Failed to send ping message: " << e.what();
+			}
+			catch (const websocketpp::lib::error_code& e)
+			{
+				std::cout << "Failed to send ping message: " << e << "(" << e.message() << ")" << std::endl;
+			}
+		}
+
+		if (nw->Remaining() < (sizeof(MessageType_t) + sizeof(uint32_t) + size))
+			return;
+
 		nw->Write((MessageType_t)ServerMessageType::PingMessage);
 		nw->Write((uint32_t)size);
 		for (size_t i = 0; i < size; i++)
@@ -76,6 +97,7 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 		messages_in.push(pair);
 
 		NetworkReader nr((void*)pair.msg.c_str(), pair.msg.size(), false);
+		nw_main.Reset();
 
 		std::cout << "Message of size: " << pair.msg.size() << " received.";
 
@@ -86,6 +108,16 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 				std::string response;
 				switch (mt)
 				{
+				case ClientMessageType::RequestModule:
+					if (pair.player->currentVessel)
+					{
+						pair.player->currentVessel->ReadModuleRequestMessage(pair.player, &nw_main, &nr);
+					}
+					else
+					{
+						throw std::exception("cannot read module request message for player not assigned a vessel");
+					}
+					break;
 				case ClientMessageType::RequestChunk:
 					if (pair.player->currentVessel)
 					{
@@ -119,6 +151,8 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 				break;
 			}
 		}
+
+		player->FlushBuffer(&nw_main);
 	}
 }
 
@@ -130,8 +164,10 @@ void on_open(websocketpp::connection_hdl hdl) {
 	
 	if (startingVessels.size() < 1)
 	{
-		startingVessels.push_back(new StartingVessel());
-		startingVessels[0]->Initialize();
+		StartingVessel* sV = new StartingVessel(VesselVecType(0.0f, 0.0f), 1.0f, VesselVecType(1.0f, 1.0f), 0.0f, NULL);
+		startingVessels.push_back(sV);
+		qt->AddVessel(sV, true);
+		sV->Initialize();
 	}
 
 	startingVessels[0]->AddPlayer(&nw_main, player);
@@ -159,6 +195,9 @@ void game_thread_run()
 {
 	while (running)
 	{
+		QTNode* root_adj[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+		qt->UpdateSurrounding((QTNode**)&root_adj);
+
 		int messages_in_size = 0;
 		{
 			/*std::lock_guard<std::mutex> lock(message_in_m);

@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "Player.h"
 #include "Vessel.h"
+#include "NetworkWriter.h"
 
 
 namespace SW_Server
@@ -16,5 +17,17 @@ namespace SW_Server
 
 	Player::~Player()
 	{
+	}
+
+	void Player::FlushBuffer(NetworkWriter* nw)
+	{
+		try
+		{
+			myServer.send(hdl, nw->StringCopy(), websocketpp::frame::opcode::binary);
+		}
+		catch (const websocketpp::lib::error_code& e) {
+			std::cout << "Failed to flush buffer because: " << e << "(" << e.message() << ")" << std::endl;
+			throw websocketpp::lib::error_code(e);
+		}
 	}
 }

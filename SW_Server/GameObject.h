@@ -1,14 +1,22 @@
 #pragma once
 namespace SW_Server
 {
+	template<typename value_type>
 	class GameObject
 	{
 	public:
-		GameObject(glm::vec2 pos, float rot);
-		~GameObject();
+		GameObject(glm::tvec2<value_type> pos, value_type rot)
+		{
+			GameObject::pos = pos;
+			GameObject::rot = rot;
+		}
+		~GameObject()
+		{
 
-		glm::vec2 pos;
-		float rot;
+		}
+
+		glm::tvec2<value_type> pos;
+		value_type rot;
 	};
 
 }

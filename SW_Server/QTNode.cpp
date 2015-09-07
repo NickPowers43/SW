@@ -4,8 +4,9 @@
 
 namespace SW_Server
 {
-	QTNode::QTNode()
+	QTNode::QTNode(QTNode* parent)
 	{
+		QTNode::parent = parent;
 		children[0] = NULL;
 		children[1] = NULL;
 		children[2] = NULL;
@@ -19,7 +20,7 @@ namespace SW_Server
 
 	void QTNode::UpdateSurrounding(QTNode** adjacent)
 	{
-		QTNode* child_adj[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL};
+		QTNode* child_adj[8];// = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
 		//update child 0
 		if (children[QT_BL])

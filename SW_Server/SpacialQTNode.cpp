@@ -4,7 +4,7 @@
 
 namespace SW_Server
 {
-	SpacialQTNode::SpacialQTNode(glm::vec2 bl, float size)
+	SpacialQTNode::SpacialQTNode(VesselVecType bl, VesselValueType size, QTNode* parent) : QTNode(parent)
 	{
 		SpacialQTNode::bl = bl;
 		SpacialQTNode::size = size;
@@ -15,23 +15,49 @@ namespace SW_Server
 	{
 	}
 
-	SpacialQTNode SpacialQTNode::bl_quadrant()
+	const SpacialQTNode SpacialQTNode::bl_quadrant()
 	{
-		return SpacialQTNode(bl, size * 0.5f);
+		return SpacialQTNode(bl, size * 0.5, static_cast<QTNode*>(this));
 	}
-	SpacialQTNode SpacialQTNode::tl_quadrant()
+	const SpacialQTNode SpacialQTNode::tl_quadrant()
 	{
-		float q_size = size * 0.5f;
-		return SpacialQTNode(glm::vec2(bl.x, bl.y + q_size), q_size);
+		VesselValueType q_size = size * 0.5;
+		return SpacialQTNode(VesselVecType(bl.x, bl.y + q_size), q_size, static_cast<QTNode*>(this));
 	}
-	SpacialQTNode SpacialQTNode::br_quadrant()
+	const SpacialQTNode SpacialQTNode::br_quadrant()
 	{
-		float q_size = size * 0.5f;
-		return SpacialQTNode(glm::vec2(bl.x + q_size, bl.y), q_size);
+		VesselValueType q_size = size * 0.5;
+		return SpacialQTNode(VesselVecType(bl.x + q_size, bl.y), q_size, static_cast<QTNode*>(this));
 	}
-	SpacialQTNode SpacialQTNode::tr_quadrant()
+	const SpacialQTNode SpacialQTNode::tr_quadrant()
 	{
-		float q_size = size * 0.5f;
-		return SpacialQTNode(bl + glm::vec2(q_size), q_size);
+		VesselValueType q_size = size * 0.5;
+		return SpacialQTNode(bl + VesselVecType(q_size), q_size, static_cast<QTNode*>(this));
+	}
+
+	VesselValueType SpacialQTNode::Left()
+	{
+		return bl.x;
+	}
+	VesselValueType SpacialQTNode::Right()
+	{
+		return bl.x + size;
+	}
+	VesselValueType SpacialQTNode::Bottom()
+	{
+		return bl.y;
+	}
+	VesselValueType SpacialQTNode::Top()
+	{
+		return bl.y + size;
+	}
+
+	VesselValueType SpacialQTNode::MiddleHorizontal()
+	{
+		return bl.x + (size * 0.5);
+	}
+	VesselValueType SpacialQTNode::MiddleVertical()
+	{
+		return bl.y + (size * 0.5);
 	}
 }

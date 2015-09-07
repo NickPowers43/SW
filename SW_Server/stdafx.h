@@ -30,6 +30,9 @@ typedef server::message_ptr message_ptr;
 
 namespace SW_Server
 {
+	typedef double VesselValueType;
+	typedef glm::tvec2<double> VesselVecType;
+
 	class VesselTile;
 	typedef uint8_t MessageType_t;
 	typedef uint16_t TileFlag_t;
@@ -37,12 +40,20 @@ namespace SW_Server
 	typedef uint8_t WallType_t;
 	typedef uint8_t WallTypeMask_t;
 	typedef uint32_t CompartmentIndex_t;
+	typedef uint8_t VMFlags_t;
+	typedef uint16_t VMType_t;
+
+	static int MAX_VESSELS_PER_NODE = 4;
+	static int QT_MAX_DEPTH = 14;
+	static int QT_WORKING_DEPTH = 10;
 
 	static int PLAYER_CHUNK_RANGE = 2;
 	static int CHUNK_SIZE_POW = 3;
 	static int CHUNK_SIZE = 1 << CHUNK_SIZE_POW;
 	static int CHUNK_DATA_COUNT = CHUNK_SIZE * CHUNK_SIZE;
 	static int CHUNK_OFFSET_MASK = (1 << (CHUNK_SIZE_POW + 1)) - 1;
+
+	static VesselValueType WORLD_SIZE = 10000000000.0;
 
 	static int VESSEL_TILE_MESSAGE_SIZE = 
 		sizeof(uint16_t) + /*index*/
@@ -56,19 +67,44 @@ namespace SW_Server
 		sizeof(uint16_t) + /*tile_count*/
 		(CHUNK_DATA_COUNT * VESSEL_TILE_MESSAGE_SIZE) /*tiles*/;
 
+	static int MAX_MODULE_MESSAGE_SIZE = sizeof(VMType_t) + (2 * sizeof(uint32_t));
+
 	class Vessel;
 	class Player;
 	class StartingVessel;
 	class NetworkReader;
 	class NetworkWriter;
+	class AABBi;
+	class VesselTile;
+	class VesselChunk;
+	class VesselObject;
+	template<typename value_type>
+	class RigidBody;
+	class VesselModule;
+	class AdjacentTiles;
+	class Compartment;
+	class VesselModule;
+	class VesselModuleTemplate;
+	class QTNode;
+	class SpacialQTNode;
+	class WorldQTNode;
+
+	template<typename T>
+	class LinkedListNode;
+	template<typename T>
+	class DynamicArray2D;
 
 	void Initialize();
 }
 
 using namespace SW_Server;
 
+#define MODULE_TYPE_COUNT 2
 
+extern WorldQTNode* qt;
+extern VesselModuleTemplate* moduleTemplates;
 extern glm::ivec2* wallOffsets;
+extern glm::vec2* wallVectorsNormalized;
 extern server myServer;
 extern std::map<void*, Player*> players;
 extern std::vector<Vessel*> vessels;
@@ -84,7 +120,25 @@ namespace ServerMessageType
 		AddPlayer = 4,
 		AddYourself = 5,
 		MakeVesselActive = 6,
-		PingMessage = 7
+		PingMessage = 7,
+		SetModule = 8
+	};
+}
+
+namespace VMFlags
+{
+	enum VMFlags : uint8_t {
+		None = 0,
+		FlipVertical = 1,
+		FlipHorizontal = 2
+	};
+}
+
+namespace VMType
+{
+	enum VMType : uint16_t {
+		SimpleFrigateCore = 0,
+		SimpleFrigateBridge = 1
 	};
 }
 
@@ -94,7 +148,8 @@ namespace ClientMessageType
 		RequestChunk = 0,
 		Inputs = 1,
 		FillAt = 2,
-		PingMessageResponse = 3
+		PingMessageResponse = 3,
+		RequestModule = 4
 	};
 }
 
@@ -105,7 +160,10 @@ namespace TileFlag
 		Hatch0 = 1,
 		Hatch1 = 2,
 		SolidBlock = 4,
-		WallNode = 8
+		WallNode = 8,
+		Lock0 = 16,
+		Lock1 = 32,
+		Ignore = 64
 	};
 }
 
@@ -136,6 +194,14 @@ namespace WallType
 		OneByTwoFlipped = 6,
 		OneByOneFlipped = 7,
 		TwoByOneFlipped = 8
+	};
+}
+
+namespace ObjectType
+{
+	enum ObjectType : uint8_t {
+		Spawner = 0,
+		Turret = 1
 	};
 }
 

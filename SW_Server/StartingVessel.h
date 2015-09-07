@@ -9,7 +9,7 @@ namespace SW_Server
 		public Vessel
 	{
 	public:
-		StartingVessel();
+		StartingVessel(VesselVecType vel, VesselValueType m, VesselVecType pos, VesselValueType rot, Vessel* next);
 		~StartingVessel();
 
 		VesselObject* PlaceObject(ObjectType::ObjectType type, glm::vec2 location) override;

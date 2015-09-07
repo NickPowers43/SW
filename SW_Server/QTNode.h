@@ -1,5 +1,8 @@
 #pragma once
 
+#define QT_T_BIT 1
+#define QT_R_BIT 2
+
 #define QT_BL 0
 #define QT_TL 1
 #define QT_BR 2
@@ -19,11 +22,12 @@ namespace SW_Server
 	class QTNode
 	{
 	public:
-		QTNode();
+		QTNode(QTNode* parent);
 		~QTNode();
 
 		virtual void UpdateSurrounding(QTNode** adjacent);
 
+		QTNode* parent;
 		QTNode* children [4];
 	};
 
