@@ -28,7 +28,6 @@ namespace SW_Server
 			Vessel* operator->() const;
 			void swap(VesselIterator& other);
 			Vessel* RemoveCurrent();
-			Vessel* last();
 		};
 
 		WorldQTNode(int depth, VesselVecType bl, VesselValueType size, QTNode* parent);
@@ -40,6 +39,8 @@ namespace SW_Server
 		virtual void UpdateSurrounding(QTNode** adjacent) override;
 		void AddVessel(Vessel* vessel, bool force);
 		size_t VesselCount();
+		Vessel* BackVessel();
+		void AppendVessel(Vessel* vessel);
 
 		int depth;
 		Vessel* vessels;

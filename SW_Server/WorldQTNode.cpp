@@ -65,13 +65,6 @@ namespace SW_Server
 		curr->Next() = NULL;
 		return curr;
 	}
-	Vessel* WorldQTNode::VesselIterator::last()
-	{
-		Vessel* curr = dir_ref;
-		dir_ref = curr->Next();
-		*vessel = dir_ref;
-		return curr;
-	}
 
 
 	WorldQTNode::WorldQTNode(int depth, VesselVecType bl, VesselValueType size, QTNode* parent) : SpacialQTNode(bl, size, parent)
@@ -261,8 +254,7 @@ namespace SW_Server
 				if (VesselCount() < MAX_VESSELS_PER_NODE)
 				{
 					//this vessel
-					VesselIterator temp_itr(&vessels);
-					temp_itr.last()->Next() = vessel;
+					AppendVessel(vessel);
 				}
 				else
 				{
@@ -290,5 +282,35 @@ namespace SW_Server
 			++itr;
 		}
 		return count;
+	}
+	Vessel* WorldQTNode::BackVessel()
+	{
+		if (vessels)
+		{
+			Vessel* curr = vessels;
+			while (curr->Next())
+			{
+				curr = curr->Next();
+			}
+			return curr;
+		}
+		else
+		{
+			return NULL;
+		}
+		
+	}
+	void WorldQTNode::AppendVessel(Vessel* vessel)
+	{
+		if (vessels)
+		{
+			BackVessel()->Next() = vessel;
+		}
+		else
+		{
+			vessels = vessel;
+		}
+
+		vessel->Next() = NULL;
 	}
 }

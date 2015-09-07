@@ -116,13 +116,13 @@
     <ClCompile Include="Compartment.cpp" />
     <ClCompile Include="DynamicArray2D.cpp" />
     <ClCompile Include="DynamicTileSet.cpp" />
-    <ClCompile Include="LinkedListNode.cpp" />
     <ClCompile Include="RigidBody.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="NetworkReader.cpp" />
     <ClCompile Include="NetworkWriter.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="QTNode.cpp" />
+    <ClCompile Include="RigidBody.cpp" />
     <ClCompile Include="ServerVC.cpp" />
     <ClCompile Include="SpacialQTNode.cpp" />
     <ClCompile Include="StartingVessel.cpp" />

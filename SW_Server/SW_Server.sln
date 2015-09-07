@@ -5,6 +5,11 @@ VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SW_Server", "SW_Server.vcxproj", "{16127E89-7A6D-44B6-9AD2-50967B069A25}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E9C1B3FA-7CB1-4A72-9187-A076F25E8F72}"
+	ProjectSection(SolutionItems) = preProject
+		LinkedListNode2.txt = LinkedListNode2.txt
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32

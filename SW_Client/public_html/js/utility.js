@@ -69,10 +69,12 @@ var messages_in = [];
 THREE.ImageUtils.crossOrigin = 'anonymous';
 var floorTexResolution = 256.0;
 var renderer = new THREE.WebGLRenderer();
-renderer.setSize( 800, 600 );
+var viewWidth = window.innerWidth * 0.7;
+var viewHeight = window.innerHeight * 0.8;
+renderer.setSize(viewWidth, viewHeight);
 document.body.appendChild( renderer.domElement );
 var scene = new THREE.Scene();
-var camera = new THREE.PerspectiveCamera( 75, 800.0 / 600.0, 0.1, 1000 );
+var camera = new THREE.OrthographicCamera( viewWidth / - 2, viewWidth / 2, viewHeight / 2, viewHeight / - 2, -1.0, 1.0 );
 var floorMaterial = null;
 
 //static floor and wall data
@@ -107,11 +109,78 @@ var myPlayer = null;
 var players = [];
 var vessels = [];
 var instantiatedChunks = [];
+var mouse = {x:0, y:0};
+var mousePrev = {x:0, y:0};
+
+var BuildModeKeyDownListener = function(e) {
+    if (e.keyCode == 87) {//W
+        var camPosition = camera.position.clone().add(new THREE.Vector3(0.0, 1.0, 0.0));
+        camera.position.set(camPosition.x, camPosition.y, camPosition.z);
+    } else if (e.keyCode == 83) {//S
+        var camPosition = camera.position.clone().add(new THREE.Vector3(0.0, -1.0, 0.0));
+        camera.position.set(camPosition.x, camPosition.y, camPosition.z);
+    } else if (e.keyCode == 65) {//A
+        var camPosition = camera.position.clone().add(new THREE.Vector3(-1.0, 0.0, 0.0));
+        camera.position.set(camPosition.x, camPosition.y, camPosition.z);
+    } else if (e.keyCode == 68) {//D
+        var camPosition = camera.position.clone().add(new THREE.Vector3(1.0, 0.0, 0.0));
+        camera.position.set(camPosition.x, camPosition.y, camPosition.z);
+    }
+};
+var BuildModeMouseDownListener = function(e) {
+    
+};
+var BuildModeMouseMoveListener = function(e) {
+    
+};
+
+function ActivateBuildMode() {
+    document.addEventListener("keydown", BuildModeKeyDownListener, false);
+    document.addEventListener("mousemove", BuildModeMouseMoveListener, false);
+    document.addEventListener("mousedown", BuildModeMouseDownListener, false);
+}
+
+function DeactivateBuildMode() {
+    document.removeEventListener("keydown", BuildModeKeyDownListener, false);
+    document.removeEventListener("mousemove", BuildModeMouseMoveListener, false);
+    document.removeEventListener("mousedown", BuildModeMouseDownListener, false);
+}
+
+function handleMouseDown(event) {
+    mouseDown = true;
+    lastMouseX = event.clientX;
+    lastMouseY = event.clientY;
+}
+
+function handleMouseUp(event) {
+    mouseDown = false;
+}
+
+function handleMouseMove(event) {
+    if (!mouseDown) {
+        return;
+    }
+    var newX = event.clientX;
+    var newY = event.clientY;
+
+    var deltaX = newX - lastMouseX;
+    var newRotationMatrix = mat4.create();
+    mat4.identity(newRotationMatrix);
+    mat4.rotate(newRotationMatrix, degToRad(deltaX / 10), [0, 1, 0]);
+
+    var deltaY = newY - lastMouseY;
+    mat4.rotate(newRotationMatrix, degToRad(deltaY / 10), [1, 0, 0]);
+
+    mat4.multiply(newRotationMatrix, moonRotationMatrix, moonRotationMatrix);
+
+    lastMouseX = newX
+    lastMouseY = newY;
+}
 
 //Constructors
 function Vec2i(x, y) {
-    this.x = x;
-    this.y = y;
+    this.x = x|0;
+    this.y = y|0;
 }
 
 function AABBi(bl, tr) {
@@ -1182,7 +1251,7 @@ var UpdateChunks = function(force) {
         for (i = 0; i < rangeT; i++) {
             for (j = 0; j < rangeT; j++) {
 
-                var diffCurr = new Vec2i(i - PlayerChunkRange, j - PlayerChunkRange);
+                var diffCurr = new Vec2i(j - PlayerChunkRange, i - PlayerChunkRange);
                 var temp = AddVec2i(myPlayer.chunkI, diffCurr);
                 var diffOrg = SubVec2i(temp, orgChunkI);
                 if (force || ((Math.abs(diffOrg.x) > PlayerChunkRange) || (Math.abs(diffOrg.y) > PlayerChunkRange))) {
@@ -1216,9 +1285,9 @@ var UpdateChunks = function(force) {
         }
 
         //destroy chunks that are no longer visible
-        for (var i = 0; i < currentVessel.chunks.dim.x; i++) {
-            for (var j = 0; j < currentVessel.chunks.dim.y; j++) {
-                var chunkI = AddVec2i(currentVessel.chunks.dim, new Vec2i(i, j));
+        for (var i = 0; i < currentVessel.chunks.dim.y; i++) {
+            for (var j = 0; j < currentVessel.chunks.dim.x; j++) {
+                var chunkI = AddVec2i(currentVessel.chunks.dim, new Vec2i(j, i));
 
                 var existingChunk = currentVessel.chunks.TryGet(chunkI.x, chunkI.y);
                 if (existingChunk != null) {
@@ -1235,8 +1304,8 @@ var UpdateChunks = function(force) {
 
 //Main Loop
 InitializeGame();
+ActivateBuildMode();
 
-camera.position.z = 20;
 
 window.performance.mark('physics_update');
 
@@ -1305,7 +1374,7 @@ function render() {
                                 
                                 var tile = new VesselTile(flags, wallMask, c0, c1, floor0, floor1);
                                 
-                                chunk.SetTile(new Vec2i(tileLinearI % VesselChunkSize, (tileLinearI / VesselChunkSize))|0, tile);
+                                chunk.SetTile(new Vec2i(tileLinearI % VesselChunkSize, tileLinearI / VesselChunkSize), tile);
                             }
                             
                             
@@ -1381,6 +1450,8 @@ function render() {
     
     if (myPlayer != null && currentVessel != null) {
         UpdateChunks(false);
+        
+        //camera.position.set(myPlayer.pos.x, myPlayer.pos)
     }
     
     requestAnimationFrame( render );

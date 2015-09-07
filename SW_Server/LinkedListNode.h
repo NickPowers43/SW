@@ -18,7 +18,6 @@ namespace SW_Server
 			}
 		}
 
-
 		T* & Next()
 		{
 			

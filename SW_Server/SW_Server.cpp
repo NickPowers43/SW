@@ -91,15 +91,15 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 
 		const std::string myMsg = msg->get_payload();
 
-		PlayerMessagePair pair;
+		/*PlayerMessagePair pair;
 		pair.msg = msg->get_payload();
 		pair.player = player;
-		messages_in.push(pair);
+		messages_in.push(pair);*/
 
-		NetworkReader nr((void*)pair.msg.c_str(), pair.msg.size(), false);
+		NetworkReader nr((void*)myMsg.c_str(), myMsg.size(), false);
 		nw_main.Reset();
 
-		std::cout << "Message of size: " << pair.msg.size() << " received.";
+		std::cout << "Message of size: " << myMsg.size() << " received.";
 
 		while (nr.Position() < nr.size)
 		{
@@ -109,9 +109,9 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 				switch (mt)
 				{
 				case ClientMessageType::RequestModule:
-					if (pair.player->currentVessel)
+					if (player->currentVessel)
 					{
-						pair.player->currentVessel->ReadModuleRequestMessage(pair.player, &nw_main, &nr);
+						player->currentVessel->ReadModuleRequestMessage(player, &nw_main, &nr);
 					}
 					else
 					{
@@ -119,9 +119,9 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 					}
 					break;
 				case ClientMessageType::RequestChunk:
-					if (pair.player->currentVessel)
+					if (player->currentVessel)
 					{
-						pair.player->currentVessel->ReadChunkRequestMessage(pair.player, &nw_main, &nr);
+						player->currentVessel->ReadChunkRequestMessage(player, &nw_main, &nr);
 						//SendPingMessage(hdl, &nw_main, 100);
 					}
 					else
@@ -162,15 +162,20 @@ void on_open(websocketpp::connection_hdl hdl) {
 	Player* player = new Player(hdl);
 	players[hdl._Get()] = player;
 	
+	StartingVessel* sV;
+
 	if (startingVessels.size() < 1)
 	{
-		StartingVessel* sV = new StartingVessel(VesselVecType(0.0f, 0.0f), 1.0f, VesselVecType(1.0f, 1.0f), 0.0f, NULL);
+		sV = new StartingVessel(VesselVecType(0.0f, 0.0f), 1.0f, VesselVecType(1.0f, 1.0f), 0.0f, NULL);
 		startingVessels.push_back(sV);
 		qt->AddVessel(sV, true);
-		sV->Initialize();
+	}
+	else
+	{
+		sV = startingVessels[0];
 	}
 
-	startingVessels[0]->AddPlayer(&nw_main, player);
+	sV->AddPlayer(&nw_main, player);
 }
 
 // Define a callback to handle new connections

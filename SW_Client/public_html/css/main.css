@@ -25,15 +25,15 @@ button {
 }
 
 body {
-    width: 800px;
+    width: 70%;
     margin: auto;
     font-size: 1em;
     line-height: 1.4;
 }
 
 canvas {
-    width: 800px; 
-    height: 600px;
+    width: 70%; 
+    height: 80%;
 }
 
 /*
