@@ -78,10 +78,16 @@
     <ClCompile Include="FixedTileSet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CompartmentTiles.cpp">
+    <ClCompile Include="TrackedTileSet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="TrackedTileSet.cpp">
+    <ClCompile Include="TrackedCompartmentTileSet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CompartmentTileSet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="VesselModuleTileSet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -155,10 +161,16 @@
     <ClInclude Include="FixedTileSet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CompartmentTiles.h">
+    <ClInclude Include="TrackedTileSet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TrackedTileSet.h">
+    <ClInclude Include="TrackedCompartmentTileSet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CompartmentTileSet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VesselModuleTileSet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

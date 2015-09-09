@@ -46,6 +46,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -70,7 +71,7 @@
     <ClCompile Include="AdjacentTiles.cpp" />
     <ClCompile Include="Compartment.cpp" />
     <ClCompile Include="CompartmentTile.cpp" />
-    <ClCompile Include="CompartmentTiles.cpp" />
+    <ClCompile Include="CompartmentTileSet.cpp" />
     <ClCompile Include="DynamicArray2D.cpp" />
     <ClCompile Include="FixedTileSet.cpp" />
     <ClCompile Include="GameObject.cpp" />
@@ -82,11 +83,13 @@
     <ClCompile Include="SW.cpp" />
     <ClCompile Include="TileChunks.cpp" />
     <ClCompile Include="TileSet.cpp" />
+    <ClCompile Include="TrackedCompartmentTileSet.cpp" />
     <ClCompile Include="TrackedTileSet.cpp" />
     <ClCompile Include="Vessel.cpp" />
     <ClCompile Include="TileChunk.cpp" />
     <ClCompile Include="VesselModule.cpp" />
     <ClCompile Include="VesselModuleTemplate.cpp" />
+    <ClCompile Include="VesselModuleTileSet.cpp" />
     <ClCompile Include="VesselObject.cpp" />
     <ClCompile Include="Tile.cpp" />
   </ItemGroup>
@@ -95,7 +98,7 @@
     <ClInclude Include="AdjacentTiles.h" />
     <ClInclude Include="Compartment.h" />
     <ClInclude Include="CompartmentTile.h" />
-    <ClInclude Include="CompartmentTiles.h" />
+    <ClInclude Include="CompartmentTileSet.h" />
     <ClInclude Include="DynamicArray2D.h" />
     <ClInclude Include="FixedTileSet.h" />
     <ClInclude Include="GameObject.h" />
@@ -109,11 +112,13 @@
     <ClInclude Include="SW.h" />
     <ClInclude Include="TileChunks.h" />
     <ClInclude Include="TileSet.h" />
+    <ClInclude Include="TrackedCompartmentTileSet.h" />
     <ClInclude Include="TrackedTileSet.h" />
     <ClInclude Include="Vessel.h" />
     <ClInclude Include="TileChunk.h" />
     <ClInclude Include="VesselModule.h" />
     <ClInclude Include="VesselModuleTemplate.h" />
+    <ClInclude Include="VesselModuleTileSet.h" />
     <ClInclude Include="VesselObject.h" />
     <ClInclude Include="Tile.h" />
   </ItemGroup>

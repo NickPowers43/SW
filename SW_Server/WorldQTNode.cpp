@@ -90,17 +90,17 @@ namespace SW_Server
 		vesselCount = 0;
 		flags |= WQT_FLAG_BROKEN;
 
-		children[QT_BL] = new WorldQTNode(depth + 1, bl_quadrant());
-		children[QT_TL] = new WorldQTNode(depth + 1, tl_quadrant());
-		children[QT_BR] = new WorldQTNode(depth + 1, br_quadrant());
-		children[QT_TR] = new WorldQTNode(depth + 1, tr_quadrant());
+		children[QT_BL] = new WorldQTNode(depth + 1, bl_quadrant<VesselValueType>());
+		children[QT_TL] = new WorldQTNode(depth + 1, tl_quadrant<VesselValueType>());
+		children[QT_BR] = new WorldQTNode(depth + 1, br_quadrant<VesselValueType>());
+		children[QT_TR] = new WorldQTNode(depth + 1, tr_quadrant<VesselValueType>());
 	}
 	void WorldQTNode::UpdateSurrounding(QTNode** adjacent)
 	{
 		//deliver appropriate vessels to (t, and r)
 		VesselIterator itr(&vessels);
 		while (itr.dir_ref) {
-			if (itr->pos.x > Right())
+			if (itr->pos.x > Right<VesselValueType>())
 			{
 				Vessel* curr = itr.RemoveCurrent();
 				if (adjacent[QT_ARG_R])
@@ -112,7 +112,7 @@ namespace SW_Server
 					static_cast<WorldQTNode*>(parent)->AddVessel(curr, false);
 				}
 			}
-			if (itr->pos.y > Top())
+			if (itr->pos.y > Top<VesselValueType>())
 			{
 				Vessel* curr = itr.RemoveCurrent();
 				if (adjacent[QT_ARG_T])
@@ -152,7 +152,7 @@ namespace SW_Server
 		//deliver appropriate vessels to (b, and l)
 		itr = VesselIterator(&vessels);
 		while (itr.dir_ref) {
-			if (itr->pos.x > Right())
+			if (itr->pos.x > Right<VesselValueType>())
 			{
 				Vessel* curr = itr.RemoveCurrent();
 				if (adjacent[QT_ARG_R])
@@ -164,7 +164,7 @@ namespace SW_Server
 					static_cast<WorldQTNode*>(parent)->AddVessel(curr, false);
 				}
 			}
-			if (itr->pos.y > Top())
+			if (itr->pos.y > Top<VesselValueType>())
 			{
 				Vessel* curr = itr.RemoveCurrent();
 				if (adjacent[QT_ARG_T])
@@ -186,14 +186,14 @@ namespace SW_Server
 	}
 	void WorldQTNode::AddVessel(Vessel* vessel, bool force)
 	{
-		if (force || (vessel->pos.x > Left() && vessel->pos.x < Right() && vessel->pos.y > Bottom() && vessel->pos.y < Top()))
+		if (force || (vessel->pos.x > Left<VesselValueType>() && vessel->pos.x < Right<VesselValueType>() && vessel->pos.y > Bottom<VesselValueType>() && vessel->pos.y < Top<VesselValueType>()))
 		{
 			if (flags & WQT_FLAG_BROKEN)
 			{
 				//add to children
-				if (vessel->pos.x > MiddleHorizontal())
+				if (vessel->pos.x > MiddleHorizontal<VesselValueType>())
 				{
-					if (vessel->pos.y > MiddleVertical())
+					if (vessel->pos.y > MiddleVertical<VesselValueType>())
 					{
 						if (!children[QT_TR])
 						{
@@ -220,7 +220,7 @@ namespace SW_Server
 				}
 				else
 				{
-					if (vessel->pos.y > MiddleVertical())
+					if (vessel->pos.y > MiddleVertical<VesselValueType>())
 					{
 						if (!children[QT_TL])
 						{

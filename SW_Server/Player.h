@@ -1,22 +1,22 @@
 #pragma once
+#include "Vessel.h"
+#include <SW\SW.h>
+#include <SW\Player.h>
 
 namespace SW_Server
 {
-	class Vessel;
-
-	class Player
+	class Player :
+		public SW::Player
 	{
 	public:
-		Player(websocketpp::connection_hdl hdl);
+		Player(websocketpp::connection_hdl hdl, glm::vec2 vel, float m, glm::vec2 pos, float rot, glm::ivec2 chunkI, Vessel* currentVessel);
 		~Player();
 
+		void SendString(const std::string message);
 		void FlushBuffer(NetworkWriter* nw);
 
-		websocketpp::connection_hdl hdl;
 		Vessel* currentVessel;
-		glm::vec2 pos;
-		glm::ivec2 chunkI;
-		float rot;
+		websocketpp::connection_hdl hdl;
 	};
-
 }
+

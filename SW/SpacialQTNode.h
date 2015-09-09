@@ -9,11 +9,15 @@ namespace SW
 	class SpacialQTNode :
 		public QTNode
 	{
+	protected:
+		glm::tvec2<value_type> bl;
+		value_type size;
+
 	public:
 		SpacialQTNode(glm::tvec2<value_type> bl, value_type size, QTNode* parent) : QTNode(parent)
 		{
-			bl = bl;
-			size = size;
+			SpacialQTNode::bl = bl;
+			SpacialQTNode::size = size;
 		}
 		~SpacialQTNode()
 		{

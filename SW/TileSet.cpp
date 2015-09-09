@@ -14,6 +14,15 @@ namespace SW
 	{
 	}
 
+	Tile* TileSet::CreateTile()
+	{
+		return new Tile();
+	}
+	void TileSet::DestroyTile(Tile* tile)
+	{
+		delete tile;
+	}
+
 	void TileSet::BuildWall(glm::ivec2 index, int count, uint8_t type)
 	{
 		Tile* tile;
@@ -67,6 +76,20 @@ namespace SW
 
 		if (!reverse) {
 			*index += wallOffsets[type] * count;
+		}
+	}
+	void TileSet::BuildFoundation(glm::ivec2 origin, glm::ivec2 size)
+	{
+		Tile* tile;
+
+		for (int i = 0; i < size.y; i++) {
+			for (int j = 0; j < size.x; j++) {
+
+				glm::ivec2 temp = origin + glm::ivec2(j, i);
+				if (!(tile = TryGet(temp))) {
+					Set(temp, CreateTile());
+				}
+			}
 		}
 	}
 

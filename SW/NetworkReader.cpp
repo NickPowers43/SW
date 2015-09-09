@@ -31,7 +31,8 @@ namespace SW
 		}
 		else
 		{
-			throw std::exception("End of read buffer reached");
+			printf("End of read buffer reached");
+			return 0;
 		}
 	}
 	uint8_t NetworkReader::ReadUint8()
@@ -42,7 +43,8 @@ namespace SW
 		}
 		else
 		{
-			throw std::exception("End of read buffer reached");
+			printf("End of read buffer reached");
+			return 0;
 		}
 	}
 	uint16_t NetworkReader::ReadUint16()
@@ -53,7 +55,8 @@ namespace SW
 		}
 		else
 		{
-			throw std::exception("End of read buffer reached");
+			printf("End of read buffer reached");
+			return 0;
 		}
 	}
 	uint32_t NetworkReader::ReadUint32()
@@ -64,7 +67,8 @@ namespace SW
 		}
 		else
 		{
-			throw std::exception("End of read buffer reached");
+			printf("End of read buffer reached");
+			return 0;
 		}
 	}
 	int8_t NetworkReader::ReadInt8()
@@ -75,7 +79,8 @@ namespace SW
 		}
 		else
 		{
-			throw std::exception("End of read buffer reached");
+			printf("End of read buffer reached");
+			return 0;
 		}
 	}
 	int16_t NetworkReader::ReadInt16()
@@ -86,7 +91,8 @@ namespace SW
 		}
 		else
 		{
-			throw std::exception("End of read buffer reached");
+			printf("End of read buffer reached");
+			return 0;
 		}
 	}
 	int32_t NetworkReader::ReadInt32()
@@ -97,7 +103,8 @@ namespace SW
 		}
 		else
 		{
-			throw std::exception("End of read buffer reached");
+			printf("End of read buffer reached");
+			return 0;
 		}
 	}
 	float NetworkReader::ReadSingle()
@@ -108,7 +115,8 @@ namespace SW
 		}
 		else
 		{
-			throw std::exception("End of read buffer reached");
+			printf("End of read buffer reached");
+			return 0;
 		}
 	}
 

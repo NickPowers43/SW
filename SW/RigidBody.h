@@ -9,8 +9,7 @@ namespace SW
 		public GameObject<value_type>
 	{
 	public:
-		template<typename value_type>
-		RigidBody(glm::tvec2<value_type> vel, float m, glm::vec2 pos, float rot) : GameObject<value_type>(pos, rot)
+		RigidBody(glm::tvec2<value_type> vel, float m, glm::tvec2<value_type> pos, float rot) : GameObject<value_type>(pos, rot)
 		{
 			RigidBody::vel = vel;
 			RigidBody::m = m;
@@ -42,8 +41,6 @@ namespace SW
 		{
 
 		}
-
-	private:
 
 		glm::tvec2<value_type> com;
 		glm::tvec2<value_type> vel;

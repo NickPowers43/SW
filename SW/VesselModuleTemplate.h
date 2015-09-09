@@ -1,5 +1,6 @@
 #pragma once
 #include "SW.h"
+#include "VesselModuleTileSet.h"
 
 namespace SW
 {
@@ -9,14 +10,7 @@ namespace SW
 		VesselModuleTemplate(glm::ivec2 dim);
 		~VesselModuleTemplate();
 
-		glm::ivec2 dim;
-		Tile* tiles;
-
-		Tile TileAtV(glm::ivec2 index);
-		Tile* TileAt(glm::ivec2 index);
-		void BuildWall(glm::ivec2 index, int count, WallType_t type);
-		void BuildWall(glm::ivec2 index, int count, WallType_t type, bool reverse);
-		void BuildWall(glm::ivec2* index, int count, WallType_t type, bool reverse);
+		VesselModuleTileSet tiles;
 	};
 
 }

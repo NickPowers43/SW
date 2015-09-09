@@ -1,5 +1,5 @@
 #pragma once
-#include "SpacialQTNode.h"
+#include <SW/SpacialQTNode.h>
 #include "Vessel.h"
 
 namespace SW_Server
@@ -10,7 +10,7 @@ namespace SW_Server
 	static int WQT_FLAG_BROKEN = 1;
 
 	class WorldQTNode :
-		public SpacialQTNode
+		public SW::SpacialQTNode<VesselValueType>
 	{
 
 	public:
@@ -46,6 +46,8 @@ namespace SW_Server
 		Vessel* vessels;
 		int vesselCount;
 		uint8_t flags;
+
+
 	};
 }
 

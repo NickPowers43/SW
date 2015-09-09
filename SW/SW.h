@@ -14,6 +14,9 @@ using namespace std;
 
 namespace SW
 {
+	typedef float VesselValueType;
+	typedef glm::tvec2<float> VesselVecType;
+
 	static int PLAYER_CHUNK_RANGE = 2;
 	static int CHUNK_SIZE_POW = 3;
 	static int CHUNK_SIZE = 1 << CHUNK_SIZE_POW;
@@ -49,8 +52,9 @@ namespace SW
 	class CompartmentTile;
 	class TileChunk;
 	class TileChunks;
+	class FixedTileSet;
 	class TrackedTileSet;
-	class CompartmentTiles;
+	class CompartmentTileSet;
 	class TileSet;
 	class AABBi;
 	class VesselObject;
@@ -58,6 +62,7 @@ namespace SW
 	class VesselModule;
 	class AdjacentTiles;
 	class VesselModuleTemplate;
+	class VesselModuleTileSet;
 	class NetworkReader;
 	class NetworkWriter;
 
@@ -68,9 +73,22 @@ namespace SW
 	template<typename T>
 	class DynamicArray2D;
 
+	static int MAX_MODULE_MESSAGE_SIZE = sizeof(VMType_t) + (2 * sizeof(uint32_t));
+	static int VESSEL_TILE_MESSAGE_SIZE =
+		sizeof(uint16_t) + /*index*/
+		sizeof(TileFlag_t) +
+		sizeof(WallTypeMask_t) +
+		(sizeof(FloorType_t) * 2) +
+		(sizeof(CompartmentIndex_t) * 2);
+	static int MAX_VESSELCHUNK_MESSAGE_SIZE =
+		(sizeof(int16_t) * 2) + /*index*/
+		sizeof(uint32_t) + /*version*/
+		sizeof(uint16_t) + /*tile_count*/
+		(CHUNK_DATA_COUNT * VESSEL_TILE_MESSAGE_SIZE) /*tiles*/;
+
 	void Initialize();
 
-	extern vector<VesselModuleTemplate> vesselModuleTemplates;
+	extern VesselModuleTemplate** vesselModuleTemplates;
 	extern glm::ivec2* wallOffsets;
 	extern glm::vec2* wallVectorsNormalized;
 }

@@ -1,20 +1,24 @@
-// SW_Server.cpp : Defines the entry point for the console application.
+// SW.cpp : Defines the entry point for the console application.
 //
-
 #include "stdafx.h"
-#include "Vessel.h"
-#include "StartingVessel.h"
-#include "NetworkReader.h"
-#include "NetworkWriter.h"
-#include "WorldQTNode.h"
-#include "Player.h"
-#include "StartingVessel.h"
 
 #include <thread>
 #include <queue>
 #include <mutex>
 
-NetworkWriter nw_main(1 << 14);
+#include <SW\QTNode.h>
+#include "WorldQTNode.h"
+#include "StartingVessel.h"
+#include "Vessel.h"
+#include "Player.h"
+#include <SW\NetworkReader.h>
+#include <SW\NetworkWriter.h>
+
+using namespace SW_Server;
+
+std::map<void*, Player*> players;
+std::vector<Vessel*> vessels;
+std::vector<StartingVessel*> startingVessels;
 
 struct PlayerMessagePair
 {
@@ -25,60 +29,7 @@ struct PlayerMessagePair
 std::mutex message_in_m;
 std::queue<PlayerMessagePair> messages_in;
 
-void SendPingMessage(websocketpp::connection_hdl hdl, NetworkWriter* nw, size_t size)
-{
-	try	
-	{
-		if (nw->Remaining() < (sizeof(MessageType_t) + sizeof(uint32_t) + size))
-		{
-			try 
-			{
-				myServer.send(hdl, nw->StringCopy(), websocketpp::frame::opcode::binary);
-			}
-			catch (std::overflow_error & e)
-			{
-				std::cout << "Failed to send ping message: " << e.what();
-			}
-			catch (const websocketpp::lib::error_code& e)
-			{
-				std::cout << "Failed to send ping message: " << e << "(" << e.message() << ")" << std::endl;
-			}
-		}
 
-		if (nw->Remaining() < (sizeof(MessageType_t) + sizeof(uint32_t) + size))
-			return;
-
-		nw->Write((MessageType_t)ServerMessageType::PingMessage);
-		nw->Write((uint32_t)size);
-		for (size_t i = 0; i < size; i++)
-		{
-			nw_main.Write((uint8_t)0);
-		}
-		std::string response((char*)nw->buffer, nw->Position());
-		//cout << "Sending message with size: " << size;
-		myServer.send(hdl, response, websocketpp::frame::opcode::binary);
-	}
-	catch (std::overflow_error & e)
-	{
-		std::cout << "Failed to send ping message: " << e.what();
-	}
-	catch (const websocketpp::lib::error_code& e)
-	{
-		std::cout << "Failed to send ping message: " << e << "(" << e.message() << ")" << std::endl;
-	}
-}
-
-void ReadPingMessageResponse(websocketpp::connection_hdl hdl, NetworkWriter* nw, NetworkReader* nr)
-{
-	nr->littleEndian = false;
-	uint32_t org_size = nr->ReadUint32();
-	nr->littleEndian = true;
-
-	if (org_size < ((1 << 14) - 200))
-	{
-		SendPingMessage(hdl, nw, org_size + 100);
-	}
-}
 
 // Define a callback to handle incoming messages
 void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
@@ -96,22 +47,22 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 		pair.player = player;
 		messages_in.push(pair);*/
 
-		NetworkReader nr((void*)myMsg.c_str(), myMsg.size(), false);
-		nw_main.Reset();
+		SW::NetworkReader nr((void*)myMsg.c_str(), myMsg.size());
+		nw_main->Reset();
 
 		std::cout << "Message of size: " << myMsg.size() << " received.";
 
 		while (nr.Position() < nr.size)
 		{
 			try	{
-				MessageType_t mt = (MessageType_t)nr.ReadMessageType();
+				SW::MessageType_t mt = (SW::MessageType_t)nr.ReadMessageType();
 				std::string response;
 				switch (mt)
 				{
 				case ClientMessageType::RequestModule:
 					if (player->currentVessel)
 					{
-						player->currentVessel->ReadModuleRequestMessage(player, &nw_main, &nr);
+						player->currentVessel->ReadModuleRequestMessage(player, nw_main, &nr);
 					}
 					else
 					{
@@ -121,7 +72,7 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 				case ClientMessageType::RequestChunk:
 					if (player->currentVessel)
 					{
-						player->currentVessel->ReadChunkRequestMessage(player, &nw_main, &nr);
+						player->currentVessel->ReadChunkRequestMessage(player, nw_main, &nr);
 						//SendPingMessage(hdl, &nw_main, 100);
 					}
 					else
@@ -130,7 +81,7 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 					}
 					break;
 				case ClientMessageType::PingMessageResponse:
-					ReadPingMessageResponse(hdl, &nw_main, &nr);
+					ReadPingMessageResponse(hdl, nw_main, &nr);
 					break;
 				default:
 					break;
@@ -152,21 +103,19 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 			}
 		}
 
-		player->FlushBuffer(&nw_main);
+		player->FlushBuffer(nw_main);
 	}
 }
 
 // Define a callback to handle new connections
 void on_open(websocketpp::connection_hdl hdl) {
 	
-	Player* player = new Player(hdl);
-	players[hdl._Get()] = player;
 	
 	StartingVessel* sV;
 
 	if (startingVessels.size() < 1)
 	{
-		sV = new StartingVessel(VesselVecType(0.0f, 0.0f), 1.0f, VesselVecType(1.0f, 1.0f), 0.0f, NULL);
+		sV = new StartingVessel(0, VesselVecType(0.0f, 0.0f), 1.0f, VesselVecType(1.0f, 1.0f), 0.0f, NULL);
 		startingVessels.push_back(sV);
 		qt->AddVessel(sV, true);
 	}
@@ -175,7 +124,8 @@ void on_open(websocketpp::connection_hdl hdl) {
 		sV = startingVessels[0];
 	}
 
-	sV->AddPlayer(&nw_main, player);
+	Player* player = new Player(hdl, glm::vec2(0.0f, 0.0f), 1.0f, glm::vec2(0.0f, 0.0f), 0.0f, glm::ivec2(0, 0), NULL);
+	players[hdl._Get()] = player;
 }
 
 // Define a callback to handle new connections
@@ -200,8 +150,8 @@ void game_thread_run()
 {
 	while (running)
 	{
-		QTNode* root_adj[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-		qt->UpdateSurrounding((QTNode**)&root_adj);
+		SW::QTNode* root_adj[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+		qt->UpdateSurrounding((SW::QTNode**)&root_adj);
 
 		int messages_in_size = 0;
 		{
@@ -232,35 +182,37 @@ int _tmain(int argc, _TCHAR* argv[])
 	//string ipS = string((char*)argv[1]);
 	//int ip = stoi(ipS);
 
-	Initialize();
+	SW::Initialize();
 	SetConsoleCtrlHandler(OnUserClose, true);
 
 	std::thread game_thread(game_thread_run);
 
+	myServer = new server();
+
 	// Create a server endpoint
 	try {
 		// Set logging settings
-		myServer.set_access_channels(websocketpp::log::alevel::all);
-		myServer.clear_access_channels(websocketpp::log::alevel::frame_payload);
+		myServer->set_access_channels(websocketpp::log::alevel::all);
+		myServer->clear_access_channels(websocketpp::log::alevel::frame_payload);
 
 		// Initialize ASIO
-		myServer.init_asio();
+		myServer->init_asio();
 
 		// Register our message handler
-		myServer.set_open_handler(&on_open);
-		myServer.set_message_handler(bind(&on_message, &myServer, ::_1, ::_2));
-		myServer.set_close_handler(&on_close);
+		myServer->set_open_handler(&on_open);
+		myServer->set_message_handler(bind(&on_message, myServer, ::_1, ::_2));
+		myServer->set_close_handler(&on_close);
 
-		myServer.set_max_message_size(1 << 16);
+		myServer->set_max_message_size(1 << 16);
 
 		// Listen on port 7778
-		myServer.listen(7778);
+		myServer->listen(7778);
 
 		// Start the server accept loop
-		myServer.start_accept();
+		myServer->start_accept();
 
 		// Start the ASIO io_service run loop
-		myServer.run();
+		myServer->run();
 	}
 	catch (websocketpp::exception const & e) {
 		std::cout << e.what() << std::endl;

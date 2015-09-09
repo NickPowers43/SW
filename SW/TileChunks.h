@@ -14,7 +14,7 @@ namespace SW
 
 		DynamicArray2D<TileChunk> chunks;
 
-		virtual TileChunk* CreateChunkAt(glm::ivec2 index) = 0;
+		virtual TileChunk* CreateChunkAt(glm::ivec2 index, TileChunkVersion_t version) = 0;
 		TileChunk* TryGetChunk(glm::ivec2 index);
 
 		TileChunk* Top(TileChunk* chunk);

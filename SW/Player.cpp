@@ -6,7 +6,9 @@
 
 namespace SW
 {
-	Player::Player(glm::ivec2 chunkI) : chunkI(chunkI)
+	Player::Player(glm::vec2 vel, float m, glm::vec2 pos, float rot, glm::ivec2 chunkI) :
+		RigidBody<float>(vel, m, pos, rot),
+		chunkI(chunkI)
 	{
 	}
 

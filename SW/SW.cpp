@@ -3,7 +3,7 @@
 
 namespace SW
 {
-	vector<VesselModuleTemplate> vesselModuleTemplates;
+	VesselModuleTemplate** vesselModuleTemplates;
 
 	glm::ivec2* wallOffsets = new glm::ivec2[9] {
 		glm::ivec2(0, 0),
@@ -36,8 +36,9 @@ namespace SW
 			wallVectorsNormalized[i] = glm::normalize(wallVectorsNormalized[i]);
 		}
 
-		vesselModuleTemplates.push_back(VesselModuleTemplate(glm::ivec2(1, 1)));
-		vesselModuleTemplates.push_back(VesselModuleTemplate(glm::ivec2(1, 1)));
+		vesselModuleTemplates = new VesselModuleTemplate*[2];
+		vesselModuleTemplates[0] = new VesselModuleTemplate(glm::ivec2(1, 1));
+		vesselModuleTemplates[1] = new VesselModuleTemplate(glm::ivec2(1, 1));
 	}
 }
 

@@ -1,47 +1,70 @@
 #include "stdafx.h"
-
-#include "VesselModuleTemplate.h"
+#include <SW\SW.h>
+#include <SW\NetworkReader.h>
+#include <SW\NetworkWriter.h>
 #include "WorldQTNode.h"
-
-glm::ivec2* wallOffsets = new glm::ivec2[9] {
-	glm::ivec2(0, 0),
-	glm::ivec2(1, 0),
-	glm::ivec2(2, 1),
-	glm::ivec2(1, 1),
-	glm::ivec2(1, 2),
-	glm::ivec2(0, 1),
-	glm::ivec2(-1, 2),
-	glm::ivec2(-1, 1),
-	glm::ivec2(-2, 1)
-};
-
-glm::vec2* wallVectorsNormalized = new glm::vec2[9] {
-	glm::vec2(0.0f, 0.0f),
-	glm::vec2(1.0f, 0.0f),
-	glm::vec2(2.0f, 1.0f),
-	glm::vec2(1.0f, 1.0f),
-	glm::vec2(1.0f, 2.0f),
-	glm::vec2(0.0f, 1.0f),
-	glm::vec2(-1.0f, 2.0f),
-	glm::vec2(-1.0f, 1.0f),
-	glm::vec2(-2.0f, 1.0f)
-};
-
-VesselModuleTemplate* moduleTemplates = (VesselModuleTemplate*)malloc(sizeof(VesselModuleTemplate) * MODULE_TYPE_COUNT);
 
 namespace SW_Server
 {
-	void Initialize()
+	WorldQTNode* qt = new WorldQTNode(0, VesselVecType(WORLD_SIZE * -0.5, WORLD_SIZE * -0.5), WORLD_SIZE, NULL);
+	server* myServer;
+	SW::NetworkWriter* nw_main = new SW::NetworkWriter(1 << 14);
+}
+
+
+using namespace SW;
+using namespace SW_Server;
+
+
+void SW_Server::SendPingMessage(websocketpp::connection_hdl hdl, SW::NetworkWriter* nw, size_t size)
+{
+	try
 	{
-		for (size_t i = 0; i < 9; i++)
+		if (nw->Remaining() < (sizeof(MessageType_t) + sizeof(uint32_t) + size))
 		{
-			wallVectorsNormalized[i] = glm::normalize(wallVectorsNormalized[i]);
+			try
+			{
+				myServer->send(hdl, nw->StringCopy(), websocketpp::frame::opcode::binary);
+			}
+			catch (std::overflow_error & e)
+			{
+				std::cout << "Failed to send ping message: " << e.what();
+			}
+			catch (const websocketpp::lib::error_code& e)
+			{
+				std::cout << "Failed to send ping message: " << e << "(" << e.message() << ")" << std::endl;
+			}
 		}
+
+		if (nw->Remaining() < (sizeof(MessageType_t) + sizeof(uint32_t) + size))
+			return;
+
+		nw->Write((MessageType_t)ServerMessageType::PingMessage);
+		nw->Write((uint32_t)size);
+		for (size_t i = 0; i < size; i++)
+		{
+			nw_main->Write((uint8_t)0);
+		}
+		std::string response((char*)nw->buffer, nw->Position());
+		//cout << "Sending message with size: " << size;
+		myServer->send(hdl, response, websocketpp::frame::opcode::binary);
+	}
+	catch (std::overflow_error & e)
+	{
+		std::cout << "Failed to send ping message: " << e.what();
+	}
+	catch (const websocketpp::lib::error_code& e)
+	{
+		std::cout << "Failed to send ping message: " << e << "(" << e.message() << ")" << std::endl;
 	}
 }
 
-WorldQTNode* qt = new WorldQTNode(0, VesselVecType(WORLD_SIZE * -0.5, WORLD_SIZE * -0.5), WORLD_SIZE, NULL);
-server myServer;
-std::map<void*, Player*> players;
-std::vector<Vessel*> vessels;
-std::vector<StartingVessel*> startingVessels;
+void SW_Server::ReadPingMessageResponse(websocketpp::connection_hdl hdl, NetworkWriter* nw, NetworkReader* nr)
+{
+	uint32_t org_size = nr->ReadUint32();
+
+	if (org_size < ((1 << 14) - 200))
+	{
+		SendPingMessage(hdl, nw, org_size + 100);
+	}
+}

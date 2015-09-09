@@ -16,8 +16,6 @@ namespace SW
 
 		void IsModuleLegal();
 
-		void InstantiateNearbyChunks(Player* player);
-
 		//virtual void PlaceBlock(uint16_t type, glm::ivec2 location);
 
 
@@ -26,7 +24,6 @@ namespace SW
 
 		std::vector<VesselModule> modules;
 		std::vector<VesselObject*> objects;
-		std::vector<Player*> playersOnBoard;
 		std::vector<TileChunk*> modifiedChunks;
 	};
 }

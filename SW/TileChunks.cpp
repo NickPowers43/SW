@@ -48,7 +48,7 @@ namespace SW
 		TileChunk* chunk = chunks.TryGet(chunkI);
 
 		if (!chunk) {
-			chunk = CreateChunkAt(chunkI);
+			chunk = CreateChunkAt(chunkI, 0);
 		}
 
 		index -= chunk->OriginTileIndex();
