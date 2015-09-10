@@ -4,7 +4,7 @@
 
 namespace SW_Server
 {
-	Compartment::Compartment(SW::CompartmentIndex_t index) : SW::Compartment(index)
+	Compartment::Compartment(CompartmentIndex_t index) : SW::Compartment(index)
 	{
 	}
 

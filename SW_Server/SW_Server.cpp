@@ -55,7 +55,7 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 		while (nr.Position() < nr.size)
 		{
 			try	{
-				SW::MessageType_t mt = (SW::MessageType_t)nr.ReadMessageType();
+				MessageType_t mt = (MessageType_t)nr.ReadMessageType();
 				std::string response;
 				switch (mt)
 				{

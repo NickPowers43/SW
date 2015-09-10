@@ -12,7 +12,7 @@ namespace SW_Server
 {
 	uint32_t Vessel::nextIndex = 0;
 
-	Vessel::Vessel(SW::VesselIndex_t index, VesselVecType vel, VesselValueType m, VesselVecType pos, VesselValueType rot, Vessel* next) :
+	Vessel::Vessel(VesselIndex_t index, VesselVecType vel, VesselValueType m, VesselVecType pos, VesselValueType rot, Vessel* next) :
 		SW::Vessel(index),
 		SW::RigidBody<VesselValueType>(vel, m, pos, rot),
 		SW::LinkedListNode<Vessel>(next)

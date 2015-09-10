@@ -63,7 +63,7 @@ void SW_Server::ReadPingMessageResponse(websocketpp::connection_hdl hdl, Network
 {
 	uint32_t org_size = nr->ReadUint32();
 
-	if (org_size < ((1 << 14) - 200))
+	if ((org_size + 100) < nw->Remaining())
 	{
 		SendPingMessage(hdl, nw, org_size + 100);
 	}

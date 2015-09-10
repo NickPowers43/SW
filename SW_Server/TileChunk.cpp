@@ -7,7 +7,7 @@ namespace SW_Server
 	TileChunk::TileChunk(glm::ivec2 index) : SW::TileChunk(index, 0)
 	{
 	}
-	TileChunk::TileChunk(glm::ivec2 index, SW::TileChunkVersion_t version) : SW::TileChunk(index, version)
+	TileChunk::TileChunk(glm::ivec2 index, TileChunkVersion_t version) : SW::TileChunk(index, version)
 	{
 	}
 

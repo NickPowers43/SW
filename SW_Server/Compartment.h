@@ -8,7 +8,7 @@ namespace SW_Server
 		public SW::Compartment
 	{
 	public:
-		Compartment(SW::CompartmentIndex_t index);
+		Compartment(CompartmentIndex_t index);
 		~Compartment();
 	};
 }

@@ -16,7 +16,7 @@ namespace SW_Server
 
 		std::vector<TileChunk*> modifiedChunks;
 
-		virtual SW::TileChunk* CreateChunkAt(glm::ivec2 index, SW::TileChunkVersion_t version) final;
+		virtual SW::TileChunk* CreateChunkAt(glm::ivec2 index, TileChunkVersion_t version) final;
 
 		void ReadChunkRequestMessage(Player* player, NetworkWriter* nw, NetworkReader* nr);
 

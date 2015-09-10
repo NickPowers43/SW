@@ -10,7 +10,7 @@ namespace SW_Server
 	{
 	public:
 		TileChunk(glm::ivec2 index);
-		TileChunk(glm::ivec2 index, SW::TileChunkVersion_t version);
+		TileChunk(glm::ivec2 index, TileChunkVersion_t version);
 		~TileChunk();
 
 		virtual SW::Tile* CreateTile() override;

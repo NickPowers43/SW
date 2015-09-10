@@ -8,7 +8,7 @@ namespace SW_Server
 		public Vessel
 	{
 	public:
-		StartingVessel(SW::VesselIndex_t index, VesselVecType vel, VesselValueType m, VesselVecType pos, VesselValueType rot, Vessel* next);
+		StartingVessel(VesselIndex_t index, VesselVecType vel, VesselValueType m, VesselVecType pos, VesselValueType rot, Vessel* next);
 		~StartingVessel();
 
 		virtual SW::VesselObject* PlaceObject(ObjectType::ObjectType type, glm::vec2 location) override;

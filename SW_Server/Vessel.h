@@ -18,7 +18,7 @@ namespace SW_Server
 		public SW::LinkedListNode<Vessel>
 	{
 	public:
-		Vessel(SW::VesselIndex_t index, VesselVecType vel, VesselValueType m, VesselVecType pos, VesselValueType rot, Vessel* next);
+		Vessel(VesselIndex_t index, VesselVecType vel, VesselValueType m, VesselVecType pos, VesselValueType rot, Vessel* next);
 		~Vessel();
 
 		void ReadChunkRequestMessage(Player* player, NetworkWriter* nw, NetworkReader* nr);

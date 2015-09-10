@@ -19,7 +19,7 @@ namespace SW_Server
 	{
 	}
 
-	SW::TileChunk* TileChunks::CreateChunkAt(glm::ivec2 index, SW::TileChunkVersion_t version)
+	SW::TileChunk* TileChunks::CreateChunkAt(glm::ivec2 index, TileChunkVersion_t version)
 	{
 		return new TileChunk(index, version);
 	}
