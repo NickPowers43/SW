@@ -1,5 +1,6 @@
 
 #include "NetworkWriter.h"
+#include <string>
 
 namespace SW
 {
@@ -14,12 +15,12 @@ namespace SW
 		delete buffer;
 	}
 
-	void NetworkWriter::Grow()
-	{
-		void* temp = new char[capacity + (capacity >> 1)];
-		memcpy(temp, buffer, capacity);
-		capacity += capacity >> 1;
-	}
+	//void NetworkWriter::Grow()
+	//{
+		//void* temp = new char[capacity + (capacity >> 1)];
+		//memcpy(temp, buffer, capacity);
+		//capacity += capacity >> 1;
+	//}
 	void NetworkWriter::Reset()
 	{
 		cursor = buffer;

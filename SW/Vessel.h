@@ -21,10 +21,6 @@ namespace SW
 
 	protected:
 		VesselIndex_t index;
-
-		std::vector<VesselModule> modules;
-		std::vector<VesselObject*> objects;
-		std::vector<TileChunk*> modifiedChunks;
 	};
 }
 

@@ -27,12 +27,12 @@ namespace SW
 				if ((tile = TryGet(tileI))) {
 					bool modified = false;
 					if (GetC0(tile) && GetC0(tile)->Instance() == c) {
-						cout << "Changing floor0 type at (" << tileI.x << "," << tileI.y << ")" << std::endl;
+						//cout << "Changing floor0 type at (" << tileI.x << "," << tileI.y << ")" << std::endl;
 						tile->floor0 = type;
 						modified = true;
 					}
 					if (GetC1(tile) && GetC1(tile)->Instance() == c) {
-						cout << "Changing floor1 type at (" << tileI.x << "," << tileI.y << ")" << std::endl;
+						//cout << "Changing floor1 type at (" << tileI.x << "," << tileI.y << ")" << std::endl;
 						tile->floor1 = type;
 						modified |= true;
 					}

@@ -20,23 +20,23 @@ namespace SW
 
 		}
 
-		template<typename value_type>
+		//template<typename value_type>
 		value_type mass()
 		{
 			return m;
 		}
-		template<typename value_type>
+		//template<typename value_type>
 		value_type massInv()
 		{
 			return m / 1.0;
 		}
-		template<typename value_type>
+		//template<typename value_type>
 		glm::tvec2<value_type> velocity()
 		{
 			return vel;
 		}
 
-		template<typename value_type>
+		//template<typename value_type>
 		void ApplyForce(glm::vec2 dir)
 		{
 

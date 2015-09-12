@@ -24,7 +24,7 @@ namespace SW_Server
 
 		nextChunkIndex = 0;
 		index = nextIndex++;
-		modifiedChunks.reserve(10);
+		//modifiedChunks.reserve(10);
 	}
 
 

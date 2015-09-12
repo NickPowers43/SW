@@ -12,7 +12,7 @@ namespace SW_Client
 	{
 	}
 
-	void NetworkWriter::WriteMessageType(SW::MessageType_t val)
+	void NetworkWriter::WriteMessageType(MessageType_t val)
 	{
 		if (Remaining() < sizeof(val))
 		{
@@ -20,7 +20,7 @@ namespace SW_Client
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 		}
 	}
 	void NetworkWriter::WriteUint8(uint8_t val)
@@ -31,7 +31,7 @@ namespace SW_Client
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 		}
 	}
 	void NetworkWriter::WriteUint16(uint16_t val)
@@ -45,7 +45,7 @@ namespace SW_Client
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 		}
 	}
 	void NetworkWriter::WriteUint32(uint32_t val)
@@ -59,7 +59,7 @@ namespace SW_Client
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 		}
 	}
 	void NetworkWriter::WriteInt8(int8_t val)
@@ -70,7 +70,7 @@ namespace SW_Client
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 		}
 	}
 	void NetworkWriter::WriteInt16(int16_t val)
@@ -84,7 +84,7 @@ namespace SW_Client
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 		}
 	}
 	void NetworkWriter::WriteInt32(int32_t val)
@@ -98,7 +98,7 @@ namespace SW_Client
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 		}
 	}
 	void NetworkWriter::WriteSingle(float val)
@@ -112,7 +112,7 @@ namespace SW_Client
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 		}
 	}
 }

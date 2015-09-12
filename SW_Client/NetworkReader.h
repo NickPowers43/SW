@@ -1,5 +1,5 @@
 #pragma once
-#include "../SW/NetworkReader.h"
+#include <SW/NetworkReader.h>
 
 namespace SW_Client
 {
@@ -12,7 +12,7 @@ namespace SW_Client
 
 		bool swapped;
 
-		SW::MessageType_t ReadMessageType();
+		MessageType_t ReadMessageType();
 		uint8_t ReadUint8();
 		uint16_t ReadUint16();
 		uint32_t ReadUint32();

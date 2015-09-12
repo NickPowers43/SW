@@ -13,15 +13,15 @@ namespace SW_Client
 	{
 	}
 
-	SW::MessageType_t NetworkReader::ReadMessageType()
+	MessageType_t NetworkReader::ReadMessageType()
 	{
-		if (Remaining() >= sizeof(SW::MessageType_t))
+		if (Remaining() >= sizeof(MessageType_t))
 		{
-			return Read<SW::MessageType_t>(&cursor);
+			return Read<MessageType_t>(&cursor);
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 			return 0;
 		}
 	}
@@ -33,7 +33,7 @@ namespace SW_Client
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 			return 0;
 		}
 	}
@@ -50,7 +50,7 @@ namespace SW_Client
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 			return 0;
 		}
 	}
@@ -67,7 +67,7 @@ namespace SW_Client
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 			return 0;
 		}
 	}
@@ -79,7 +79,7 @@ namespace SW_Client
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 			return 0;
 		}
 	}
@@ -96,7 +96,7 @@ namespace SW_Client
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 			return 0;
 		}
 	}
@@ -113,7 +113,7 @@ namespace SW_Client
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 			return 0;
 		}
 	}
@@ -130,7 +130,7 @@ namespace SW_Client
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 			return 0;
 		}
 	}

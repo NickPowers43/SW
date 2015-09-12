@@ -1,6 +1,5 @@
 
 #include "TileSet.h"
-
 #include "Tile.h"
 
 namespace SW
@@ -111,7 +110,7 @@ namespace SW
 		if (!(type == WallType::WallType::OneByZero || type == WallType::WallType::ZeroByOne)) {
 
 			int hDir = (type < WallType::WallType::ZeroByOne) ? 1 : -1;
-			int diff = abs(type - WallType::WallType::ZeroByOne);
+			int diff = abs<int>(type - WallType::WallType::ZeroByOne);
 
 			if (hDir < 0) {
 				if (ContainsWall(glm::ivec2(index.x + hDir, index.y))) {
@@ -192,7 +191,7 @@ namespace SW
 				return false;
 			}
 			if (wallCount == 1) {
-				if (abs((uint8_t)wall0 - (uint8_t)type) < 4) {
+				if (abs<int>((uint8_t)wall0 - (uint8_t)type) < 4) {
 					return false;
 				}
 			}
@@ -378,7 +377,7 @@ namespace SW
 			Tile* otherTile = TryGet(index - wallOffsets[i]);
 			if (otherTile) {
 				if (otherTile->Contains((uint8_t)i)) {
-					if (abs((uint8_t)type - (uint8_t)i) < 4) {
+					if (abs<int>((uint8_t)type - (uint8_t)i) < 4) {
 						return false;
 					}
 				}

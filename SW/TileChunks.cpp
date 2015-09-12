@@ -18,6 +18,10 @@ namespace SW
 	{
 		return chunks.TryGet(index);
 	}
+	void TileChunks::SetChunk(TileChunk* chunk)
+	{
+		chunks.Set(chunk->index, chunk);
+	}
 
 	TileChunk* TileChunks::Top(TileChunk* chunk) { return TryGetChunk(glm::ivec2(chunk->index.x, chunk->index.y + 1)); }
 	TileChunk* TileChunks::Bottom(TileChunk* chunk) { return TryGetChunk(glm::ivec2(chunk->index.x, chunk->index.y - 1)); }

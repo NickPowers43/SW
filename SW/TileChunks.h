@@ -16,6 +16,7 @@ namespace SW
 
 		virtual TileChunk* CreateChunkAt(glm::ivec2 index, TileChunkVersion_t version) = 0;
 		TileChunk* TryGetChunk(glm::ivec2 index);
+		void SetChunk(TileChunk* chunk);
 
 		TileChunk* Top(TileChunk* chunk);
 		TileChunk* Bottom(TileChunk* chunk);
@@ -30,11 +31,11 @@ namespace SW
 		virtual void Set(glm::ivec2 index, Tile* val) final;
 		virtual AABBi GetAABB() final;
 
-		glm::ivec2 TileOffset(glm::ivec2 tileI, glm::ivec2 chunkI);
-		glm::ivec2 TileIToChunkI(glm::ivec2 tileI);
-		glm::ivec2 ChunkIToTileI(glm::ivec2 chunkI);
-		glm::ivec2 WorldToChunkI(glm::vec2 worldPosition);
-		glm::vec2 ChunkIToWorld(glm::ivec2 chunkI);
+		static glm::ivec2 TileOffset(glm::ivec2 tileI, glm::ivec2 chunkI);
+		static glm::ivec2 TileIToChunkI(glm::ivec2 tileI);
+		static glm::ivec2 ChunkIToTileI(glm::ivec2 chunkI);
+		static glm::ivec2 WorldToChunkI(glm::vec2 worldPosition);
+		static glm::vec2 ChunkIToWorld(glm::ivec2 chunkI);
 	};
 }
 

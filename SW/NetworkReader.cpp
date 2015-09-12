@@ -31,7 +31,7 @@ namespace SW
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 			return 0;
 		}
 	}
@@ -43,7 +43,7 @@ namespace SW
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 			return 0;
 		}
 	}
@@ -55,7 +55,7 @@ namespace SW
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 			return 0;
 		}
 	}
@@ -67,7 +67,7 @@ namespace SW
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 			return 0;
 		}
 	}
@@ -79,7 +79,7 @@ namespace SW
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 			return 0;
 		}
 	}
@@ -91,7 +91,7 @@ namespace SW
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 			return 0;
 		}
 	}
@@ -103,7 +103,7 @@ namespace SW
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 			return 0;
 		}
 	}
@@ -115,7 +115,7 @@ namespace SW
 		}
 		else
 		{
-			printf("End of read buffer reached");
+			
 			return 0;
 		}
 	}

@@ -1,50 +1,45 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdio.h>
-#include <vector>
-#include <iostream>
-#include <map>
-
 #include <glm/geometric.hpp>
 #include <glm/common.hpp>
 #include <glm/vec2.hpp>
 
-using namespace std;
+#define FloorCount 3
+#define MODULE_TYPE_COUNT 2
+#define WallTypeCount 9
+
+#define CHUNK_SIZE 8
+#define CHUNK_DATA_COUNT (CHUNK_SIZE * CHUNK_SIZE)
+#define PLAYER_CHUNK_RANGE 2
+
+typedef uint8_t MessageType_t;
+
+typedef uint8_t ChunkFlag_t;
+
+typedef uint16_t TileFlag_t;
+typedef uint8_t FloorType_t;
+typedef uint8_t WallType_t;
+typedef uint8_t WallTypeMask_t;
+
+typedef uint8_t ObjectType_t;
+
+typedef uint32_t VesselIndex_t;
+typedef uint32_t CompartmentIndex_t;
+
+typedef uint8_t VMFlags_t;
+typedef uint16_t VMType_t;
+
+typedef uint32_t TileChunkVersion_t;
 
 namespace SW
 {
 	typedef float VesselValueType;
 	typedef glm::tvec2<float> VesselVecType;
 
-	static int PLAYER_CHUNK_RANGE = 2;
 	static int CHUNK_SIZE_POW = 3;
-	static int CHUNK_SIZE = 1 << CHUNK_SIZE_POW;
-	static int CHUNK_DATA_COUNT = CHUNK_SIZE * CHUNK_SIZE;
 	static int CHUNK_OFFSET_MASK = (1 << (CHUNK_SIZE_POW + 1)) - 1;
 
-	static int MODULE_TYPE_COUNT = 2;
-
 	static float CHUNK_UPDATE_INTERVAL = 1.0f;
-
-	typedef uint8_t MessageType_t;
-
-	typedef uint8_t ChunkFlag_t;
-
-	typedef uint16_t TileFlag_t;
-	typedef uint8_t FloorType_t;
-	typedef uint8_t WallType_t;
-	typedef uint8_t WallTypeMask_t;
-
-	typedef uint8_t ObjectType_t;
-
-	typedef uint32_t VesselIndex_t;
-	typedef uint32_t CompartmentIndex_t;
-
-	typedef uint8_t VMFlags_t;
-	typedef uint16_t VMType_t;
-
-	typedef uint32_t TileChunkVersion_t;
 
 	class Vessel;
 	class Player;
@@ -98,7 +93,7 @@ void swap_32(void* val);
 
 namespace VMFlags
 {
-	enum VMFlags : SW::VMType_t {
+	enum VMFlags : VMType_t {
 		None = 0,
 		FlipVertical = 1,
 		FlipHorizontal = 2
@@ -107,7 +102,7 @@ namespace VMFlags
 
 namespace VMType
 {
-	enum VMType : SW::VMType_t {
+	enum VMType : VMType_t {
 		SimpleFrigateCore = 0,
 		SimpleFrigateBridge = 1
 	};
@@ -115,7 +110,7 @@ namespace VMType
 
 namespace TileFlag
 {
-	enum TileFlag : SW::TileFlag_t {
+	enum TileFlag : TileFlag_t {
 		None = 0,
 		Hatch0 = 1,
 		Hatch1 = 2,
@@ -129,7 +124,7 @@ namespace TileFlag
 
 namespace ChunkFlag
 {
-	enum ChunkFlag : SW::ChunkFlag_t {
+	enum ChunkFlag : ChunkFlag_t {
 		None = 0,
 		Seen = 1,
 		Modified = 2
@@ -138,7 +133,7 @@ namespace ChunkFlag
 
 namespace ObjectType
 {
-	enum ObjectType : SW::ObjectType_t {
+	enum ObjectType : ObjectType_t {
 		Spawner = 0,
 		Turret = 1
 	};
@@ -146,7 +141,7 @@ namespace ObjectType
 
 namespace FloorType
 {
-	enum FloorType : SW::FloorType_t {
+	enum FloorType : FloorType_t {
 		None = 0,
 		Basic = 1,
 		SmoothWhite = 2
@@ -155,7 +150,7 @@ namespace FloorType
 
 namespace ClientMessageType
 {
-	enum ClientMessageType : SW::MessageType_t {
+	enum ClientMessageType : MessageType_t {
 		RequestChunk = 0,
 		Inputs = 1,
 		FillAt = 2,
@@ -166,7 +161,7 @@ namespace ClientMessageType
 
 namespace ServerMessageType
 {
-	enum ServerMessageType : SW::MessageType_t {
+	enum ServerMessageType : MessageType_t {
 		SetChunk = 0,
 		SyncVessel = 1,
 		UpdatePlayer = 2,
@@ -181,7 +176,7 @@ namespace ServerMessageType
 
 namespace WallTypeMask
 {
-	enum WallTypeMask : SW::WallTypeMask_t {
+	enum WallTypeMask : WallTypeMask_t {
 		None = 0,
 		OneByZero = 1,
 		TwoByOne = 2,
@@ -196,7 +191,7 @@ namespace WallTypeMask
 
 namespace WallType
 {
-	enum WallType : SW::WallType_t {
+	enum WallType : WallType_t {
 		None = 0,
 		OneByZero = 1,
 		TwoByOne = 2,
@@ -207,4 +202,17 @@ namespace WallType
 		OneByOneFlipped = 7,
 		TwoByOneFlipped = 8
 	};
+}
+
+template<typename value_type>
+value_type abs(value_type val)
+{
+	if (val < 0)
+	{
+		return -val;
+	}
+	else
+	{
+		return val;
+	}
 }

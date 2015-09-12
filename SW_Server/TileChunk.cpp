@@ -33,7 +33,7 @@ namespace SW_Server
 
 		uint16_t* tile_count = (uint16_t*)nw->cursor;
 		nw->Write((uint16_t)0);
-		for (size_t i = 0; i < SW::CHUNK_DATA_COUNT; i++)
+		for (size_t i = 0; i < CHUNK_DATA_COUNT; i++)
 		{
 			if (data[i])
 			{

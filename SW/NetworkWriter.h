@@ -1,5 +1,6 @@
 #pragma once
 #include "SW.h"
+#include <string>
 
 namespace SW
 {
@@ -10,28 +11,28 @@ namespace SW
 		~NetworkWriter();
 
 		size_t capacity;
-		void* buffer;
-		void* cursor;
+		char* buffer;
+		char* cursor;
 
 		template<typename T> void Write(T val)
 		{
-			if (capacity - Position() < sizeof(val))
-				throw std::overflow_error("Capacity of NetworkWriter has been met");//Grow();
+			//if (capacity - Position() < sizeof(val))
+			//	cerr << "Capacity of NetworkWriter has been met";
 
 			*((T*)cursor) = val;
-			cursor = (void*)((size_t)cursor + sizeof(val));
+			cursor = (char*)((size_t)cursor + sizeof(val));
 		}
 		template<typename T> void WriteRef(T* val)
 		{
-			if (capacity - Position() < sizeof(*val))
-				throw std::overflow_error("Capacity of NetworkWriter has been met");//Grow();
+			//if (capacity - Position() < sizeof(*val))
+			//	cerr << "Capacity of NetworkWriter has been met";
 
 			*((T*)cursor) = *val;
-			cursor = (void*)((size_t)cursor + sizeof(val));
+			cursor = (char*)((size_t)cursor + sizeof(val));
 		}
 
 		void Reset();
-		void Grow();
+		//void Grow();
 		size_t Position();
 		size_t Remaining();
 		std::string StringCopy();

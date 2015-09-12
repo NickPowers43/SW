@@ -1,5 +1,5 @@
 #pragma once
-#include "../SW/NetworkWriter.h"
+#include <SW/NetworkWriter.h>
 
 namespace SW_Client
 {
@@ -13,7 +13,7 @@ namespace SW_Client
 
 		bool flipped;
 
-		void WriteMessageType(SW::MessageType_t val);
+		void WriteMessageType(MessageType_t val);
 		void WriteUint8(uint8_t val);
 		void WriteUint16(uint16_t val);
 		void WriteUint32(uint32_t val);
@@ -24,19 +24,19 @@ namespace SW_Client
 
 		template<typename T> void Write(T val)
 		{
-			if (capacity - Position() < sizeof(val))
-				throw std::overflow_error("Capacity of NetworkWriter has been met");//Grow();
+			//if (capacity - Position() < sizeof(val))
+			//	cerr << "Capacity of NetworkWriter has been met";
 
 			*((T*)cursor) = val;
-			cursor = (void*)((size_t)cursor + sizeof(val));
+			cursor = (char*)((size_t)cursor + sizeof(val));
 		}
 		template<typename T> void WriteRef(T* val)
 		{
-			if (capacity - Position() < sizeof(*val))
-				throw std::overflow_error("Capacity of NetworkWriter has been met");//Grow();
+			//if (capacity - Position() < sizeof(*val))
+			//	cerr << "Capacity of NetworkWriter has been met";
 
 			*((T*)cursor) = *val;
-			cursor = (void*)((size_t)cursor + sizeof(val));
+			cursor = (char*)((size_t)cursor + sizeof(val));
 		}
 	};
 }

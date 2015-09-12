@@ -9,6 +9,7 @@
 #include <SW\AABBi.h>
 #include <SW\NetworkWriter.h>
 #include <SW\NetworkReader.h>
+#include <SW/VesselModule.h>
 
 namespace SW_Server
 {
@@ -39,6 +40,7 @@ namespace SW_Server
 		TileChunks tiles;
 
 		vector<Player*> playersOnBoard;
+		vector<SW::VesselModule> modules;
 	};
 }
 
