@@ -84,6 +84,7 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 					ReadPingMessageResponse(hdl, nw_main, &nr);
 					break;
 				default:
+					cout << "unrecognized messageType: " << mt;
 					break;
 				}
 			}
@@ -110,7 +111,6 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 // Define a callback to handle new connections
 void on_open(websocketpp::connection_hdl hdl) {
 	
-	
 	StartingVessel* sV;
 
 	if (startingVessels.size() < 1)
@@ -124,8 +124,15 @@ void on_open(websocketpp::connection_hdl hdl) {
 		sV = startingVessels[0];
 	}
 
+	nw_main->Reset();
+	nw_main->Write((MessageType_t)ServerMessageType::EndianessCheck);
+	nw_main->Write((uint32_t)((uint32_t)255 << 16));
+
 	Player* player = new Player(hdl, glm::vec2(0.0f, 0.0f), 1.0f, glm::vec2(0.0f, 0.0f), 0.0f, glm::ivec2(0, 0), NULL);
 	players[hdl._Get()] = player;
+	sV->AddPlayer(nw_main, player);
+
+	player->FlushBuffer(nw_main);
 }
 
 // Define a callback to handle new connections

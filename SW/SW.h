@@ -68,6 +68,7 @@ namespace SW
 	template<typename T>
 	class DynamicArray2D;
 
+	//Server message sizes
 	static int MAX_MODULE_MESSAGE_SIZE = sizeof(VMType_t) + (2 * sizeof(uint32_t));
 	static int VESSEL_TILE_MESSAGE_SIZE =
 		sizeof(uint16_t) + /*index*/
@@ -170,7 +171,8 @@ namespace ServerMessageType
 		AddYourself = 5,
 		MakeVesselActive = 6,
 		PingMessage = 7,
-		SetModule = 8
+		SetModule = 8,
+		EndianessCheck = 9
 	};
 }
 

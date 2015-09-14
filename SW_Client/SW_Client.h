@@ -4,6 +4,7 @@
 
 namespace SW_Client
 {
+	class NetworkReader;
 	class NetworkWriter;
 	class Player;
 	class Vessel;
@@ -17,13 +18,16 @@ extern bool swapBytes;
 
 namespace SW_Client
 {
-	void SendMessage(NetworkWriter* nw);
 	int ClearCurrentVessel();
+	void FlushBuffer(NetworkWriter* nw);
 }
+
 
 extern "C"
 {
+	extern void PrintMessage(int cStr);
 	extern void SendMessage(int dPtr, int length);
 	extern void CloseConnection();
 	extern void PrintRefresh();
+	extern void GetFunctions();
 }

@@ -26,7 +26,8 @@ namespace SW_Server
 		void ReadModuleRequestMessage(Player* player, NetworkWriter* nw, NetworkReader* nr);
 
 		void BroadcastPlayerAddition(Player* player, NetworkWriter* nw);
-		void SendOnBoardPlayerInformation(Player* player, NetworkWriter* nw);
+		size_t GetOnBoardPlayerInformationMessageSize();
+		void SendMakeVesselActive(Player* player, NetworkWriter* nw);
 		void AddPlayerVessel(Player* player, NetworkWriter* nw, glm::vec2 position);
 		void RemovePlayer(Player* player);
 

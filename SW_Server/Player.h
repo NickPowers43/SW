@@ -13,6 +13,7 @@ namespace SW_Server
 		~Player();
 
 		void SendString(const std::string message);
+		void JustSendBuffer(NetworkWriter* nw);
 		void FlushBuffer(NetworkWriter* nw);
 
 		Vessel* currentVessel;

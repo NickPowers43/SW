@@ -1,5 +1,33 @@
 #include "NetworkReader.h"
+#include <memory.h>
 
+char* alignedBufferR = (char*)new uint32_t[1];
+
+template<typename T>
+T ReadClient(void** cursor, bool swapped)
+{
+	memcpy(alignedBufferR, *cursor, sizeof(T));
+
+	T val = *((T*)alignedBufferR);
+	*cursor = (void*)((size_t)*cursor + sizeof(val));
+
+	if (sizeof(val) > 1)
+	{
+		if (!swapped)
+		{
+			return val;
+		}
+
+		T temp;
+		swab((char*)&val, (char*)&temp, sizeof(val));
+		return temp;
+	}
+	else
+	{
+
+		return val;
+	}
+}
 
 namespace SW_Client
 {
@@ -17,11 +45,10 @@ namespace SW_Client
 	{
 		if (Remaining() >= sizeof(MessageType_t))
 		{
-			return Read<MessageType_t>(&cursor);
+			return ReadClient<MessageType_t>(&cursor, swapped);
 		}
 		else
 		{
-			
 			return 0;
 		}
 	}
@@ -29,7 +56,7 @@ namespace SW_Client
 	{
 		if (Remaining() >= 1)
 		{
-			return Read<uint8_t>(&cursor);
+			return ReadClient<uint8_t>(&cursor, swapped);
 		}
 		else
 		{
@@ -41,12 +68,7 @@ namespace SW_Client
 	{
 		if (Remaining() >= 2)
 		{
-			uint16_t val = Read<uint16_t>(&cursor);
-
-			if (swapped)
-				swap_16((void*)&val);
-
-			return val;
+			return ReadClient<uint16_t>(&cursor, swapped);
 		}
 		else
 		{
@@ -58,12 +80,7 @@ namespace SW_Client
 	{
 		if (Remaining() >= 4)
 		{
-			uint32_t val = Read<uint32_t>(&cursor);
-
-			if (swapped)
-				swap_16((void*)&val);
-
-			return val;
+			return ReadClient<uint32_t>(&cursor, swapped);
 		}
 		else
 		{
@@ -75,7 +92,7 @@ namespace SW_Client
 	{
 		if (Remaining() >= 1)
 		{
-			return Read<uint32_t>(&cursor);
+			return ReadClient<int8_t>(&cursor, swapped);
 		}
 		else
 		{
@@ -87,12 +104,7 @@ namespace SW_Client
 	{
 		if (Remaining() >= 2)
 		{
-			int16_t val = Read<int16_t>(&cursor);
-
-			if (swapped)
-				swap_16((void*)&val);
-
-			return val;
+			return ReadClient<int16_t>(&cursor, swapped);
 		}
 		else
 		{
@@ -104,12 +116,7 @@ namespace SW_Client
 	{
 		if (Remaining() >= 4)
 		{
-			int32_t val = Read<int32_t>(&cursor);
-
-			if (swapped)
-				swap_32((void*)&val);
-
-			return val;
+			return ReadClient<int32_t>(&cursor, swapped);
 		}
 		else
 		{
@@ -121,12 +128,7 @@ namespace SW_Client
 	{
 		if (Remaining() >= 4)
 		{
-			float val = Read<float>(&cursor);
-
-			if (swapped)
-				swap_32((void*)&val);
-
-			return val;
+			return ReadClient<float>(&cursor, swapped);
 		}
 		else
 		{

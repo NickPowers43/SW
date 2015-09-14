@@ -29,11 +29,30 @@ namespace SW_Server
 			throw websocketpp::lib::error_code(e);
 		}
 	}
+	void Player::JustSendBuffer(NetworkWriter* nw)
+	{
+		try
+		{
+			if (nw->Position() > 0)
+			{
+				myServer->send(hdl, nw->buffer, nw->Position(), websocketpp::frame::opcode::binary);
+				//nw->Reset();
+			}
+		}
+		catch (const websocketpp::lib::error_code& e) {
+			std::cout << "Failed to flush buffer because: " << e << "(" << e.message() << ")" << std::endl;
+			throw websocketpp::lib::error_code(e);
+		}
+	}
 	void Player::FlushBuffer(NetworkWriter* nw)
 	{
 		try
 		{
-			myServer->send(hdl, nw->StringCopy(), websocketpp::frame::opcode::binary);
+			if (nw->Position() > 0)
+			{
+				myServer->send(hdl, nw->buffer, nw->Position(), websocketpp::frame::opcode::binary);
+				nw->Reset();
+			}
 		}
 		catch (const websocketpp::lib::error_code& e) {
 			std::cout << "Failed to flush buffer because: " << e << "(" << e.message() << ")" << std::endl;

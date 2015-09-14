@@ -8,6 +8,15 @@
 //}
 
 
+template<typename T>
+T Read(void** buffer)
+{
+	T output;
+	output = *((T*)*buffer);
+	*buffer = (void*)((size_t)*buffer + sizeof(output));
+	return output;
+}
+
 namespace SW
 {
 

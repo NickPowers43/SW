@@ -1,4 +1,17 @@
 #include "NetworkWriter.h"
+#include <memory.h>
+
+char* alignedBuffer = (char*)new uint32_t[1];
+
+template<typename T> void WriteClient(void** cursor, bool flipped, T val)
+{
+	*((T*)alignedBuffer) = val;
+
+	memcpy(*cursor, alignedBuffer, sizeof(val));
+
+	//*((T*)cursor) = val;
+	*cursor = (char*)((size_t)*cursor + sizeof(val));
+}
 
 namespace SW_Client
 {
@@ -14,9 +27,9 @@ namespace SW_Client
 
 	void NetworkWriter::WriteMessageType(MessageType_t val)
 	{
-		if (Remaining() < sizeof(val))
+		if (Remaining() > sizeof(val))
 		{
-			Write(val);
+			WriteClient<MessageType_t>(&cursor, flipped, val);
 		}
 		else
 		{
@@ -25,9 +38,9 @@ namespace SW_Client
 	}
 	void NetworkWriter::WriteUint8(uint8_t val)
 	{
-		if (Remaining() < sizeof(val))
+		if (Remaining() > sizeof(val))
 		{
-			Write(val);
+			WriteClient<uint8_t>(&cursor, flipped, val);
 		}
 		else
 		{
@@ -36,12 +49,12 @@ namespace SW_Client
 	}
 	void NetworkWriter::WriteUint16(uint16_t val)
 	{
-		if (Remaining() < sizeof(val))
+		if (Remaining() > sizeof(val))
 		{
-			if (flipped)
-				swap_16((void*)&val);
+			uint16_t temp;
+			swab((char*)&val, (char*)&temp, sizeof(val));
 
-			Write(val);
+			WriteClient<uint16_t>(&cursor, flipped, temp);
 		}
 		else
 		{
@@ -50,12 +63,12 @@ namespace SW_Client
 	}
 	void NetworkWriter::WriteUint32(uint32_t val)
 	{
-		if (Remaining() < sizeof(val))
+		if (Remaining() > sizeof(val))
 		{
-			if (flipped)
-				swap_32((void*)&val);
+			uint32_t temp;
+			swab((char*)&val, (char*)&temp, sizeof(val));
 
-			Write(val);
+			WriteClient<uint32_t>(&cursor, flipped, temp);
 		}
 		else
 		{
@@ -64,9 +77,9 @@ namespace SW_Client
 	}
 	void NetworkWriter::WriteInt8(int8_t val)
 	{
-		if (Remaining() < sizeof(val))
+		if (Remaining() > sizeof(val))
 		{
-			Write(val);
+			WriteClient<uint8_t>(&cursor, flipped, val);
 		}
 		else
 		{
@@ -75,12 +88,12 @@ namespace SW_Client
 	}
 	void NetworkWriter::WriteInt16(int16_t val)
 	{
-		if (Remaining() < sizeof(val))
+		if (Remaining() > sizeof(val))
 		{
-			if (flipped)
-				swap_16((void*)&val);
+			int16_t temp;
+			swab((char*)&val, (char*)&temp, sizeof(val));
 
-			Write(val);
+			WriteClient<int16_t>(&cursor, flipped, temp);
 		}
 		else
 		{
@@ -89,12 +102,12 @@ namespace SW_Client
 	}
 	void NetworkWriter::WriteInt32(int32_t val)
 	{
-		if (Remaining() < sizeof(val))
+		if (Remaining() > sizeof(val))
 		{
-			if (flipped)
-				swap_32((void*)&val);
+			int32_t temp;
+			swab((char*)&val, (char*)&temp, sizeof(val));
 
-			Write(val);
+			WriteClient<int32_t>(&cursor, flipped, temp);
 		}
 		else
 		{
@@ -103,12 +116,12 @@ namespace SW_Client
 	}
 	void NetworkWriter::WriteSingle(float val)
 	{
-		if (Remaining() < sizeof(val))
+		if (Remaining() > sizeof(val))
 		{
-			if (flipped)
-				swap_32((void*)&val);
+			float temp;
+			swab((char*)&val, (char*)&temp, sizeof(val));
 
-			Write(val);
+			WriteClient<float>(&cursor, flipped, temp);
 		}
 		else
 		{

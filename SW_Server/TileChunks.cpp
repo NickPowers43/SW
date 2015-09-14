@@ -48,7 +48,6 @@ namespace SW_Server
 					{
 						//start a new message
 						player->FlushBuffer(nw);
-						nw->Reset();
 						nw->Write(ServerMessageType::SetChunk);
 						response_count = (uint8_t*)nw->cursor;
 						nw->Write((uint8_t)0);

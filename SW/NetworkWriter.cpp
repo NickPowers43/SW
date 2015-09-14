@@ -7,7 +7,7 @@ namespace SW
 	NetworkWriter::NetworkWriter(size_t capacity)
 	{
 		NetworkWriter::capacity = capacity;
-		NetworkWriter::buffer = new char[capacity];
+		NetworkWriter::buffer = (void*)new char[capacity];
 		NetworkWriter::cursor = buffer;
 	}
 	NetworkWriter::~NetworkWriter()

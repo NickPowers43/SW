@@ -56,7 +56,6 @@ namespace SW_Server
 					{
 						//start a new message
 						player->FlushBuffer(nw);
-						nw->Reset();
 						nw->Write(ServerMessageType::SetChunk);
 						response_count = (uint8_t*)nw->cursor;
 						nw->Write((uint8_t)0);
@@ -86,7 +85,6 @@ namespace SW_Server
 				{
 					//start a new message
 					player->FlushBuffer(nw);
-					nw->Reset();
 					nw->Write((MessageType_t)ServerMessageType::SetModule);
 					response_count = (uint16_t*)nw->cursor;
 					nw->Write((uint16_t)0);
@@ -111,7 +109,6 @@ namespace SW_Server
 			{
 				//start a new message
 				player->FlushBuffer(nw);
-				nw->Reset();
 				nw->Write((MessageType_t)ServerMessageType::SetModule);
 				nw->Write((uint16_t)0);//zero deletions
 				response_count = (uint16_t*)nw->cursor;
@@ -126,23 +123,31 @@ namespace SW_Server
 
 	void Vessel::BroadcastPlayerAddition(Player* player, NetworkWriter* nw)
 	{
-		nw->Reset();
+		//flush the current messages and start creating a broadcast message
+		player->FlushBuffer(nw);
 		nw->Write((MessageType_t)ServerMessageType::AddPlayer);
 		nw->Write((float)player->pos.x);
 		nw->Write((float)player->pos.y);
 
-		const std::string message = nw->StringCopy();
-
 		for (size_t i = 0; i < playersOnBoard.size(); i++)
 		{
-			playersOnBoard[i]->SendString(message);
+			playersOnBoard[i]->JustSendBuffer(nw);
 		}
-	}
-	void Vessel::SendOnBoardPlayerInformation(Player* player, NetworkWriter* nw)
-	{
+
 		nw->Reset();
-		nw->Write((uint8_t)ServerMessageType::MakeVesselActive);
-		nw->Write((uint32_t)index);
+	}
+	size_t Vessel::GetOnBoardPlayerInformationMessageSize()
+	{
+		return (sizeof(MessageType_t) + sizeof(VesselIndex_t) + sizeof(uint16_t) + ((playersOnBoard.size() + 1) * 2 * sizeof(float)));
+	}
+	void Vessel::SendMakeVesselActive(Player* player, NetworkWriter* nw)
+	{
+		if (nw->Remaining() < GetOnBoardPlayerInformationMessageSize())
+		{
+			player->FlushBuffer(nw);
+		}
+		nw->Write((MessageType_t)ServerMessageType::MakeVesselActive);
+		nw->Write((VesselIndex_t)index);
 		nw->Write((uint16_t)playersOnBoard.size());
 		for (size_t i = 0; i < playersOnBoard.size(); i++)
 		{
@@ -152,14 +157,6 @@ namespace SW_Server
 		//write information for yourself
 		nw->Write((float)player->pos.x);
 		nw->Write((float)player->pos.y);
-
-		try {
-			myServer->send(player->hdl, nw->buffer, nw->Position(), websocketpp::frame::opcode::binary);
-		}
-		catch (const websocketpp::lib::error_code& e) {
-			std::cout << "Failed to send message " << std::endl;
-			//TODO: disconnect player
-		}
 	}
 	void Vessel::AddPlayerVessel(Player* player, NetworkWriter* nw, glm::vec2 position)
 	{
@@ -168,8 +165,8 @@ namespace SW_Server
 
 		//tell onBoardPlayers to add player
 		BroadcastPlayerAddition(player, nw);
-		
-		SendOnBoardPlayerInformation(player, nw);
+
+		SendMakeVesselActive(player, nw);
 		
 		playersOnBoard.push_back(player);
 	}

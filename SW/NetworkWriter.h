@@ -11,24 +11,13 @@ namespace SW
 		~NetworkWriter();
 
 		size_t capacity;
-		char* buffer;
-		char* cursor;
+		void* buffer;
+		void* cursor;
 
 		template<typename T> void Write(T val)
 		{
-			//if (capacity - Position() < sizeof(val))
-			//	cerr << "Capacity of NetworkWriter has been met";
-
 			*((T*)cursor) = val;
-			cursor = (char*)((size_t)cursor + sizeof(val));
-		}
-		template<typename T> void WriteRef(T* val)
-		{
-			//if (capacity - Position() < sizeof(*val))
-			//	cerr << "Capacity of NetworkWriter has been met";
-
-			*((T*)cursor) = *val;
-			cursor = (char*)((size_t)cursor + sizeof(val));
+			cursor = (void*)((size_t)cursor + sizeof(val));
 		}
 
 		void Reset();

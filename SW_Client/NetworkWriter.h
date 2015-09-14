@@ -21,23 +21,6 @@ namespace SW_Client
 		void WriteInt16(int16_t val);
 		void WriteInt32(int32_t val);
 		void WriteSingle(float val);
-
-		template<typename T> void Write(T val)
-		{
-			//if (capacity - Position() < sizeof(val))
-			//	cerr << "Capacity of NetworkWriter has been met";
-
-			*((T*)cursor) = val;
-			cursor = (char*)((size_t)cursor + sizeof(val));
-		}
-		template<typename T> void WriteRef(T* val)
-		{
-			//if (capacity - Position() < sizeof(*val))
-			//	cerr << "Capacity of NetworkWriter has been met";
-
-			*((T*)cursor) = *val;
-			cursor = (char*)((size_t)cursor + sizeof(val));
-		}
 	};
 }
 

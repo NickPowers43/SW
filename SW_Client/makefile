@@ -13,7 +13,7 @@ OUTPUT=../SW_Client_Web/public_html/js/SW_Client.js
 all: $(SOURCES) $(OUTPUT)
 
 $(OUTPUT): $(SOURCES) 
-	$(CC) -DEMSCRIPTEN $(SOURCES) $(IDIR) --bind --js-library library_mySocket.js -s EXPORTED_FUNCTIONS="['_Initialize', '_Update']" -o $(OUTPUT)
+	$(CC) -DEMSCRIPTEN $(SOURCES) $(IDIR) --bind -s SAFE_HEAP=1 --js-library library_mySocket.js -s EXPORTED_FUNCTIONS="['_Initialize', '_Update', '_OnConnectionMade', '_HandleClose', '_HandleMessage']" -o $(OUTPUT)
 
 clean:
 	rm $(OUTPUT)

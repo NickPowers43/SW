@@ -12,6 +12,7 @@ namespace SW_Client
 
 		bool swapped;
 
+
 		MessageType_t ReadMessageType();
 		uint8_t ReadUint8();
 		uint16_t ReadUint16();
