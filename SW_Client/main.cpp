@@ -28,8 +28,6 @@ SDL_Surface* screen;
 
 extern "C" int Initialize(int width, int height)
 {
-	GetFunctions();
-
 	//initialise SDL
 	if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER) == 0)
 	{
@@ -53,6 +51,23 @@ extern "C" int Initialize(int width, int height)
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	//glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
 	glViewport(0, 0, width, height);
+	glEnable(GL_TEXTURE_2D);
+
+	SW_Client::camera.dim.x = (float)width;
+	SW_Client::camera.dim.y = (float)height;
+
+	SW_Client::InitializeClient();
+
 
 	return 1;
+}
+
+
+#define main main
+
+int main()
+{
+
+
+	StartProgram();
 }

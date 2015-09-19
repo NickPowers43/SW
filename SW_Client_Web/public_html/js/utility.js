@@ -6,29 +6,26 @@ window.Connect = function(address)
     window.mySocket.binaryType = 'arraybuffer';
 
     // Open the Network.socket
-    /*Network.socket.onopen = function(event) {
-        
-        console.log('Connection established with server at: ' + Network.server_address);
-        GameData.connected = true;
-
-        while (Network.messages_out.length > 0){
-            Network.socket.send(Network.messages_out.shift());
-        }
+    window.mySocket.onopen = function(event) {
+        window.OnConnectionMade();
+        console.log('Connection established with server at: ' + address);
 
         // Listen for messages
-        //Network.socket.onmessage = function(event) {
-        //    var buf = Module._malloc(event.data.length);
-        //    Module.HEAPU8.set(event.data, buf);
-        //    window.HandleReceiveMessage(buf, event.data.length);
-        //    Module._free(buf);
-        //};
+        window.mySocket.onmessage = function(event) {
+            var msgData = new Uint8Array(event.data);
+            //console.log("Message received. Length: ", msgData.length, msgData);
+            var bufPtr = Module._malloc(msgData.length);
+            var buffer = new Uint8Array(Module.HEAPU8.buffer, bufPtr, msgData.length);
+            buffer.set(msgData);
+            window.HandleMessage(bufPtr, msgData.length);
+            Module._free(bufPtr);
+        };
 
         // Listen for Network.socket closes
-        Network.socket.onclose = function(event) {
-            window.HandleConnectionClose();
-            Close();
+        window.mySocket.onclose = function(event) {
+            window.HandleClose();
         };
-    };*/
+    };
 };
 
 var UpdateCamera = function(){

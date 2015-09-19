@@ -47,7 +47,7 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 		pair.player = player;
 		messages_in.push(pair);*/
 
-		SW::NetworkReader nr((void*)myMsg.c_str(), myMsg.size());
+		SW::NetworkReader nr((char*)myMsg.c_str(), myMsg.size());
 		nw_main->Reset();
 
 		std::cout << "Message of size: " << myMsg.size() << " received.";

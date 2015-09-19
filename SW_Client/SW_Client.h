@@ -25,9 +25,10 @@ namespace SW_Client
 
 extern "C"
 {
+
 	extern void PrintMessage(int cStr);
 	extern void SendMessage(int dPtr, int length);
 	extern void CloseConnection();
 	extern void PrintRefresh();
-	extern void GetFunctions();
+	extern void StartProgram();
 }

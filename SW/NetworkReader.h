@@ -6,7 +6,7 @@ namespace SW
 	class NetworkReader
 	{
 	public:
-		NetworkReader(void* buffer, size_t size);
+		NetworkReader(char* buffer, size_t size);
 		~NetworkReader();
 
 		uint8_t ReadMessageType();
@@ -18,8 +18,8 @@ namespace SW
 		int32_t ReadInt32();
 		float ReadSingle();
 
-		void* buffer;
-		void* cursor;
+		char* buffer;
+		char* cursor;
 		size_t size;
 
 		size_t Position();

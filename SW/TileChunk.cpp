@@ -36,6 +36,15 @@ namespace SW
 
 	TileChunk::~TileChunk()
 	{
+		for (size_t i = 0; i < CHUNK_SIZE * CHUNK_SIZE; i++)
+		{
+			if (data[i])
+			{
+				DestroyTile(data[i]);
+			}
+		}
+
+		delete data;
 	}
 
 	void TileChunk::Set(glm::ivec2 index, Tile* val)

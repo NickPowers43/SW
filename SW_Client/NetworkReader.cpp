@@ -4,34 +4,25 @@
 char* alignedBufferR = (char*)new uint32_t[1];
 
 template<typename T>
-T ReadClient(void** cursor, bool swapped)
+void ClientSafeRead(char* output, char** cursor, bool swapped)
 {
 	memcpy(alignedBufferR, *cursor, sizeof(T));
 
-	T val = *((T*)alignedBufferR);
-	*cursor = (void*)((size_t)*cursor + sizeof(val));
-
-	if (sizeof(val) > 1)
+	if (swapped)
 	{
-		if (!swapped)
-		{
-			return val;
-		}
-
-		T temp;
-		swab((char*)&val, (char*)&temp, sizeof(val));
-		return temp;
+		swab(*cursor, output, sizeof(output));
 	}
 	else
 	{
-
-		return val;
+		memcpy((void*)output, (void*)*cursor, sizeof(output));
 	}
+
+	*cursor = (char*)((size_t)*cursor + sizeof(T));
 }
 
 namespace SW_Client
 {
-	NetworkReader::NetworkReader(void* buffer, size_t size, bool swapped) : SW::NetworkReader(buffer, size)
+	NetworkReader::NetworkReader(char* buffer, size_t size, bool swapped) : SW::NetworkReader(buffer, size)
 	{
 		NetworkReader::swapped = swapped;
 	}
@@ -45,7 +36,9 @@ namespace SW_Client
 	{
 		if (Remaining() >= sizeof(MessageType_t))
 		{
-			return ReadClient<MessageType_t>(&cursor, swapped);
+			MessageType_t output;
+			ClientSafeRead<MessageType_t>((char*)&output, &cursor, swapped);
+			return output;
 		}
 		else
 		{
@@ -56,7 +49,9 @@ namespace SW_Client
 	{
 		if (Remaining() >= 1)
 		{
-			return ReadClient<uint8_t>(&cursor, swapped);
+			uint8_t output;
+			ClientSafeRead<uint8_t>((char*)&output, &cursor, swapped);
+			return output;
 		}
 		else
 		{
@@ -68,7 +63,9 @@ namespace SW_Client
 	{
 		if (Remaining() >= 2)
 		{
-			return ReadClient<uint16_t>(&cursor, swapped);
+			uint16_t output;
+			ClientSafeRead<uint16_t>((char*)&output, &cursor, swapped);
+			return output;
 		}
 		else
 		{
@@ -80,7 +77,9 @@ namespace SW_Client
 	{
 		if (Remaining() >= 4)
 		{
-			return ReadClient<uint32_t>(&cursor, swapped);
+			uint32_t output;
+			ClientSafeRead<uint32_t>((char*)&output, &cursor, swapped);
+			return output;
 		}
 		else
 		{
@@ -92,7 +91,9 @@ namespace SW_Client
 	{
 		if (Remaining() >= 1)
 		{
-			return ReadClient<int8_t>(&cursor, swapped);
+			int8_t output;
+			ClientSafeRead<int8_t>((char*)&output, &cursor, swapped);
+			return output;
 		}
 		else
 		{
@@ -104,7 +105,9 @@ namespace SW_Client
 	{
 		if (Remaining() >= 2)
 		{
-			return ReadClient<int16_t>(&cursor, swapped);
+			int16_t output;
+			ClientSafeRead<int16_t>((char*)&output, &cursor, swapped);
+			return output;
 		}
 		else
 		{
@@ -116,7 +119,9 @@ namespace SW_Client
 	{
 		if (Remaining() >= 4)
 		{
-			return ReadClient<int32_t>(&cursor, swapped);
+			int32_t output;
+			ClientSafeRead<int32_t>((char*)&output, &cursor, swapped);
+			return output;
 		}
 		else
 		{
@@ -128,7 +133,9 @@ namespace SW_Client
 	{
 		if (Remaining() >= 4)
 		{
-			return ReadClient<float>(&cursor, swapped);
+			float output;
+			ClientSafeRead<float>((char*)&output, &cursor, swapped);
+			return output;
 		}
 		else
 		{

@@ -79,11 +79,10 @@ namespace SW
 	}
 	void TileSet::BuildFoundation(glm::ivec2 origin, glm::ivec2 size)
 	{
-		Tile* tile;
 
 		for (int i = 0; i < size.y; i++) {
 			for (int j = 0; j < size.x; j++) {
-
+				Tile* tile;
 				glm::ivec2 temp = origin + glm::ivec2(j, i);
 				if (!(tile = TryGet(temp))) {
 					Set(temp, CreateTile());

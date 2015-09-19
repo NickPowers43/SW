@@ -7,11 +7,10 @@ namespace SW_Client
 		public SW::NetworkReader
 	{
 	public:
-		NetworkReader(void* buffer, size_t size, bool swapped);
+		NetworkReader(char* buffer, size_t size, bool swapped);
 		~NetworkReader();
 
 		bool swapped;
-
 
 		MessageType_t ReadMessageType();
 		uint8_t ReadUint8();

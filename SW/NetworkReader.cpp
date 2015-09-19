@@ -9,18 +9,18 @@
 
 
 template<typename T>
-T Read(void** buffer)
+T Read(char** buffer)
 {
 	T output;
 	output = *((T*)*buffer);
-	*buffer = (void*)((size_t)*buffer + sizeof(output));
+	*buffer = (char*)((size_t)*buffer + sizeof(output));
 	return output;
 }
 
 namespace SW
 {
 
-	NetworkReader::NetworkReader(void* buffer, size_t size)
+	NetworkReader::NetworkReader(char* buffer, size_t size)
 	{
 		NetworkReader::buffer = buffer;
 		NetworkReader::cursor = buffer;

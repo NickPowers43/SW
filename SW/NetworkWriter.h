@@ -11,13 +11,13 @@ namespace SW
 		~NetworkWriter();
 
 		size_t capacity;
-		void* buffer;
-		void* cursor;
+		char* buffer;
+		char* cursor;
 
 		template<typename T> void Write(T val)
 		{
 			*((T*)cursor) = val;
-			cursor = (void*)((size_t)cursor + sizeof(val));
+			cursor = (char*)((size_t)cursor + sizeof(val));
 		}
 
 		void Reset();

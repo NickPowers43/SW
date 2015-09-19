@@ -38,30 +38,16 @@
             window.mySocket = null;
             var canvas = document.getElementById("canvas");
             //make the canvas fullscreen
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+			window.canvasWidth = 800;
+			window.canvasHeight = 600;
+            canvas.width = window.canvasWidth;
+            canvas.height = window.canvasHeight;
             //show Emscripten environment where the canvas is
             var Module = {};
             Module.canvas = canvas;
         </script>
-        <script src="js/SW_Client.js"></script>
+        <script src="SW_Client.js"></script>
         <script src="js/utility.js"></script>
         <script src="js/uihelper.js"></script>
-        <script type="text/javascript">
-            //window.Initialize = Module.cwrap('Initialize', 'number', ['number', 'number']);
-            window.Initialize = Module.cwrap('Initialize', 'number', ['number', 'number']);
-            window.Update = Module.cwrap('Update', '');
-            //window.HandleReceiveMessage = Module.cwrap('HandleReceiveMessage', '', ['number', 'number']);
-            //window.HandleConnectionClose = Module.cwrap('HandleConnectionClose', '');
-            //
-            //console.log(Module);
-            window.Initialize(window.innerWidth, window.innerHeight);
-            window.render = function () {
-                window.Update();
-                window.requestAnimationFrame(window.render);
-            };
-            window.render();
-        </script>
-
     </body>
 </html>

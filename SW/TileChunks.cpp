@@ -37,7 +37,7 @@ namespace SW
 		glm::ivec2 chunkI = TileIToChunkI(index);
 		TileChunk* chunk = chunks.TryGet(chunkI);
 
-		if (chunk == NULL) {
+		if (!chunk) {
 			return NULL;
 		}
 		else {
@@ -47,7 +47,6 @@ namespace SW
 	}
 	void TileChunks::Set(glm::ivec2 index, Tile* val)
 	{
-		glm::ivec2 index2 = index;
 		glm::ivec2 chunkI = TileIToChunkI(index);
 		TileChunk* chunk = chunks.TryGet(chunkI);
 

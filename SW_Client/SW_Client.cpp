@@ -35,9 +35,9 @@ namespace SW_Client
 			if (force || ((orgChunkI.x != myPlayer->chunkI.x) || (orgChunkI.y != myPlayer->chunkI.y)))
 			{
 				nw->WriteMessageType(ClientMessageType::RequestChunk);
-				uint8_t* requestLength = (uint8_t*)nw->cursor;
+				uint8_t requestLength = 0;
+				uint8_t* requestLengthLocation = (uint8_t*)nw->cursor;
 				nw->WriteUint8(0);
-
 
 				for (size_t i = 0; i < rangeT; i++)
 				{
@@ -50,25 +50,26 @@ namespace SW_Client
 
 						if (force || ((abs(diffOrg.x) > PLAYER_CHUNK_RANGE) || (abs(diffOrg.y) > PLAYER_CHUNK_RANGE)))
 						{
-							/*std::ostringstream print;
+							std::ostringstream print;
 							print << "Requesting chunk at: ";
 							print << std::to_string(temp.x);
 							print << ", ";
 							print << std::to_string(temp.y);
 							print << ")";
-							PrintMessage((int)print.str().c_str());*/
+							PrintMessage((int)print.str().c_str());
 
-							(*requestLength)++;
+							requestLength++;
 
-							TileChunk* temp2 = static_cast<TileChunk*>(currentVessel->tiles.TryGetChunk(glm::ivec2(temp.x, temp.y)));
 
 							nw->WriteInt16((int16_t)temp.x);
 							nw->WriteInt16((int16_t)temp.y);
 
-
+							SW::TileChunk* temp2 = currentVessel->tiles.TryGetChunk(glm::ivec2(temp.x, temp.y));
 							if (temp2)
 							{
-								temp2->seen = true;
+								TileChunk* temp3 = static_cast<TileChunk*>(temp2);
+								temp3->seen = true;
+
 								nw->WriteUint32((TileChunkVersion_t)temp2->version);
 							}
 							else
@@ -79,11 +80,7 @@ namespace SW_Client
 					}
 				}
 
-				std::ostringstream print;
-				print << "post chunk request nw properties: (Position: ";
-				print << std::to_string(nw->Position());
-				print << ").";
-				PrintMessage((int)print.str().c_str());
+				nw->WriteUint8(requestLength, (char*)requestLengthLocation);
 
 				//destroy chunks that are no longer visible
 				for (size_t i = 0; i < currentVessel->tiles.chunks.dim.y; i++)
@@ -218,7 +215,7 @@ extern "C" void HandleMessage(int dPtr, int length)
 	//PrintMessage((int)slength.c_str());
 	//PrintMessage((int)sdPtr.c_str());
 
-	SW_Client::NetworkReader nr = SW_Client::NetworkReader((void*)dPtr, length, swapBytes);
+	SW_Client::NetworkReader nr = SW_Client::NetworkReader((char*)dPtr, length, swapBytes);
 	
 	nw_main->Reset();
 
@@ -229,22 +226,22 @@ extern "C" void HandleMessage(int dPtr, int length)
 		MessageType_t messageType = nr.ReadMessageType();
 		switch (messageType) {
 		case ServerMessageType::PingMessage:
-			PrintMessage((int)"PingMessage message received");
+			//PrintMessage((int)"PingMessage message received");
 			SW_Client::RespondToPingMessage(&nr, nw_main);
 			break;
 		case ServerMessageType::SetChunk:
-			PrintMessage((int)"SetChunk message received");
+			//PrintMessage((int)"SetChunk message received");
 			if (currentVessel)
 			{
 				currentVessel->ReadSetChunkMessage(&nr, nw_main);
 			}
 			break;
 		case ServerMessageType::MakeVesselActive:
-			PrintMessage((int)"MakeVesselActive message received");
+			//PrintMessage((int)"MakeVesselActive message received");
 			ReadMakeVesselActiveMessage(&nr, nw_main);
 			break;
 		case ServerMessageType::EndianessCheck:
-			PrintMessage((int)"EndianessCheck message received");
+			//PrintMessage((int)"EndianessCheck message received");
 			ecVar = nr.ReadUint32();
 			nw_main->flipped = nr.swapped = swapBytes = ecVar != (uint32_t)(255 << 16);
 			if (swapBytes)
@@ -293,7 +290,11 @@ extern "C" void Update()
 					SW_Client::TileChunk* chunk = static_cast<SW_Client::TileChunk*>(swChunk);
 					if (chunk->instantiated)
 					{
-						//chunk->Draw();
+						//PrintMessage((int)"Drawing chunk");
+						std::ostringstream print;
+						print << "Drawing chunk: (" << chunkI.x << ", " << chunkI.y << ")";
+						PrintMessage((int)print.str().c_str());
+						chunk->Draw();
 					}
 				}
 			}

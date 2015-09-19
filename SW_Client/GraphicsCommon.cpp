@@ -1,34 +1,41 @@
 #include "GraphicsCommon.h"
+#include "SW_Client.h"
 #include <stdio.h>
+#include <sstream>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/matrix.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <SDL/SDL_image.h>
 
 using namespace std;
 
 const char floorVShaderSource[] =
-"layout(location = 0) uniform mat3 viewMat;                                 \n"
+"uniform mat4 viewMat;                                 \n"
 "                                                   \n"
-"uniform sampler2D floorTexture;                                                   \n"
 "                                                   \n"
-"layout(location = 0) in vec2 floorPos;                                                  \n"
-"layout(location = 1) in vec2 floorUV;                                                  \n"
+"attribute vec2 floorPos;                                                  \n"
+"attribute vec2 floorUV;                                                  \n"
 "                                                   \n"
-"varying vec4 color;                                 \n"
+"varying vec2 myUV;                                 \n"
 "                                                   \n"
 "void main()                                         \n"
 "{                                                   \n"
-"   vec3 transPoint = vec3(floorPos.x, floorPos.y, 1.0);\n"
+"   vec4 transPoint = vec4(floorPos.x, floorPos.y, 0.0, 1.0);\n"
 "                                                   \n"
 "   transPoint = viewMat * transPoint;                                                \n"
 "                                                   \n"
-"   gl_Position = vec4(transPoint, 1.0);\n"
-"   color = texture(floorTexture, floorUV);             \n"
+"   gl_Position = transPoint;\n"
+"   myUV = floorUV;             \n"
 "}                                                   \n";
 
 const char floorFShaderSource[] =
 "precision mediump float;                     \n"
-"varying vec4 color;                          \n"
+"uniform sampler2D floorTexture;                                                   \n"
+"varying vec2 myUV;                          \n"
 "void main()                                  \n"
 "{                                            \n"
-"  gl_FragColor = color;        \n"
+"  gl_FragColor = texture2D(floorTexture, myUV);        \n"
 "}                                            \n";
 
 namespace SW_Client
@@ -70,22 +77,89 @@ namespace SW_Client
 	}
 	PosUVMesh::PosUVMesh(MeshIndex_t* i, int iCount, PosUVPair* v, int vCount)
 	{
-		PosUVMesh::v = new PosUVPair[vCount];
 		PosUVMesh::vCount = vCount;
-		for (size_t j = 0; j < vCount; j++)
+		if (iCount)
 		{
-			PosUVMesh::v[j] = v[j];
+			PosUVMesh::v = new PosUVPair[vCount];
+			for (size_t j = 0; j < vCount; j++)
+			{
+				PosUVMesh::v[j] = v[j];
+			}
 		}
-		PosUVMesh::i = new MeshIndex_t[vCount];
 		PosUVMesh::iCount = iCount;
-		for (size_t j = 0; j < iCount; j++)
+		if (vCount)
 		{
-			PosUVMesh::i[j] = i[j];
+			PosUVMesh::i = new MeshIndex_t[iCount];
+			for (size_t j = 0; j < iCount; j++)
+			{
+				PosUVMesh::i[j] = i[j];
+			}
 		}
+	}
+
+	Camera::Camera()
+	{
+		zoom = 1.0f / 8.0f;
+		position = glm::vec2(0.0f, 0.0f);
+		dim = glm::vec2(1.0f, 1.0f);
+	}
+	Camera::~Camera()
+	{
+
+	}
+
+	void Camera::GenerateView(glm::mat4 & viewMat)
+	{
+		float InvAspectRatio = dim.y / dim.x;
+		viewMat = glm::translate(viewMat, glm::vec3(position.x, position.y, 0.0f));
+		viewMat = glm::scale(viewMat, glm::vec3(zoom * InvAspectRatio, zoom, 1.0f));
 	}
 
 	void InitializeClient()
 	{
+		glEnable(GL_TEXTURE_2D);
+
+		SDL_Surface* surface = IMG_Load("data/textures/floors.png");
+		GLenum texture_format;
+		int nOfColors = surface->format->BytesPerPixel;
+		if (nOfColors == 4)     // contains an alpha channel
+		{
+			texture_format = GL_RGBA;
+		}
+		else if (nOfColors == 3)     // no alpha channel
+		{
+			texture_format = GL_RGB;
+		}
+		else
+		{
+			PrintMessage((int)"Unknown color format for texture");
+		}
+
+		if (!surface)
+		{
+			std::ostringstream print0;
+			print0 << "IMG_Load: " << IMG_GetError();
+			PrintMessage((int)print0.str().c_str());
+		}
+		else
+		{
+			std::ostringstream print0;
+			print0 << "IMG_Load: {width: " << surface->w << ", height: " << surface->h << "}";
+			PrintMessage((int)print0.str().c_str());
+			//glActiveTexture(GL_TEXTURE0);
+			glGenTextures(1, &floorProgram.texture);
+			glBindTexture(GL_TEXTURE_2D, floorProgram.texture);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexImage2D(GL_TEXTURE_2D, 0, texture_format, surface->w, surface->h, 0, texture_format, GL_UNSIGNED_BYTE, surface->pixels);
+			glGenerateMipmap(GL_TEXTURE_2D);
+			glBindTexture(GL_TEXTURE_2D, 0);
+			//glFinish();
+			SDL_FreeSurface(surface);
+		}
+
 		float floorUVScale = 1.0f / (float)FLOOR_TEXTURE_RES;
 
 		floorUVRects = new SpriteRect[3];
@@ -96,19 +170,23 @@ namespace SW_Client
 
 		GLuint floorVShader = loadShader(GL_VERTEX_SHADER, floorVShaderSource);
 		GLuint floorFShader = loadShader(GL_FRAGMENT_SHADER, floorFShaderSource);
-		floorShaderProgram = buildProgram(floorVShader, floorFShader);
+		floorProgram.program = buildProgram(floorVShader, floorFShader);
 
 		//check if the program linked successfully
 		GLint linked;
-		glGetProgramiv(floorShaderProgram, GL_LINK_STATUS, &linked);
+		glGetProgramiv(floorProgram.program, GL_LINK_STATUS, &linked);
 		if (!linked)
 		{
 			printf("floorShaderProgram link error");
-			glDeleteProgram(floorShaderProgram);
+			glDeleteProgram(floorProgram.program);
 		}
-
-		glBindAttribLocation(floorShaderProgram, 0, "floorPos");
-		glBindAttribLocation(floorShaderProgram, 1, "floorUV");
+		else
+		{
+			floorProgram.viewMat = glGetUniformLocation(floorProgram.program, "viewMat");
+			floorProgram.posAttrib = glGetAttribLocation(floorProgram.program, "floorPos");
+			floorProgram.uvAttrib = glGetAttribLocation(floorProgram.program, "floorUV");
+			floorProgram.textureLoc = glGetUniformLocation(floorProgram.program, "floorTexture");
+		}
 	}
 
 	void GenerateBaseVertices(SpriteRect rect, PosUVPair* output)
@@ -120,41 +198,52 @@ namespace SW_Client
 			glm::vec2(0.0, 0.0),
 			glm::vec2(rect.x, rect.y));
 		//1
-		output[0] = PosUVPair(
+		output[1] = PosUVPair(
 			glm::vec2(0.0, 1.0),
 			glm::vec2(rect.x, rect.y + rect.height));
 		//2
-		output[0] = PosUVPair(
+		output[2] = PosUVPair(
 			glm::vec2(1.0, 0.0),
 			glm::vec2(rect.x + rect.width, rect.y));
 		//3
-		output[0] = PosUVPair(
+		output[3] = PosUVPair(
 			glm::vec2(1.0, 1.0),
 			glm::vec2(rect.x + rect.width, rect.y + rect.height));
 
 		//4
-		output[0] = PosUVPair(
+		output[4] = PosUVPair(
 			glm::vec2(0.0, 0.5),
 			glm::vec2(rect.x, rect.y + (rect.height * 0.5)));
 		//5
-		output[0] = PosUVPair(
+		output[5] = PosUVPair(
 			glm::vec2(0.5, 1.0),
 			glm::vec2(rect.x + (rect.width * 0.5), rect.y + rect.height));
 		//6
-		output[0] = PosUVPair(
+		output[6] = PosUVPair(
 			glm::vec2(0.5, 0.0),
 			glm::vec2(rect.x + (rect.width * 0.5), rect.y));
 		//7
-		output[0] = PosUVPair(
+		output[7] = PosUVPair(
 			glm::vec2(1.0, 0.5),
 			glm::vec2(rect.x + rect.width, rect.y + (rect.height * 0.5)));
 
 		//return output;
+		for (size_t i = 0; i < 8; i++)
+		{
+			output[i].uv.y = 1.0f - output[i].uv.y;
+		}
 	}
 
-	void AppendQuadIndices(MeshIndex_t* indices, int & start)
+	void AppendQuadIndices(MeshIndex_t* indices, int vCount, int & start)
 	{
-		int start_ = start;
+		/*int start_ = vCount - 4;
+		indices[start++] = start_ + 0;
+		indices[start++] = start_ + 2;
+		indices[start++] = start_ + 1;
+		indices[start++] = start_ + 1;
+		indices[start++] = start_ + 2;
+		indices[start++] = start_ + 3;*/
+		int start_ = vCount - 4;
 		indices[start++] = start_ + 0;
 		indices[start++] = start_ + 1;
 		indices[start++] = start_ + 2;
@@ -163,34 +252,36 @@ namespace SW_Client
 		indices[start++] = start_ + 2;
 	}
 
-	void AppendTriangleIndices(MeshIndex_t* indices, int & start)
+	void AppendTriangleIndices(MeshIndex_t* indices, int vCount, int & start)
 	{
-		int start_ = start;
+		/*int start_ = vCount - 3;
+		indices[start++] = start_ + 0;
+		indices[start++] = start_ + 2;
+		indices[start++] = start_ + 1;*/
+		int start_ = vCount - 3;
 		indices[start++] = start_ + 0;
 		indices[start++] = start_ + 1;
 		indices[start++] = start_ + 2;
 	}
 
 	//globals
-	GLuint floorShaderProgram;
+	Camera camera = Camera();
+	FloorProgram floorProgram;;
 
 	SpriteRect* floorUVRects;
-	PosUVMesh** floorMeshes;
+	PosUVMesh* floorMeshes = new PosUVMesh[FloorCount * FloorCount * WallTypeCount * 2];
 	//
 
 	PosUVPair* v0TempBuffer8 = new PosUVPair[8];
 	PosUVPair* v1TempBuffer8 = new PosUVPair[8];
-	MeshIndex_t* iTemp = new MeshIndex_t[8];
+	MeshIndex_t* iTemp = new MeshIndex_t[9];
 	PosUVPair* vTemp = new PosUVPair[8];
 
-	PosUVMesh* GenerateMeshes(WallType_t type, SpriteRect rightFloor, int none0, SpriteRect leftFloor, int none1)
+	void GenerateMeshes(PosUVMesh* floorMesh, WallType_t type, SpriteRect rightFloor, int none0, SpriteRect leftFloor, int none1)
 	{
 		if (none0 && none1) {
-			return NULL;
+			return;
 		}
-
-		PosUVMesh* output = new PosUVMesh[2];
-
 
 		GenerateBaseVertices(rightFloor, v0TempBuffer8);
 		GenerateBaseVertices(leftFloor, v1TempBuffer8);
@@ -206,24 +297,25 @@ namespace SW_Client
 				vTemp[vTempCount++] = v0TempBuffer8[1];
 				vTemp[vTempCount++] = v0TempBuffer8[2];
 				vTemp[vTempCount++] = v0TempBuffer8[3];
-				AppendQuadIndices(iTemp, iTempCount);
+				AppendQuadIndices(iTemp, vTempCount, iTempCount);
 			}
-			output[0] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
+			floorMesh[0] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
+			break;
 		case WallType::TwoByOne:
 			if (!none0) {
 				vTemp[vTempCount++] = v0TempBuffer8[0];
 				vTemp[vTempCount++] = v0TempBuffer8[7];
 				vTemp[vTempCount++] = v0TempBuffer8[2];
-				AppendTriangleIndices(iTemp, iTempCount);
+				AppendTriangleIndices(iTemp, vTempCount, iTempCount);
 			}
 			if (!none1) {
 				vTemp[vTempCount++] = v1TempBuffer8[0];
 				vTemp[vTempCount++] = v1TempBuffer8[1];
 				vTemp[vTempCount++] = v1TempBuffer8[7];
 				vTemp[vTempCount++] = v1TempBuffer8[3];
-				AppendQuadIndices(iTemp, iTempCount);
+				AppendQuadIndices(iTemp, vTempCount, iTempCount);
 			}
-			output[0] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
+			floorMesh[0] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
 			vTempCount = 0;
 			iTempCount = 0;
 			if (!none0) {
@@ -231,76 +323,79 @@ namespace SW_Client
 				vTemp[vTempCount++] = v0TempBuffer8[4];
 				vTemp[vTempCount++] = v0TempBuffer8[2];
 				vTemp[vTempCount++] = v0TempBuffer8[3];
-				AppendQuadIndices(iTemp, iTempCount);
+				AppendQuadIndices(iTemp, vTempCount, iTempCount);
 			}
 			if (!none1) {
 				vTemp[vTempCount++] = v1TempBuffer8[4];
 				vTemp[vTempCount++] = v1TempBuffer8[1];
 				vTemp[vTempCount++] = v1TempBuffer8[3];
-				AppendTriangleIndices(iTemp, iTempCount);
+				AppendTriangleIndices(iTemp, vTempCount, iTempCount);
 			}
-			output[1] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
+			floorMesh[1] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
+			break;
 		case WallType::OneByOne:
 			//wall type None (simple quad)
 			if (!none0) {
 				vTemp[vTempCount++] = v0TempBuffer8[0];
 				vTemp[vTempCount++] = v0TempBuffer8[3];
 				vTemp[vTempCount++] = v0TempBuffer8[2];
-				AppendTriangleIndices(iTemp, iTempCount);
+				AppendTriangleIndices(iTemp, vTempCount, iTempCount);
 			}
 			if (!none1) {
 				vTemp[vTempCount++] = v1TempBuffer8[0];
 				vTemp[vTempCount++] = v1TempBuffer8[1];
 				vTemp[vTempCount++] = v1TempBuffer8[3];
-				AppendTriangleIndices(iTemp, iTempCount);
+				AppendTriangleIndices(iTemp, vTempCount, iTempCount);
 			}
-			output[0] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
+			floorMesh[0] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
+			break;
 		case WallType::OneByTwo:
 			if (!none0) {
 				vTemp[vTempCount++] = v0TempBuffer8[0];
 				vTemp[vTempCount++] = v0TempBuffer8[5];
 				vTemp[vTempCount++] = v0TempBuffer8[2];
 				vTemp[vTempCount++] = v0TempBuffer8[3];
-				AppendQuadIndices(iTemp, iTempCount);
+				AppendQuadIndices(iTemp, vTempCount, iTempCount);
 			}
 			if (!none1) {
 				vTemp[vTempCount++] = v1TempBuffer8[0];
 				vTemp[vTempCount++] = v1TempBuffer8[1];
 				vTemp[vTempCount++] = v1TempBuffer8[5];
-				AppendTriangleIndices(iTemp, iTempCount);
+				AppendTriangleIndices(iTemp, vTempCount, iTempCount);
 			}
-			output[0] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
+			floorMesh[0] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
 			vTempCount = 0;
 			iTempCount = 0;
 			if (!none0) {
 				vTemp[vTempCount++] = v0TempBuffer8[6];
 				vTemp[vTempCount++] = v0TempBuffer8[3];
 				vTemp[vTempCount++] = v0TempBuffer8[2];
-				AppendTriangleIndices(iTemp, iTempCount);
+				AppendTriangleIndices(iTemp, vTempCount, iTempCount);
 			}
 			if (!none1) {
 				vTemp[vTempCount++] = v1TempBuffer8[0];
 				vTemp[vTempCount++] = v1TempBuffer8[1];
 				vTemp[vTempCount++] = v1TempBuffer8[6];
 				vTemp[vTempCount++] = v1TempBuffer8[3];
-				AppendQuadIndices(iTemp, iTempCount);
+				AppendQuadIndices(iTemp, vTempCount, iTempCount);
 			}
-			output[1] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
+			floorMesh[1] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
+			break;
 		case WallType::OneByTwoFlipped:
 			if (!none0) {
 				vTemp[vTempCount++] = v0TempBuffer8[2];
 				vTemp[vTempCount++] = v0TempBuffer8[5];
 				vTemp[vTempCount++] = v0TempBuffer8[3];
-				AppendTriangleIndices(iTemp, iTempCount);
+				AppendTriangleIndices(iTemp, vTempCount, iTempCount);
 			}
 			if (!none1) {
 				vTemp[vTempCount++] = v1TempBuffer8[0];
 				vTemp[vTempCount++] = v1TempBuffer8[1];
 				vTemp[vTempCount++] = v1TempBuffer8[2];
 				vTemp[vTempCount++] = v1TempBuffer8[5];
-				AppendQuadIndices(iTemp, iTempCount);
+				AppendQuadIndices(iTemp, vTempCount, iTempCount);
 			}
-			output[0] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
+			floorMesh[0] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
 			vTempCount = 0;
 			iTempCount = 0;
 			if (!none0) {
@@ -308,113 +403,142 @@ namespace SW_Client
 				vTemp[vTempCount++] = v0TempBuffer8[1];
 				vTemp[vTempCount++] = v0TempBuffer8[2];
 				vTemp[vTempCount++] = v0TempBuffer8[3];
-				AppendQuadIndices(iTemp, iTempCount);
+				AppendQuadIndices(iTemp, vTempCount, iTempCount);
 			}
 			if (!none1) {
 				vTemp[vTempCount++] = v1TempBuffer8[0];
 				vTemp[vTempCount++] = v1TempBuffer8[1];
 				vTemp[vTempCount++] = v1TempBuffer8[6];
-				AppendTriangleIndices(iTemp, iTempCount);
+				AppendTriangleIndices(iTemp, vTempCount, iTempCount);
 			}
-			output[1] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
+			floorMesh[1] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
+			break;
 		case WallType::OneByOneFlipped:
 			//wall type None (simple quad)
 			if (!none0) {
 				vTemp[vTempCount++] = v0TempBuffer8[2];
 				vTemp[vTempCount++] = v0TempBuffer8[1];
 				vTemp[vTempCount++] = v0TempBuffer8[3];
-				AppendTriangleIndices(iTemp, iTempCount);
+				AppendTriangleIndices(iTemp, vTempCount, iTempCount);
 			}
 			if (!none1) {
 				vTemp[vTempCount++] = v1TempBuffer8[0];
 				vTemp[vTempCount++] = v1TempBuffer8[1];
 				vTemp[vTempCount++] = v1TempBuffer8[2];
-				AppendTriangleIndices(iTemp, iTempCount);
+				AppendTriangleIndices(iTemp, vTempCount, iTempCount);
 			}
-			output[0] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
+			floorMesh[0] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
+			break;
 		case WallType::TwoByOneFlipped:
 			if (!none0) {
 				vTemp[vTempCount++] = v0TempBuffer8[2];
 				vTemp[vTempCount++] = v0TempBuffer8[4];
 				vTemp[vTempCount++] = v0TempBuffer8[3];
 				vTemp[vTempCount++] = v0TempBuffer8[1];
-				AppendQuadIndices(iTemp, iTempCount);
+				AppendQuadIndices(iTemp, vTempCount, iTempCount);
 			}
 			if (!none1) {
 				vTemp[vTempCount++] = v1TempBuffer8[2];
 				vTemp[vTempCount++] = v1TempBuffer8[0];
 				vTemp[vTempCount++] = v1TempBuffer8[4];
-				AppendTriangleIndices(iTemp, iTempCount);
+				AppendTriangleIndices(iTemp, vTempCount, iTempCount);
 			}
-			output[0] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
+			floorMesh[0] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
 			vTempCount = 0;
 			iTempCount = 0;
 			if (!none0) {
 				vTemp[vTempCount++] = v0TempBuffer8[7];
 				vTemp[vTempCount++] = v0TempBuffer8[1];
 				vTemp[vTempCount++] = v0TempBuffer8[3];
-				AppendTriangleIndices(iTemp, iTempCount);
+				AppendTriangleIndices(iTemp, vTempCount, iTempCount);
 			}
 			if (!none1) {
 				vTemp[vTempCount++] = v1TempBuffer8[2];
 				vTemp[vTempCount++] = v1TempBuffer8[0];
 				vTemp[vTempCount++] = v1TempBuffer8[7];
 				vTemp[vTempCount++] = v1TempBuffer8[1];
-				AppendQuadIndices(iTemp, iTempCount);
+				AppendQuadIndices(iTemp, vTempCount, iTempCount);
 			}
-			output[1] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
+			floorMesh[1] = PosUVMesh(iTemp, iTempCount, vTemp, vTempCount);
+			break;
 		default:
-			return NULL;
+			return;
 		}
 
-		return output;
 	}
 
-	PosUVMesh* GetFloorMesh(FloorType_t floor0, FloorType_t floor1, WallType_t wall)
+	PosUVMesh* GetFloorMesh(FloorType_t floor0, FloorType_t floor1, WallType_t wall, int offset)
 	{
-		return floorMeshes[((FloorCount * FloorCount * WallTypeCount) * floor0) + (FloorCount * floor1) + wall];
+		return &floorMeshes[((FloorCount * WallTypeCount * 2) * floor0) + (WallTypeCount * 2 * floor1) + (wall * 2) + offset];
+
+		/*if (!output)
+		{
+			std::ostringstream print;
+			print << "GetFloorMesh: Null floorMesh{ floor0: " << (int)floor0 << ", floor1: " << (int)floor1 << ", wall: " << (int)wall << "}";
+			PrintMessage((int)print.str().c_str());
+		}
+
+		return output;*/
 	}
-	void SetFloorMesh(FloorType_t floor0, FloorType_t floor1, WallType_t wall, PosUVMesh* val)
+	void SetFloorMesh(FloorType_t floor0, FloorType_t floor1, WallType_t wall, int offset, PosUVMesh val)
 	{
-		floorMeshes[((FloorCount * FloorCount * WallTypeCount) * floor0) + (FloorCount * floor1) + wall] = val;
+		/*std::ostringstream print;
+		print << "SetFloorMesh: { floor0: " << (int)floor0 << ", floor1: " << (int)floor1 << ", wall: " << (int)wall << ", val: " << (int)val << "}";
+		PrintMessage((int)print.str().c_str());*/
+		floorMeshes[((FloorCount * WallTypeCount * 2) * floor0) + (WallTypeCount * 2 * floor1) + (wall * 2) + offset] = val;
 	}
 
 	void GenerateFloorMeshes()
 	{
-		floorMeshes = new PosUVMesh*[FloorCount * FloorCount * WallTypeCount];
-		for (int i = 0; i < (FloorCount * FloorCount * WallTypeCount); i++) {
+		/*for (int i = 0; i < (FloorCount * FloorCount * WallTypeCount * 2); i++) {
 			floorMeshes[i] = NULL;
-		}
+		}*/
 
 		for (int i = 0; i < FloorCount; i++) {
 			for (int j = 0; j < FloorCount; j++) {
-				for (int k = 0; k < 9; k++) {
-
-					PosUVMesh* temp = GenerateMeshes(
+				for (int k = 0; k < WallTypeCount; k++) {
+					GenerateMeshes(
+						GetFloorMesh(i, j, k, 0),
 						(WallType_t)k,
 						floorUVRects[i],
-						!i,
+						i == 0,
 						floorUVRects[j],
-						!j);
-
-					SetFloorMesh(i, j, k, temp);
+						j == 0);
 				}
 			}
 		}
 	}
 
-	void AppendMeshData(PosUVMesh* floorMesh, std::vector<float> vertices, std::vector<MeshIndex_t> indices, glm::vec2 offset)
+	void AppendMeshData(PosUVMesh* floorMesh, std::vector<float> & vertices, std::vector<MeshIndex_t> & indices, glm::vec2 offset)
 	{
-		MeshIndex_t startI = vertices.size();
+		if (!floorMesh)
+		{
+			PrintMessage((int)"AppendMeshData: Null floorMesh");
+			return;
+		}
+
+		/*std::ostringstream print;
+		print << "appending ";
+		print << floorMesh->iCount;
+		print << " indices";
+		PrintMessage((int)print.str().c_str());*/
+
+		MeshIndex_t startI = vertices.size() / 4;
 		for (size_t i = 0; i < floorMesh->iCount; i++) {
 			indices.push_back(floorMesh->i[i] + startI);
 		}
 
 
+		/*std::ostringstream print0;
+		print0 << "appending ";
+		print0 << floorMesh->vCount;
+		print0 << " floats";
+		PrintMessage((int)print0.str().c_str());*/
+
 		for (size_t i = 0; i < floorMesh->vCount; i++) {
-			glm::vec2 temp = floorMesh->v[i].pos;
-			vertices.push_back(temp.x + offset.x);
-			vertices.push_back(temp.y + offset.y);
+			glm::vec2 temp = floorMesh->v[i].pos + offset;
+			vertices.push_back(temp.x);
+			vertices.push_back(temp.y);
 			temp = floorMesh->v[i].uv;
 			vertices.push_back(temp.x);
 			vertices.push_back(temp.y);
@@ -427,7 +551,7 @@ namespace SW_Client
 		GLuint shader = glCreateShader(type);
 		if (shader == 0)
 		{
-			printf("Error creating shader");
+			PrintMessage((int)"Error creating shader");
 			return 0;
 		}
 
@@ -440,7 +564,15 @@ namespace SW_Client
 		glGetShaderiv(shader, GL_COMPILE_STATUS, &compiled);
 		if (!compiled)
 		{
-			printf("Shader compilation error");
+			char* logBuffer = new char[1 << 14];
+			for (size_t i = 0; i < 1 << 14; i++)
+			{
+				logBuffer[i] = 0;
+			}
+			GLsizei ingoLogLength = 0;
+			glGetShaderInfoLog(shader, 1 << 14, &ingoLogLength, logBuffer);
+			PrintMessage((int)"Shader compilation error");
+			PrintMessage((int)logBuffer);
 			glDeleteShader(shader);
 			return 0;
 		}
@@ -450,13 +582,20 @@ namespace SW_Client
 
 	GLuint buildProgram(GLuint vertexShader, GLuint fragmentShader)
 	{
-
 		//create a GL program and link it
 		GLuint programObject = glCreateProgram();
-		glAttachShader(programObject, vertexShader);
-		glAttachShader(programObject, fragmentShader);
-		glLinkProgram(programObject);
-		return programObject;
+		if (programObject == 0)
+		{
+			PrintMessage((int)"Program creation error");
+			return 0;
+		}
+		else
+		{
+			glAttachShader(programObject, vertexShader);
+			glAttachShader(programObject, fragmentShader);
+			glLinkProgram(programObject);
+			return programObject;
+		}
 	}
 }
 

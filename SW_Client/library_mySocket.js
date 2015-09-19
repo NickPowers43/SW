@@ -1,12 +1,23 @@
 
 var LibraryMySocket = {
-	PrintMessage: function(cStr) {
-		console.log(Pointer_stringify(cStr));
-	},
-	GetFunctions: function() {
+	StartProgram: function() {
+		console.log("running StartProgram");
+		
+		window.Initialize = Module.cwrap('Initialize', 'number', ['number', 'number']);
+		window.Update = Module.cwrap('Update', '');
 		window.HandleMessage = Module.cwrap('HandleMessage', '', ['number', 'number']);
 		window.HandleClose = Module.cwrap('HandleClose', '');
 		window.OnConnectionMade = Module.cwrap('OnConnectionMade', '');
+		
+		window.Initialize(window.canvasWidth, window.canvasHeight);
+		window.render = function () {
+			window.Update();
+			window.requestAnimationFrame(window.render);
+		};
+		window.render();
+	},
+	PrintMessage: function(cStr) {
+		console.log(Pointer_stringify(cStr));
 	},
 	SendMessage: function(dPtr, length) {
 		var dV = new DataView(new ArrayBuffer(length));
@@ -15,7 +26,7 @@ var LibraryMySocket = {
 			dV.setUint8(i,heapBytes[i]);
 		}
 		window.mySocket.send(dV.buffer);
-		console.log("sending message length: ", length, heapBytes);
+		//console.log("sending message length: ", length, heapBytes);
 	},
 	CloseConnection: function() {
 		window.mySocket.close();

@@ -1,17 +1,7 @@
 #include "NetworkWriter.h"
+#include "SW_Client.h"
+#include <sstream>
 #include <memory.h>
-
-char* alignedBuffer = (char*)new uint32_t[1];
-
-template<typename T> void WriteClient(void** cursor, bool flipped, T val)
-{
-	*((T*)alignedBuffer) = val;
-
-	memcpy(*cursor, alignedBuffer, sizeof(val));
-
-	//*((T*)cursor) = val;
-	*cursor = (char*)((size_t)*cursor + sizeof(val));
-}
 
 namespace SW_Client
 {
@@ -25,107 +15,110 @@ namespace SW_Client
 	{
 	}
 
-	void NetworkWriter::WriteMessageType(MessageType_t val)
+
+	void NetworkWriter::ClientSafeWrite(char* val, size_t size)
 	{
-		if (Remaining() > sizeof(val))
+		/*if (Remaining() < size)
 		{
-			WriteClient<MessageType_t>(&cursor, flipped, val);
+			return;
+		}*/
+
+		/*std::ostringstream print;
+		print << "writing value of size: ";
+		print << size;
+		PrintMessage((int)print.str().c_str());*/
+
+		if (flipped)
+		{
+			swab(val, cursor, size);
 		}
 		else
 		{
-			
+			memcpy(cursor, val, size);
 		}
+
+		cursor = (char*)((size_t)cursor + size);
+	}
+	void NetworkWriter::ClientSafeWrite(char* val, size_t size, char* dst)
+	{
+		/*if (Remaining() < size)
+		{
+			return;
+		}*/
+
+		if (flipped)
+		{
+			swab(val, dst, size);
+		}
+		else
+		{
+			memcpy(dst, val, size);
+		}
+	}
+
+	void NetworkWriter::WriteMessageType(MessageType_t val)
+	{
+		ClientSafeWrite((char*)&val, sizeof(val));
 	}
 	void NetworkWriter::WriteUint8(uint8_t val)
 	{
-		if (Remaining() > sizeof(val))
-		{
-			WriteClient<uint8_t>(&cursor, flipped, val);
-		}
-		else
-		{
-			
-		}
+		ClientSafeWrite((char*)&val, sizeof(val));
 	}
 	void NetworkWriter::WriteUint16(uint16_t val)
 	{
-		if (Remaining() > sizeof(val))
-		{
-			uint16_t temp;
-			swab((char*)&val, (char*)&temp, sizeof(val));
-
-			WriteClient<uint16_t>(&cursor, flipped, temp);
-		}
-		else
-		{
-			
-		}
+		ClientSafeWrite((char*)&val, sizeof(val));
 	}
 	void NetworkWriter::WriteUint32(uint32_t val)
 	{
-		if (Remaining() > sizeof(val))
-		{
-			uint32_t temp;
-			swab((char*)&val, (char*)&temp, sizeof(val));
-
-			WriteClient<uint32_t>(&cursor, flipped, temp);
-		}
-		else
-		{
-			
-		}
+		ClientSafeWrite((char*)&val, sizeof(val));
 	}
 	void NetworkWriter::WriteInt8(int8_t val)
 	{
-		if (Remaining() > sizeof(val))
-		{
-			WriteClient<uint8_t>(&cursor, flipped, val);
-		}
-		else
-		{
-			
-		}
+		ClientSafeWrite((char*)&val, sizeof(val));
 	}
 	void NetworkWriter::WriteInt16(int16_t val)
 	{
-		if (Remaining() > sizeof(val))
-		{
-			int16_t temp;
-			swab((char*)&val, (char*)&temp, sizeof(val));
-
-			WriteClient<int16_t>(&cursor, flipped, temp);
-		}
-		else
-		{
-			
-		}
+		ClientSafeWrite((char*)&val, sizeof(val));
 	}
 	void NetworkWriter::WriteInt32(int32_t val)
 	{
-		if (Remaining() > sizeof(val))
-		{
-			int32_t temp;
-			swab((char*)&val, (char*)&temp, sizeof(val));
-
-			WriteClient<int32_t>(&cursor, flipped, temp);
-		}
-		else
-		{
-			
-		}
+		ClientSafeWrite((char*)&val, sizeof(val));
 	}
 	void NetworkWriter::WriteSingle(float val)
 	{
-		if (Remaining() > sizeof(val))
-		{
-			float temp;
-			swab((char*)&val, (char*)&temp, sizeof(val));
+		ClientSafeWrite((char*)&val, sizeof(val));
+	}
 
-			WriteClient<float>(&cursor, flipped, temp);
-		}
-		else
-		{
-			
-		}
+	void NetworkWriter::WriteMessageType(MessageType_t val, char* dst)
+	{
+		ClientSafeWrite((char*)&val, sizeof(val), dst);
+	}
+	void NetworkWriter::WriteUint8(uint8_t val, char* dst)
+	{
+		ClientSafeWrite((char*)&val, sizeof(val), dst);
+	}
+	void NetworkWriter::WriteUint16(uint16_t val, char* dst)
+	{
+		ClientSafeWrite((char*)&val, sizeof(val), dst);
+	}
+	void NetworkWriter::WriteUint32(uint32_t val, char* dst)
+	{
+		ClientSafeWrite((char*)&val, sizeof(val), dst);
+	}
+	void NetworkWriter::WriteInt8(int8_t val, char* dst)
+	{
+		ClientSafeWrite((char*)&val, sizeof(val), dst);
+	}
+	void NetworkWriter::WriteInt16(int16_t val, char* dst)
+	{
+		ClientSafeWrite((char*)&val, sizeof(val), dst);
+	}
+	void NetworkWriter::WriteInt32(int32_t val, char* dst)
+	{
+		ClientSafeWrite((char*)&val, sizeof(val), dst);
+	}
+	void NetworkWriter::WriteSingle(float val, char* dst)
+	{
+		ClientSafeWrite((char*)&val, sizeof(val), dst);
 	}
 }

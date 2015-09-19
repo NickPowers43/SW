@@ -21,6 +21,7 @@ namespace SW_Client
 		bool seen;
 
 		int indicesCount;
+		bool meshCreated;
 		bool instantiated;
 		GLuint floorVBuffer;
 		GLuint floorIBuffer;

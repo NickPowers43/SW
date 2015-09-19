@@ -39,6 +39,7 @@ namespace SW
 				}
 			}
 
+			delete data;
 			data = newData;
 			dim = newDim;
 		}
@@ -62,6 +63,7 @@ namespace SW
 			}
 
 			origin -= amount;
+			delete data;
 			data = newData;
 			dim = newDim;
 		}

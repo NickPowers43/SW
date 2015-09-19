@@ -7,7 +7,7 @@ namespace SW
 	NetworkWriter::NetworkWriter(size_t capacity)
 	{
 		NetworkWriter::capacity = capacity;
-		NetworkWriter::buffer = (void*)new char[capacity];
+		NetworkWriter::buffer = new char[capacity];
 		NetworkWriter::cursor = buffer;
 	}
 	NetworkWriter::~NetworkWriter()
@@ -35,6 +35,6 @@ namespace SW
 	}
 	std::string NetworkWriter::StringCopy()
 	{
-		return std::string((char*)buffer, Position());
+		return std::string(buffer, Position());
 	}
 }
