@@ -1,5 +1,6 @@
 #include "Vessel.h"
 #include "SW_Client.h"
+#include <sstream>
 #include <SW/Tile.h>
 #include <SW/SW.h>
 #include "Player.h"
@@ -8,11 +9,160 @@ namespace SW_Client
 {
 	Vessel::Vessel(VesselIndex_t index) : SW::Vessel(index)
 	{
+		myPlayer = NULL;
 	}
 
 
 	Vessel::~Vessel()
 	{
+	}
+
+	void Vessel::AddMyPlayer(Player* player, NetworkWriter* nw)
+	{
+		if (player)
+		{
+			myPlayer = player;
+			UpdateChunks(true, nw);
+		}
+		else
+		{
+			PrintMessage((int)"NULL player added");
+		}
+	}
+	void Vessel::Update(NetworkWriter* nw)
+	{
+		if (myPlayer)
+		{
+			UpdateChunks(false, nw);
+		}
+
+		DrawWorld();
+	}
+	void Vessel::Clear()
+	{
+		/*for (size_t i = 0; i < players.size(); i++)
+		{
+			delete players[i];
+		}
+		players.clear();*/
+
+		myPlayer = NULL;
+	}
+	void Vessel::UpdateChunks(bool force, NetworkWriter* nw)
+	{
+		if (myPlayer)
+		{
+			size_t rangeT = (PLAYER_CHUNK_RANGE * 2) + 1;
+			glm::ivec2 orgChunkI = myPlayer->chunkI;
+			myPlayer->chunkI = TileChunks::WorldToChunkI(myPlayer->pos);
+
+			if (force || ((orgChunkI.x != myPlayer->chunkI.x) || (orgChunkI.y != myPlayer->chunkI.y)))
+			{
+				nw->WriteMessageType(ClientMessageType::RequestChunk);
+				uint8_t requestLength = 0;
+				uint8_t* requestLengthLocation = (uint8_t*)nw->cursor;
+				nw->WriteUint8(0);
+
+				for (size_t i = 0; i < rangeT; i++)
+				{
+					for (size_t j = 0; j < rangeT; j++)
+					{
+
+						glm::ivec2 diffCurr(j - PLAYER_CHUNK_RANGE, i - PLAYER_CHUNK_RANGE);
+						glm::ivec2 temp(myPlayer->chunkI + diffCurr);
+						glm::ivec2 diffOrg(temp - orgChunkI);
+
+						if (force || ((abs(diffOrg.x) > PLAYER_CHUNK_RANGE) || (abs(diffOrg.y) > PLAYER_CHUNK_RANGE)))
+						{
+							std::ostringstream print;
+							print << "Requesting chunk at: ";
+							print << std::to_string(temp.x);
+							print << ", ";
+							print << std::to_string(temp.y);
+							print << ")";
+							PrintMessage((int)print.str().c_str());
+
+							requestLength++;
+
+
+							nw->WriteInt16((int16_t)temp.x);
+							nw->WriteInt16((int16_t)temp.y);
+
+							SW::TileChunk* temp2 = tiles.TryGetChunk(glm::ivec2(temp.x, temp.y));
+							if (temp2)
+							{
+								TileChunk* temp3 = static_cast<TileChunk*>(temp2);
+								temp3->seen = true;
+
+								nw->WriteUint32((TileChunkVersion_t)temp2->version);
+							}
+							else
+							{
+								nw->WriteUint32((TileChunkVersion_t)4294967295);
+							}
+						}
+					}
+				}
+
+				nw->WriteUint8(requestLength, (char*)requestLengthLocation);
+
+				//destroy chunks that are no longer visible
+				for (size_t i = 0; i < tiles.chunks.dim.y; i++)
+				{
+					for (size_t j = 0; j < tiles.chunks.dim.x; j++)
+					{
+						glm::ivec2 chunkI(tiles.chunks.origin + glm::ivec2(j, i));
+						SW::TileChunk* swChunk = tiles.TryGetChunk(glm::ivec2(chunkI.x, chunkI.y));
+						if (swChunk)
+						{
+							SW_Client::TileChunk* chunk = static_cast<SW_Client::TileChunk*>(swChunk);
+							if (chunk->seen)
+							{
+								InstantiateChunk(chunk);
+							}
+							else
+							{
+								chunk->Destroy();
+							}
+
+							chunk->seen = false;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	void Vessel::DrawWorld()
+	{
+		DrawFloor();
+	}
+	void Vessel::DrawFloor()
+	{
+		for (size_t i = 0; i < tiles.chunks.dim.y; i++)
+		{
+			for (size_t j = 0; j < tiles.chunks.dim.x; j++)
+			{
+				glm::ivec2 chunkI(currentVessel->tiles.chunks.origin + glm::ivec2(j, i));
+				SW::TileChunk* swChunk = tiles.TryGetChunk(glm::ivec2(chunkI.x, chunkI.y));
+				if (swChunk)
+				{
+					SW_Client::TileChunk* chunk = static_cast<SW_Client::TileChunk*>(swChunk);
+					if (chunk->instantiated)
+					{
+						chunk->Draw();
+					}
+				}
+			}
+		}
+	}
+	void Vessel::DrawWalls()
+	{
+
+	}
+	void Vessel::DrawShadows()
+	{
+
 	}
 
 	void Vessel::ReadSetChunkMessage(NetworkReader* nr, NetworkWriter* nw)
@@ -50,18 +200,14 @@ namespace SW_Client
 				chunk->Set(glm::ivec2(tileLinearI % CHUNK_SIZE, tileLinearI / CHUNK_SIZE), tile);
 			}
 
-			/*glm::ivec2 diff(chunk->index - myPlayer->chunkI);
-			if ((abs<int>(diff.x) <= PLAYER_CHUNK_RANGE) || (abs<int>(diff.y) <= PLAYER_CHUNK_RANGE)) {
-				newChunks.push_back(chunk);
-			}*/
-			newChunks.push_back(chunk);
+			newChunks[i] = chunk;
 		}
 
 		//Reinstantiate chunks
-		while (newChunks.size() > 0) {
-			TileChunk* chunk = newChunks.back();
-			newChunks.pop_back();
-			SW::TileChunk* swChunk = currentVessel->tiles.TryGetChunk(chunk->index);
+		for (size_t i = 0; i < chunkCount; i++)
+		{
+			TileChunk* chunk = newChunks[i];
+			SW::TileChunk* swChunk = tiles.TryGetChunk(chunk->index);
 			if (swChunk)
 			{
 				TileChunk* existingChunk = static_cast<TileChunk*>(swChunk);
@@ -69,21 +215,25 @@ namespace SW_Client
 				delete existingChunk;
 			}
 
-			//cout << "Instantiating chunk (" << chunk->index.x << "," << chunk->index.y << ")";
-
-
 			tiles.SetChunk(static_cast<SW::TileChunk*>(chunk));
-			InstantiateChunk(chunk);
 		}
+		for (size_t i = 0; i < chunkCount; i++)
+		{
+			TileChunk* chunk = newChunks[i];
+
+			glm::ivec2 diff(chunk->index - myPlayer->chunkI);
+			if ((abs<int>(diff.x) <= PLAYER_CHUNK_RANGE) || (abs<int>(diff.y) <= PLAYER_CHUNK_RANGE)) {
+
+				InstantiateChunk(chunk);
+			}
+
+		}
+
+		delete newChunks;
 	}
 
 	void Vessel::InstantiateChunk(TileChunk* chunk)
 	{
-		chunk->Instantiate(
-			tiles.ClientChunkTop(chunk),
-			tiles.ClientChunkLeft(chunk),
-			tiles.ClientChunkRight(chunk),
-			tiles.ClientChunkBottom(chunk),
-			tiles.ClientChunkBottomRight(chunk));
+		chunk->Instantiate(dynamic_cast<SW::TileSet*>(&tiles));
 	}
 }

@@ -14,8 +14,8 @@ namespace SW_Client
 		~TileChunk();
 
 		void Draw();
-		void Instantiate(TileChunk* t, TileChunk* l, TileChunk* r, TileChunk* b, TileChunk* br);
-		void GenerateFloorMesh(TileChunk* t, TileChunk* l, TileChunk* r, TileChunk* b, TileChunk* br);
+		void Instantiate(TileSet* ts);
+		void GenerateFloorMesh(TileSet* ts);
 		void Destroy();
 
 		bool seen;

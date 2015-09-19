@@ -9,7 +9,7 @@ namespace SW
 		FixedTileSet::tiles = tiles = new Tile*[dim.x * dim.y];
 		for (size_t i = 0; i < (dim.x * dim.y); i++)
 		{
-			tiles[i] = CreateTile();
+			tiles[i] = NULL;
 		}
 	}
 
@@ -32,19 +32,24 @@ namespace SW
 
 	Tile* FixedTileSet::TryGet(glm::ivec2 index)
 	{
-		return tiles[(index.y * dim.x) + index.x];
+		if (GetAABB().ContainsExclusive(index))
+		{
+			return tiles[(index.y * dim.x) + index.x];
+		}
+		else
+		{
+			return NULL;
+		}
 	}
 	void FixedTileSet::Set(glm::ivec2 index, Tile* val)
 	{
-		tiles[(index.y * dim.x) + index.x] = val;
+		if (GetAABB().ContainsExclusive(index))
+		{
+			tiles[(index.y * dim.x) + index.x] = val;
+		}
 	}
 	AABBi FixedTileSet::GetAABB()
 	{
 		return AABBi(glm::ivec2(0, 0), dim);
-	}
-
-	Tile* FixedTileSet::TileAt(glm::ivec2 index)
-	{
-		return tiles[(index.y * dim.x) + index.x];
 	}
 }

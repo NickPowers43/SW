@@ -30,8 +30,12 @@ namespace SW_Server
 		void SendMakeVesselActive(Player* player, NetworkWriter* nw);
 		void AddPlayerVessel(Player* player, NetworkWriter* nw, glm::vec2 position);
 		void RemovePlayer(Player* player);
+		void BuildModule(VMType_t type, glm::ivec2 position);
 
 		virtual SW::VesselObject* PlaceObject(ObjectType::ObjectType type, glm::vec2 location);
+
+		void AddModule(SW::VesselModule vm);
+		void RemoveModuleAt(size_t index);
 
 		static uint32_t nextIndex;
 		uint32_t nextCompartmentIndex;
@@ -41,7 +45,6 @@ namespace SW_Server
 		TileChunks tiles;
 
 		vector<Player*> playersOnBoard;
-		vector<SW::VesselModule> modules;
 	};
 }
 

@@ -201,11 +201,38 @@ namespace SW_Server
 			//}
 		}
 	}
+	void Vessel::BuildModule(VMType_t type, glm::ivec2 position)
+	{
+		VesselModuleTemplate* typeTemplate = vesselModuleTemplates[type];
+
+		for (size_t i = 0; i < modules.size(); i++)
+		{
+			if (true)
+			{
+
+				return;
+			}
+		}
+	}
 
 	VesselObject* Vessel::PlaceObject(ObjectType::ObjectType type, glm::vec2 location)
 	{
 		VesselObject* obj = new VesselObject(type, location);
 
 		return obj;
+	}
+
+	void Vessel::AddModule(SW::VesselModule vm)
+	{
+		SW::Vessel::AddModule(vm);
+
+	}
+	void Vessel::RemoveModuleAt(size_t index)
+	{
+		VesselModule* rVM = &modules[index];
+
+
+
+		SW::Vessel::RemoveModuleAt(index);
 	}
 }

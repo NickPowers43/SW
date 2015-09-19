@@ -162,11 +162,7 @@ namespace SW
 		//template<typename value_type>
 		value_type* TryGet(glm::ivec2 index)
 		{
-			if (!Contains(index.x, index.y))
-				return NULL;
-
-			index -= origin;
-			return data[(index.y * dim.x) + index.x];
+			return TryGet(index.x, index.y);
 		}
 
 		//template<typename value_type>

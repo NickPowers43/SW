@@ -55,6 +55,7 @@ namespace SW
 		}
 
 		index -= chunk->OriginTileIndex();
+
 		chunk->Set(index, val);
 
 	}
@@ -66,16 +67,30 @@ namespace SW
 
 	glm::ivec2 TileChunks::TileOffset(glm::ivec2 tileI, glm::ivec2 chunkI)
 	{
-		glm::ivec2 output;
-		output.x = (tileI.x >= 0) ? tileI.x - (chunkI.x << CHUNK_SIZE) : tileI.x - (chunkI.x << CHUNK_SIZE);
-		output.y = (tileI.y >= 0) ? tileI.y - (chunkI.y << CHUNK_SIZE) : tileI.y - (chunkI.y << CHUNK_SIZE);
-		return output;
+		glm::ivec2 rel = ChunkIToTileI(chunkI);
+		return tileI - rel;
 	}
 	glm::ivec2 TileChunks::TileIToChunkI(glm::ivec2 tileI)
 	{
 		glm::ivec2 output;
-		output.x = (tileI.x >= 0) ? tileI.x / CHUNK_SIZE : ((tileI.x + 1) / CHUNK_SIZE) - 1;
-		output.y = (tileI.y >= 0) ? tileI.y / CHUNK_SIZE : ((tileI.y + 1) / CHUNK_SIZE) - 1;
+		if (tileI.x < 0)
+		{
+			tileI.x++;
+			output.x = (tileI.x / CHUNK_SIZE) - 1;
+		}
+		else
+		{
+			output.x = tileI.x / CHUNK_SIZE;
+		}
+		if (tileI.y < 0)
+		{
+			tileI.y++;
+			output.y = (tileI.y / CHUNK_SIZE) - 1;
+		}
+		else
+		{
+			output.y = tileI.y / CHUNK_SIZE;
+		}
 		return output;
 	}
 	glm::ivec2 TileChunks::ChunkIToTileI(glm::ivec2 chunkI)

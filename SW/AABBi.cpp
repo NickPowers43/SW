@@ -15,6 +15,22 @@ namespace SW
 	{
 	}
 
+	bool AABBi::OverlappingInclusive(AABBi a, AABBi b)
+	{
+		return !(((b.tr.x <= a.bl.x) || (b.bl.x > a.tr.x)) || ((b.tr.y <= a.bl.y) || (b.bl.y > a.tr.y)));
+	}
+	bool AABBi::OverlappingExclusive(AABBi a, AABBi b)
+	{
+		return !(((b.tr.x < a.bl.x) || (b.bl.x >= a.tr.x)) || ((b.tr.y < a.bl.y) || (b.bl.y >= a.tr.y)));
+	}
+	bool AABBi::ContainsExclusive(glm::ivec2 point)
+	{
+		return ((point.x >= bl.x) && (point.x < tr.x)) && ((point.y >= bl.y) && (point.y < tr.y));
+	}
+	bool AABBi::ContainsInclusive(glm::ivec2 point)
+	{
+		return ((point.x >= bl.x) && (point.x <= tr.x)) && ((point.y >= bl.y) && (point.y <= tr.y));
+	}
 	void AABBi::FitWhole(glm::ivec2 point)
 	{
 		bl.x = glm::min(point.x++, bl.x);

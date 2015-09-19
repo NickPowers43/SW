@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "StartingVessel.h"
 #include <SW/VesselObject.h>
+#include "Compartment.h"
 
 
 namespace SW_Server
@@ -66,7 +67,7 @@ namespace SW_Server
 		tiles.BuildWall(&loc0, 1, WallType::WallType::OneByOneFlipped, false);
 		tiles.BuildWall(&loc0, 1, WallType::WallType::ZeroByOne, false);
 		glm::ivec2 circleInner = loc0;
-		tiles.BuildWall(&loc0, 3, WallType::WallType::ZeroByOne, false);
+		loc0 += glm::ivec2(0, 3);// tiles.BuildWall(&loc0, 3, WallType::WallType::ZeroByOne, false);
 		glm::ivec2 circleOuter = loc0;
 		tiles.BuildWall(&loc0, 1, WallType::WallType::ZeroByOne, false);
 		tiles.BuildWall(&loc0, 3, WallType::WallType::OneByZero, false);
@@ -99,7 +100,7 @@ namespace SW_Server
 
 		tiles.RebuildCompartments();
 
-		tiles.SetCompartmentFloor(FloorType::Basic, tiles.CompartmentAt(glm::vec2(0.0f, 0.0f)));
+		tiles.SetCompartmentFloorAt(FloorType::Basic, glm::vec2(0.0f, 0.0f));
 	}
 	SW::VesselObject* StartingVessel::PlaceObject(ObjectType::ObjectType type, glm::vec2 location)
 	{

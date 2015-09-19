@@ -1,4 +1,5 @@
 #include "SW_Client.h"
+#include <sstream>
 #include "Player.h"
 #include "Vessel.h"
 #include "TileChunks.h"
@@ -7,7 +8,6 @@
 
 #include <string>
 #include <stdio.h>
-#include <sstream>
 #include <map>
 #include <vector>
 #include <GLES2/gl2.h>
@@ -17,110 +17,12 @@
 
 std::map<VesselIndex_t, SW_Client::Vessel*> vessels;
 SW_Client::Player* myPlayer = NULL;
-std::vector<SW_Client::Player*> players;
 SW_Client::Vessel* currentVessel = NULL;
 bool swapBytes = false;
 SW_Client::NetworkWriter* nw_main = new SW_Client::NetworkWriter(1 << 14, swapBytes);
 
 namespace SW_Client
 {
-	void UpdateChunks(bool force, NetworkWriter* nw)
-	{
-		if (myPlayer)
-		{
-			size_t rangeT = (PLAYER_CHUNK_RANGE * 2) + 1;
-			glm::ivec2 orgChunkI = myPlayer->chunkI;
-			myPlayer->chunkI = TileChunks::WorldToChunkI(myPlayer->pos);
-
-			if (force || ((orgChunkI.x != myPlayer->chunkI.x) || (orgChunkI.y != myPlayer->chunkI.y)))
-			{
-				nw->WriteMessageType(ClientMessageType::RequestChunk);
-				uint8_t requestLength = 0;
-				uint8_t* requestLengthLocation = (uint8_t*)nw->cursor;
-				nw->WriteUint8(0);
-
-				for (size_t i = 0; i < rangeT; i++)
-				{
-					for (size_t j = 0; j < rangeT; j++)
-					{
-
-						glm::ivec2 diffCurr(j - PLAYER_CHUNK_RANGE, i - PLAYER_CHUNK_RANGE);
-						glm::ivec2 temp(myPlayer->chunkI + diffCurr);
-						glm::ivec2 diffOrg(temp - orgChunkI);
-
-						if (force || ((abs(diffOrg.x) > PLAYER_CHUNK_RANGE) || (abs(diffOrg.y) > PLAYER_CHUNK_RANGE)))
-						{
-							std::ostringstream print;
-							print << "Requesting chunk at: ";
-							print << std::to_string(temp.x);
-							print << ", ";
-							print << std::to_string(temp.y);
-							print << ")";
-							PrintMessage((int)print.str().c_str());
-
-							requestLength++;
-
-
-							nw->WriteInt16((int16_t)temp.x);
-							nw->WriteInt16((int16_t)temp.y);
-
-							SW::TileChunk* temp2 = currentVessel->tiles.TryGetChunk(glm::ivec2(temp.x, temp.y));
-							if (temp2)
-							{
-								TileChunk* temp3 = static_cast<TileChunk*>(temp2);
-								temp3->seen = true;
-
-								nw->WriteUint32((TileChunkVersion_t)temp2->version);
-							}
-							else
-							{
-								nw->WriteUint32((TileChunkVersion_t)4294967295);
-							}
-						}
-					}
-				}
-
-				nw->WriteUint8(requestLength, (char*)requestLengthLocation);
-
-				//destroy chunks that are no longer visible
-				for (size_t i = 0; i < currentVessel->tiles.chunks.dim.y; i++)
-				{
-					for (size_t j = 0; j < currentVessel->tiles.chunks.dim.x; j++)
-					{
-						glm::ivec2 chunkI(currentVessel->tiles.chunks.origin + glm::ivec2(j, i));
-						SW::TileChunk* swChunk = currentVessel->tiles.TryGetChunk(glm::ivec2(chunkI.x, chunkI.y));
-						if (swChunk)
-						{
-							SW_Client::TileChunk* chunk = static_cast<SW_Client::TileChunk*>(swChunk);
-							if (chunk->seen)
-							{
-								currentVessel->InstantiateChunk(chunk);
-							}
-							else
-							{
-								chunk->Destroy();
-							}
-
-							chunk->seen = false;
-						}
-					}
-				}
-			}
-		}
-	}
-
-	int ClearCurrentVessel()
-	{
-		for (size_t i = 0; i < players.size(); i++)
-		{
-			delete players[i];
-		}
-		players.clear();
-
-		currentVessel = NULL;
-
-		return 0;
-	}
 	void FlushBuffer(NetworkWriter* nw)
 	{
 		if (nw->Position() > 0)
@@ -162,10 +64,8 @@ namespace SW_Client
 
 		if (currentVessel)
 		{
-			if (ClearCurrentVessel())
-			{
-				//disconnect immediately
-			}
+			currentVessel->Clear();
+			currentVessel = NULL;
 		}
 
 		currentVessel = vessel;
@@ -176,7 +76,7 @@ namespace SW_Client
 			float x = nr->ReadSingle();
 			float y = nr->ReadSingle();
 			glm::vec2 pos = glm::vec2(x, y);
-			players.push_back(new Player(glm::vec2(0.0f, 0.0f), 1.0f, pos, 0.0f, SW::TileChunks::WorldToChunkI(pos)));
+			//players.push_back(new Player(glm::vec2(0.0f, 0.0f), 1.0f, pos, 0.0f, SW::TileChunks::WorldToChunkI(pos)));
 		}
 
 		//add ourselves
@@ -194,8 +94,25 @@ namespace SW_Client
 			myPlayer->chunkI = SW::TileChunks::WorldToChunkI(pos);
 		}
 
+		currentVessel->AddMyPlayer(myPlayer, nw_main);
+	}
 
-		UpdateChunks(true, nw_main);
+	void ReadEndianessCheckMessage(NetworkReader* nr, NetworkWriter* nw)
+	{
+		uint32_t ecVar = nr->ReadUint32();
+		nw_main->flipped = nr->swapped = swapBytes = ecVar != (uint32_t)(255 << 16);
+		if (swapBytes)
+		{
+			PrintMessage((int)"swapBytes set to true");
+			std::ostringstream print;
+			print << "ecVar: ";
+			print << ecVar;
+			PrintMessage((int)print.str().c_str());
+		}
+		else
+		{
+			PrintMessage((int)"swapBytes set to false");
+		}
 	}
 }
 
@@ -219,8 +136,6 @@ extern "C" void HandleMessage(int dPtr, int length)
 	
 	nw_main->Reset();
 
-	uint32_t ecVar;
-
 	while (nr.Remaining() > 0)
 	{
 		MessageType_t messageType = nr.ReadMessageType();
@@ -242,20 +157,7 @@ extern "C" void HandleMessage(int dPtr, int length)
 			break;
 		case ServerMessageType::EndianessCheck:
 			//PrintMessage((int)"EndianessCheck message received");
-			ecVar = nr.ReadUint32();
-			nw_main->flipped = nr.swapped = swapBytes = ecVar != (uint32_t)(255 << 16);
-			if (swapBytes)
-			{
-				PrintMessage((int)"swapBytes set to true");
-				std::ostringstream print;
-				print << "ecVar: ";
-				print << ecVar;
-				PrintMessage((int)print.str().c_str());
-			}
-			else
-			{
-				PrintMessage((int)"swapBytes set to false");
-			}
+			SW_Client::ReadEndianessCheckMessage(&nr, nw_main);
 			break;
 		default:
 			PrintMessage((int)"Unrecognized message received");
@@ -275,30 +177,9 @@ extern "C" void Update()
 {
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	if (currentVessel && myPlayer)
+	if (currentVessel)
 	{
-		SW_Client::UpdateChunks(false, nw_main);
-
-		for (size_t i = 0; i < currentVessel->tiles.chunks.dim.y; i++)
-		{
-			for (size_t j = 0; j < currentVessel->tiles.chunks.dim.x; j++)
-			{
-				glm::ivec2 chunkI(currentVessel->tiles.chunks.origin + glm::ivec2(j, i));
-				SW::TileChunk* swChunk = currentVessel->tiles.TryGetChunk(glm::ivec2(chunkI.x, chunkI.y));
-				if (swChunk)
-				{
-					SW_Client::TileChunk* chunk = static_cast<SW_Client::TileChunk*>(swChunk);
-					if (chunk->instantiated)
-					{
-						//PrintMessage((int)"Drawing chunk");
-						std::ostringstream print;
-						print << "Drawing chunk: (" << chunkI.x << ", " << chunkI.y << ")";
-						PrintMessage((int)print.str().c_str());
-						chunk->Draw();
-					}
-				}
-			}
-		}
+		currentVessel->Update(nw_main);
 	}
 
 	SDL_GL_SwapBuffers();

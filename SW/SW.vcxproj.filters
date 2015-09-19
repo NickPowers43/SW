@@ -90,6 +90,9 @@
     <ClCompile Include="VesselModuleTileSet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="VesselModuleSet.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AABBi.h">
@@ -171,6 +174,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="VesselModuleTileSet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="VesselModuleSet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

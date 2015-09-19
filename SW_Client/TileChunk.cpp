@@ -1,5 +1,7 @@
 #include "TileChunk.h"
 #include "SW_Client.h"
+#include <sstream>
+#include <SW/AABBi.h>
 #include <SW/Tile.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -30,8 +32,8 @@ namespace SW_Client
 				//PrintMessage((int)"Drawing Mesh");
 				glm::mat4 viewMat(1.0f);
 				camera.GenerateView(viewMat);
-				glm::vec2 offset = TileIToWorld(OriginTileIndex());
-				viewMat = glm::translate(viewMat, glm::vec3(offset.x, offset.y, 0.0f));
+				/*glm::vec2 offset = TileIToWorld(OriginTileIndex());
+				viewMat = glm::translate(viewMat, glm::vec3(offset.x, offset.y, 0.0f));*/
 				//cout << "Drawing chunk";
 
 				//viewMat = glm::transpose(viewMat);
@@ -56,102 +58,51 @@ namespace SW_Client
 			}
 		}
 	}
-	void TileChunk::Instantiate(TileChunk* t, TileChunk* l, TileChunk* r, TileChunk* b, TileChunk* br)
+	void TileChunk::Instantiate(TileSet* ts)
 	{
 		if (!instantiated)
 		{
-			GenerateFloorMesh(t, l, r, b, br);
+			GenerateFloorMesh(ts);
 
 			instantiated = true;
 		}
 	}
-	void TileChunk::GenerateFloorMesh(TileChunk* t, TileChunk* l, TileChunk* r, TileChunk* b, TileChunk* br)
+	void TileChunk::GenerateFloorMesh(TileSet* ts)
 	{
 		//glm::vec2 position = TileIToWorld(OriginTileIndex());
+		//std::ostringstream print;
+		//print << "GenerateFloorMesh: index: (" << index.x << ", " << index.y << "), ";
 
 		std::vector<float> vertices;
 		std::vector<MeshIndex_t> indices;
 
-		for (size_t i = 0; i < CHUNK_SIZE; i++) {
-			for (size_t j = 0; j < CHUNK_SIZE; j++) {
-
-				SW::Tile* tile = TryGet(glm::ivec2(i, j));
+		SW::AABBi aabb = GetAABB();
+		//print << "aabb: (" << aabb.bl.x << ", " << aabb.bl.y << "),(" << aabb.tr.x << ", " << aabb.tr.y << ")\n";
+		for (int i = aabb.bl.y; i < aabb.tr.y; i++)
+		{
+			for (int j = aabb.bl.x; j < aabb.tr.x; j++)
+			{
+				SW::Tile* tile = ts->TryGet(glm::ivec2(j, i));
 
 				if (tile) {
 
+					//print << "non-NULL-tile at: (" << j << ", " << i << ")\n";
+
 					if (tile->floor0 != FloorType::None || tile->floor1 != FloorType::None) {
 
-						glm::vec2 offset = glm::vec2(i, j);
-
-						SW::Tile* lTile = NULL;
-						SW::Tile* rTile = NULL;
-						SW::Tile* r2Tile = NULL;
-						SW::Tile* bTile = NULL;
-						SW::Tile* brTile = NULL;
-
-						if (i == 0) {
-							if (l) {
-								lTile = l->TryGet(glm::ivec2(CHUNK_SIZE - 1, j));
-							}
-						}
-						else {
-							lTile = TryGet(glm::ivec2(i - 1, j));
-						}
-
-						if (i == CHUNK_SIZE - 1) {
-							if (r) {
-								rTile = r->TryGet(glm::ivec2(0, j));
-							}
-						}
-						else {
-							rTile = TryGet(glm::ivec2(i + 1, j));
-						}
-
-						if (i >= CHUNK_SIZE - 2) {
-							if (r) {
-								r2Tile = r->TryGet(glm::ivec2(i - (CHUNK_SIZE - 2), j));
-							}
-						}
-						else {
-							r2Tile = TryGet(glm::ivec2(i + 2, j));
-						}
-
-						if (j == 0) {
-							if (b) {
-								bTile = b->TryGet(glm::ivec2(i, CHUNK_SIZE - 1));
-							}
-						}
-						else {
-							bTile = TryGet(glm::ivec2(i, j - 1));
-						}
-
-						if (j == 0) {
-							if (i < CHUNK_SIZE - 1) {
-								if (b) {
-									brTile = b->TryGet(glm::ivec2(i + 1, CHUNK_SIZE - 1));
-								}
-							}
-							else {
-								if (br) {
-									brTile = br->TryGet(glm::ivec2(0, CHUNK_SIZE - 1));
-								}
-							}
-						}
-						else {
-							if (i != CHUNK_SIZE - 1) {
-								brTile = TryGet(glm::ivec2(i + 1, j - 1));
-							}
-							else {
-								if (r) {
-									brTile = r->TryGet(glm::ivec2(0, j - 1));
-								}
-							}
-						}
+						glm::vec2 offset = glm::vec2(j, i);
 
 						if (tile->floor0 == tile->floor1) {
 							AppendMeshData(GetFloorMesh(tile->floor0, FloorType::None, WallType::None, 0), vertices, indices, offset);
 						}
 						else {
+
+							SW::Tile* lTile = ts->TryGet(glm::ivec2(j - 1, i));
+							SW::Tile* rTile = ts->TryGet(glm::ivec2(j + 1, i));
+							SW::Tile* r2Tile = ts->TryGet(glm::ivec2(j + 2, i));
+							SW::Tile* bTile = ts->TryGet(glm::ivec2(j, i - 1));
+							SW::Tile* brTile = ts->TryGet(glm::ivec2(j + 1, i - 1));
+
 							if (tile->ContainsMask(WallTypeMask::TwoByOne)) { //this tile contains a TwoByOne
 								AppendMeshData(GetFloorMesh(tile->floor0, tile->floor1, WallType::TwoByOne, 0), vertices, indices, offset);
 							}
@@ -191,6 +142,8 @@ namespace SW_Client
 				}
 			}
 		}
+
+		//PrintMessage((int)print.str().c_str());
 
 		if (indices.size() > 0)
 		{

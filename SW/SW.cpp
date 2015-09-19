@@ -1,8 +1,47 @@
 #include "SW.h"
 #include "VesselModuleTemplate.h"
 
+
+
 namespace SW
 {
+	VesselModuleTemplate* ConstructSimpleFrigateCore()
+	{
+		glm::ivec2 dim(3, 8);
+		VesselModuleTemplate* output = new VesselModuleTemplate(dim);
+		output->tiles.BuildFoundation(glm::ivec2(0, 0), dim + glm::ivec2(1,1));
+
+		glm::ivec2 temp = glm::ivec2(0, 0);
+		output->tiles.BuildWall(&temp, 8, WallType::ZeroByOne, false);
+		output->tiles.BuildWall(&temp, 3, WallType::OneByZero, false);
+		output->tiles.BuildWall(&temp, 8, WallType::ZeroByOne, true);
+		output->tiles.BuildWall(&temp, 3, WallType::OneByZero, true);
+
+		output->tiles.RebuildCompartmentsFloorless();
+		output->tiles.SetCompartmentFloorAt(FloorType::Basic, glm::vec2(1.5f, 1.5f));
+
+		return output;
+	}
+	VesselModuleTemplate* ConstructSimpleFrigateBridge()
+	{
+		glm::ivec2 dim(3, 9);
+		VesselModuleTemplate* output = new VesselModuleTemplate(dim);
+		output->tiles.BuildFoundation(glm::ivec2(0, 0), dim + glm::ivec2(1, 1));
+
+		glm::ivec2 temp = glm::ivec2(0, 0);
+		output->tiles.BuildWall(&temp, 7, WallType::ZeroByOne, false);
+		output->tiles.BuildWall(&temp, 1, WallType::OneByTwo, false);
+		output->tiles.BuildWall(&temp, 1, WallType::OneByZero, false);
+		output->tiles.BuildWall(&temp, 1, WallType::OneByTwoFlipped, true);
+		output->tiles.BuildWall(&temp, 7, WallType::ZeroByOne, true);
+		output->tiles.BuildWall(&temp, 3, WallType::OneByZero, true);
+
+		output->tiles.RebuildCompartmentsFloorless();
+		output->tiles.SetCompartmentFloorAt(FloorType::Basic, glm::vec2(1.5f, 1.5f));
+
+		return output;
+	}
+
 	VesselModuleTemplate** vesselModuleTemplates;
 
 	glm::ivec2* wallOffsets = new glm::ivec2[9] {
@@ -37,8 +76,8 @@ namespace SW
 		}
 
 		vesselModuleTemplates = new VesselModuleTemplate*[2];
-		vesselModuleTemplates[0] = new VesselModuleTemplate(glm::ivec2(1, 1));
-		vesselModuleTemplates[1] = new VesselModuleTemplate(glm::ivec2(1, 1));
+		vesselModuleTemplates[VMType::SimpleFrigateCore] = ConstructSimpleFrigateCore();
+		vesselModuleTemplates[VMType::SimpleFrigateBridge] = ConstructSimpleFrigateBridge();
 	}
 }
 

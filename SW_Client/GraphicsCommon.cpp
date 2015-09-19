@@ -99,7 +99,7 @@ namespace SW_Client
 
 	Camera::Camera()
 	{
-		zoom = 1.0f / 8.0f;
+		zoom = 1.0f / 16.0f;
 		position = glm::vec2(0.0f, 0.0f);
 		dim = glm::vec2(1.0f, 1.0f);
 	}
@@ -117,6 +117,8 @@ namespace SW_Client
 
 	void InitializeClient()
 	{
+		SW::Initialize();
+
 		glEnable(GL_TEXTURE_2D);
 
 		SDL_Surface* surface = IMG_Load("data/textures/floors.png");

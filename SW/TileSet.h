@@ -3,6 +3,8 @@
 
 namespace SW
 {
+	class AdjacentTiles;
+
 	class TileSet
 	{
 	public:

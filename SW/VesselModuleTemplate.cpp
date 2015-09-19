@@ -13,4 +13,11 @@ namespace SW
 	VesselModuleTemplate::~VesselModuleTemplate()
 	{
 	}
+
+	AABBi VesselModuleTemplate::GetAABB()
+	{
+		AABBi output = tiles.GetAABB();
+		output.tr -= glm::ivec2(1, 1);
+		return output;
+	}
 }

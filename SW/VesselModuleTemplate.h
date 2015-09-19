@@ -1,5 +1,6 @@
 #pragma once
 #include "SW.h"
+#include "AABBi.h"
 #include "VesselModuleTileSet.h"
 
 namespace SW
@@ -9,6 +10,8 @@ namespace SW
 	public:
 		VesselModuleTemplate(glm::ivec2 dim);
 		~VesselModuleTemplate();
+
+		AABBi GetAABB();
 
 		VesselModuleTileSet tiles;
 	};

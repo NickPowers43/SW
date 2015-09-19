@@ -12,6 +12,9 @@
 #define CHUNK_DATA_COUNT (CHUNK_SIZE * CHUNK_SIZE)
 #define PLAYER_CHUNK_RANGE 2
 
+#define WALL_THICKNESS 0.125f
+#define HALF_WALL_THICKNESS (WALL_THICKNESS* 0.5f)
+
 typedef uint8_t MessageType_t;
 
 typedef uint8_t ChunkFlag_t;
@@ -156,7 +159,7 @@ namespace ClientMessageType
 		Inputs = 1,
 		FillAt = 2,
 		PingMessageResponse = 3,
-		RequestModule = 4
+		RequestModule = 4,
 	};
 }
 
