@@ -22,7 +22,7 @@ namespace SW
 
 	Compartment* Compartment::Instance()
 	{
-		if (isPtr)
+		if (ptrValue)
 		{
 			return ptrValue;
 		} 
@@ -37,14 +37,14 @@ namespace SW
 		aabb.FitWhole(index);
 	}
 
-	void Compartment::Combine(Compartment* other)
+	void Compartment::Reference(Compartment* other)
 	{
 		if (other != this)
 		{
-			isPtr = true;
-			ptrValue = other->Instance();
+			ptrValue = other;
 
-			other->aabb.FitAABB(aabb);
+			if (other)
+				other->aabb.FitAABB(aabb);
 		}
 	}
 

@@ -19,7 +19,7 @@ namespace SW
 
 		Compartment* Instance();
 		void FitTile(glm::ivec2 index);
-		void Combine(Compartment* other);
+		void Reference(Compartment* other);
 
 	private:
 		bool isPtr;

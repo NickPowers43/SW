@@ -30,8 +30,8 @@ namespace SW
 	}
 	void CompartmentTileSet::CopyCompartments(Tile* src, Tile* dst)
 	{
-		SetC0(dst, static_cast<CompartmentTile*>(src)->c0->Instance());
-		SetC1(dst, static_cast<CompartmentTile*>(src)->c1->Instance());
+		SetC0(dst, static_cast<CompartmentTile*>(src)->c0);
+		SetC1(dst, static_cast<CompartmentTile*>(src)->c1);
 	}
 	void CompartmentTileSet::SetC0(Tile* tile, Compartment* c)
 	{
@@ -130,33 +130,50 @@ namespace SW
 			(t->r2Tile && t->r2Tile->ContainsMask(WallTypeMask::WallTypeMask::TwoByOneFlipped)) ||
 			(t->rTile && t->rTile->ContainsMask(WallTypeMask::WallTypeMask::OneByOneFlipped | WallTypeMask::WallTypeMask::OneByTwoFlipped))) {
 			if (l && b) {
-				l->Instance()->Combine(b);
-				SetC1(t->tile, (t->tile->floor1) ? l : NULL);
-				SetC0(t->tile, (t->tile->floor0) ? CreateCompartment() : NULL);
-				return;
+				l->Reference(b);
 			}
-
-			Compartment* c1 = (b) ? b : l;
-			SetC1(t->tile, (t->tile->floor1) ? c1 : NULL);
-			SetC0(t->tile, (t->tile->floor0) ? CreateCompartment() : NULL);
+			if (t->tile->floor1)
+			{
+				l = (l) ? l : b;
+				if (!l)
+				{
+					l = CreateCompartment();
+				}
+				SetC1(t->tile, l->Instance());
+			}
+			if (t->tile->floor0)
+			{
+				SetC0(t->tile, CreateCompartment());
+			}
 			return;
 		}
 		else if (t->tile->ContainsMask(WallTypeMask::WallTypeMask::TwoByOne | WallTypeMask::WallTypeMask::OneByOne | WallTypeMask::WallTypeMask::OneByTwo)) {
-			
-			SetC0(t->tile, (t->tile->floor0) ? (b) ? b : CreateCompartment() : NULL);
-			SetC1(t->tile, (t->tile->floor1) ? (l) ? l : CreateCompartment() : NULL);
+
+			if (t->tile->floor0)
+				SetC0(t->tile, (b) ? b : CreateCompartment());
+			else
+				SetC0(t->tile, NULL);
+
+			if (t->tile->floor1)
+				SetC1(t->tile, (b) ? b : CreateCompartment());
+			else
+				SetC1(t->tile, NULL);
+
 			return;
 		}
 		else {
 			if (l && b) {
-				l->Instance()->Combine(b);
-				SetC0(t->tile, (t->tile->floor0) ? l : NULL);
-				SetC1(t->tile, NULL);
-				return;
+				l->Reference(b);
 			}
 
-			l = (l) ? l : b;
-			SetC0(t->tile, (t->tile->floor0) ? (b) ? b : CreateCompartment() : NULL);
+			if (t->tile->floor0)
+			{
+				l = (l) ? l : b;
+				SetC0(t->tile, (l) ? l->Instance() : CreateCompartment());
+			}
+			else
+				SetC0(t->tile, NULL);
+			SetC1(t->tile, NULL);
 			return;
 		}
 	}
@@ -208,34 +225,64 @@ namespace SW
 		if (
 			(t->r2Tile && t->r2Tile->ContainsMask(WallTypeMask::WallTypeMask::TwoByOneFlipped)) ||
 			(t->rTile && t->rTile->ContainsMask(WallTypeMask::WallTypeMask::OneByOneFlipped | WallTypeMask::WallTypeMask::OneByTwoFlipped))) {
-			if (l && b) {
-				l->Instance()->Combine(b);
-				SetC1(t->tile, l);
-				SetC0(t->tile, CreateCompartment());
-				return;
+			if (l)
+			{
+				if (b)
+				{
+					Compartment* c = b->Instance();
+					l->Reference(c);
+					SetC1(t->tile, c);
+				}
+				else
+				{
+					SetC1(t->tile, l->Instance());
+				}
 			}
-
-			Compartment* c1 = (b) ? b : l;
-			SetC1(t->tile, c1);
+			else
+			{
+				if (b)
+				{
+					SetC1(t->tile, b->Instance());
+				}
+				else
+				{
+					SetC1(t->tile, CreateCompartment());
+				}
+			}
 			SetC0(t->tile, CreateCompartment());
 			return;
 		}
 		else if (t->tile->ContainsMask(WallTypeMask::WallTypeMask::TwoByOne | WallTypeMask::WallTypeMask::OneByOne | WallTypeMask::WallTypeMask::OneByTwo)) {
-
 			SetC0(t->tile, (b) ? b : CreateCompartment());
 			SetC1(t->tile, (l) ? l : CreateCompartment());
 			return;
 		}
 		else {
-			if (l && b) {
-				l->Instance()->Combine(b);
-				SetC0(t->tile, l);
-				SetC1(t->tile, NULL);
-				return;
+			if (l)
+			{
+				if (b)
+				{
+					Compartment* c = b->Instance();
+					l->Reference(c);
+					SetC0(t->tile, c);
+				}
+				else
+				{
+					SetC0(t->tile, l->Instance());
+				}
 			}
-
-			l = (l) ? l : b;
-			SetC0(t->tile, (l) ? l : CreateCompartment());
+			else
+			{
+				if (b)
+				{
+					SetC0(t->tile, b->Instance());
+				}
+				else
+				{
+					SetC0(t->tile, CreateCompartment());
+				}
+			}
+			SetC1(t->tile, NULL);
 			return;
 		}
 	}
