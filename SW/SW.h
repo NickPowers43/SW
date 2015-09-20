@@ -34,6 +34,8 @@ typedef uint16_t VMType_t;
 
 typedef uint32_t TileChunkVersion_t;
 
+extern float deltaTime;
+
 namespace SW
 {
 	typedef float VesselValueType;

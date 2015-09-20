@@ -52,6 +52,7 @@ extern "C" int Initialize(int width, int height)
 	//glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_FALSE);
 	glViewport(0, 0, width, height);
 	glEnable(GL_TEXTURE_2D);
+	glEnable(GL_CULL_FACE);
 
 	SW_Client::camera.dim.x = (float)width;
 	SW_Client::camera.dim.y = (float)height;

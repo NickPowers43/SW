@@ -7,8 +7,56 @@
 #include <glm/matrix.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <SDL/SDL_image.h>
+#include <SDL/SDL_input.h>
+
 
 using namespace std;
+
+const char coloredVertexVShaderSource[] =
+"uniform mat4 viewMat;                                 \n"
+"attribute vec2 worldPos;                                                  \n"
+"void main()                                         \n"
+"{                                                   \n"
+"   vec4 transPoint = vec4(worldPos.x, worldPos.y, 0.3, 1.0);\n"
+"   transPoint = viewMat * transPoint;                                                \n"
+"   gl_Position = transPoint;                      \n"
+"}                                                   \n";
+
+const char coloredVertexFShaderSource[] =
+"precision mediump float;                     \n"
+"uniform vec4 color;                                 \n"
+"void main()                                  \n"
+"{                                            \n"
+"  gl_FragColor = color;        \n"
+"}                                            \n";
+
+const char shadowVShaderSource[] =
+"uniform mat4 viewMat;                                 \n"
+"uniform vec2 playerPos;                                 \n"
+"                                                   \n"
+"attribute vec2 worldPos;                                                  \n"
+"attribute vec2 shadowAttrib;                                                  \n"
+"                                                   \n"
+"varying float intensity;                                 \n"
+"                                                   \n"
+"void main()                                         \n"
+"{                                                   \n"
+"   vec2 fworldPos = worldPos + ((normalize(worldPos - playerPos) * 100.0) * shadowAttrib.x);                                                \n"
+"   vec4 transPoint = vec4(fworldPos.x, fworldPos.y, 0.4, 1.0);\n"
+"                                                   \n"
+"   transPoint = viewMat * transPoint;                                                \n"
+"                                                   \n"
+"   gl_Position = transPoint;                      \n"
+"   intensity = shadowAttrib.y;             \n"
+"}                                                   \n";
+
+const char shadowFShaderSource[] =
+"precision mediump float;                     \n"
+"varying float intensity;                          \n"
+"void main()                                  \n"
+"{                                            \n"
+"  gl_FragColor = vec4(intensity, intensity, intensity, 1.0);        \n"
+"}                                            \n";
 
 const char floorVShaderSource[] =
 "uniform mat4 viewMat;                                 \n"
@@ -99,7 +147,7 @@ namespace SW_Client
 
 	Camera::Camera()
 	{
-		zoom = 1.0f / 16.0f;
+		zoom = 1.0f / 6.0f;
 		position = glm::vec2(0.0f, 0.0f);
 		dim = glm::vec2(1.0f, 1.0f);
 	}
@@ -118,6 +166,8 @@ namespace SW_Client
 	void InitializeClient()
 	{
 		SW::Initialize();
+
+		keyStates = SDL_GetKeyboardState(NULL);
 
 		glEnable(GL_TEXTURE_2D);
 
@@ -189,6 +239,43 @@ namespace SW_Client
 			floorProgram.uvAttrib = glGetAttribLocation(floorProgram.program, "floorUV");
 			floorProgram.textureLoc = glGetUniformLocation(floorProgram.program, "floorTexture");
 		}
+
+		GLuint shadowVShader = loadShader(GL_VERTEX_SHADER, shadowVShaderSource);
+		GLuint shadowFShader = loadShader(GL_FRAGMENT_SHADER, shadowFShaderSource);
+		shadowProgram.program = buildProgram(shadowVShader, shadowFShader);
+
+		//check if the program linked successfully
+		glGetProgramiv(shadowProgram.program, GL_LINK_STATUS, &linked);
+		if (!linked)
+		{
+			printf("shadowShaderProgram link error");
+			glDeleteProgram(shadowProgram.program);
+		}
+		else
+		{
+			shadowProgram.viewMat = glGetUniformLocation(shadowProgram.program, "viewMat");
+			shadowProgram.playerPos = glGetUniformLocation(shadowProgram.program, "playerPos");
+			shadowProgram.worldPosAttrib = glGetAttribLocation(shadowProgram.program, "worldPos");
+			shadowProgram.shadowAttrib = glGetAttribLocation(shadowProgram.program, "shadowAttrib");
+		}
+
+		GLuint coloredVertexVShader = loadShader(GL_VERTEX_SHADER, coloredVertexVShaderSource);
+		GLuint coloredVertexFShader = loadShader(GL_FRAGMENT_SHADER, coloredVertexFShaderSource);
+		coloredVertexProgram.program = buildProgram(coloredVertexVShader, coloredVertexFShader);
+
+		//check if the program linked successfully
+		glGetProgramiv(coloredVertexProgram.program, GL_LINK_STATUS, &linked);
+		if (!linked)
+		{
+			printf("coloredVertexShaderProgram link error");
+			glDeleteProgram(coloredVertexProgram.program);
+		}
+		else
+		{
+			coloredVertexProgram.color = glGetUniformLocation(coloredVertexProgram.program, "color");
+			coloredVertexProgram.viewMat = glGetUniformLocation(coloredVertexProgram.program, "viewMat");
+			coloredVertexProgram.worldPosAttrib = glGetAttribLocation(coloredVertexProgram.program, "worldPos");
+		}
 	}
 
 	void GenerateBaseVertices(SpriteRect rect, PosUVPair* output)
@@ -238,41 +325,35 @@ namespace SW_Client
 
 	void AppendQuadIndices(MeshIndex_t* indices, int vCount, int & start)
 	{
-		/*int start_ = vCount - 4;
-		indices[start++] = start_ + 0;
-		indices[start++] = start_ + 2;
-		indices[start++] = start_ + 1;
-		indices[start++] = start_ + 1;
-		indices[start++] = start_ + 2;
-		indices[start++] = start_ + 3;*/
 		int start_ = vCount - 4;
 		indices[start++] = start_ + 0;
-		indices[start++] = start_ + 1;
-		indices[start++] = start_ + 2;
-		indices[start++] = start_ + 1;
 		indices[start++] = start_ + 3;
+		indices[start++] = start_ + 1;
+		indices[start++] = start_ + 0;
 		indices[start++] = start_ + 2;
+		indices[start++] = start_ + 3;
 	}
 
 	void AppendTriangleIndices(MeshIndex_t* indices, int vCount, int & start)
 	{
-		/*int start_ = vCount - 3;
-		indices[start++] = start_ + 0;
-		indices[start++] = start_ + 2;
-		indices[start++] = start_ + 1;*/
 		int start_ = vCount - 3;
 		indices[start++] = start_ + 0;
-		indices[start++] = start_ + 1;
 		indices[start++] = start_ + 2;
+		indices[start++] = start_ + 1;
 	}
 
 	//globals
+	uint8_t* keyStates;
+
 	Camera camera = Camera();
-	FloorProgram floorProgram;;
+	FloorProgram floorProgram;
+	ShadowProgram shadowProgram;
+	ColoredVertexProgram coloredVertexProgram;;
 
 	SpriteRect* floorUVRects;
 	PosUVMesh* floorMeshes = new PosUVMesh[FloorCount * FloorCount * WallTypeCount * 2];
 	//
+
 
 	PosUVPair* v0TempBuffer8 = new PosUVPair[8];
 	PosUVPair* v1TempBuffer8 = new PosUVPair[8];

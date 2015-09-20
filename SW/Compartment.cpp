@@ -39,12 +39,11 @@ namespace SW
 
 	void Compartment::Reference(Compartment* other)
 	{
-		if (other != this)
-		{
-			ptrValue = other;
+		ptrValue = other;
 
-			if (other)
-				other->aabb.FitAABB(aabb);
+		if (other)
+		{
+			other->aabb.FitAABB(aabb);
 		}
 	}
 

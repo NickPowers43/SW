@@ -175,6 +175,8 @@ extern "C" void HandleClose()
 
 extern "C" void Update()
 {
+	SDL_PumpEvents();
+
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	if (currentVessel)

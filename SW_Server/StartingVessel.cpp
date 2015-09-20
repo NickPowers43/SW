@@ -98,9 +98,9 @@ namespace SW_Server
 		//place spawner for noobs
 		PlaceObject(ObjectType::ObjectType::Spawner, glm::vec2(0.0f, 0.0f));
 
-		tiles.RebuildCompartments();
+		tiles.RebuildCompartmentsFloorless();
 
-		tiles.SetCompartmentFloorAt(FloorType::Basic, glm::vec2(0.0f, 0.0f));
+		tiles.SetCompartmentFloorAt(FloorType::SmoothWhite, glm::vec2(0.0f, 0.0f));
 	}
 	SW::VesselObject* StartingVessel::PlaceObject(ObjectType::ObjectType type, glm::vec2 location)
 	{

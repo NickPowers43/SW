@@ -7,6 +7,9 @@
 
 #define FLOOR_SHADER_VIEW_MAT_LOC 0
 
+#define SHADOW_VERTEX_F_COUNT 4
+#define WALL_VERTEX_F_COUNT 2
+
 typedef uint32_t MeshIndex_t;
 
 namespace SW_Client
@@ -54,6 +57,27 @@ namespace SW_Client
 		GLuint uvAttrib;
 	};
 
+	struct ShadowProgram
+	{
+		GLuint program;
+
+		int viewMat;
+		int playerPos;
+
+		GLuint worldPosAttrib;
+		GLuint shadowAttrib;
+	};
+
+	struct ColoredVertexProgram
+	{
+		GLuint program;
+
+		int viewMat;
+		int color;
+
+		GLuint worldPosAttrib;
+	};
+
 	class Camera
 	{
 	public: 
@@ -67,12 +91,18 @@ namespace SW_Client
 		void GenerateView(glm::mat4 & viewMat);
 	};
 
+	extern uint8_t* keyStates;
+
 	extern Camera camera;
 	extern FloorProgram floorProgram;
+	extern ShadowProgram shadowProgram;
+	extern ColoredVertexProgram coloredVertexProgram;
 
 
 	extern SpriteRect* floorUVRects;
 	extern PosUVMesh* floorMeshes;
+
+	glm::vec2 WallCorner(WallType_t wall0, WallType_t wall1);
 
 	void InitializeClient();
 

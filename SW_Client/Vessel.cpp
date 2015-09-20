@@ -4,6 +4,10 @@
 #include <SW/Tile.h>
 #include <SW/SW.h>
 #include "Player.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/matrix.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace SW_Client
 {
@@ -135,7 +139,30 @@ namespace SW_Client
 
 	void Vessel::DrawWorld()
 	{
+		glm::mat4 viewMat(1.0f);
+		camera.GenerateView(viewMat);
+
+		glUseProgram(floorProgram.program);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, floorProgram.texture);
+		glUniformMatrix4fv(floorProgram.viewMat, 1, false, glm::value_ptr(viewMat));
+		glUniform1i(floorProgram.textureLoc, 0);
+
 		DrawFloor();
+
+		glUseProgram(coloredVertexProgram.program);
+		glm::vec4 color(0.5f, 0.5f, 0.5f, 1.0f);
+		glUniform4fv(coloredVertexProgram.color, 1, &color.x);
+		glUniformMatrix4fv(coloredVertexProgram.viewMat, 1, false, glm::value_ptr(viewMat));
+
+		DrawWalls();
+
+		glUseProgram(shadowProgram.program);
+		glUniform2fv(shadowProgram.playerPos, 1, &myPlayer->pos.x);
+		glUniformMatrix4fv(shadowProgram.viewMat, 1, false, glm::value_ptr(viewMat));
+
+		DrawShadows();
+
 	}
 	void Vessel::DrawFloor()
 	{
@@ -150,7 +177,7 @@ namespace SW_Client
 					SW_Client::TileChunk* chunk = static_cast<SW_Client::TileChunk*>(swChunk);
 					if (chunk->instantiated)
 					{
-						chunk->Draw();
+						chunk->DrawFloor();
 					}
 				}
 			}
@@ -162,7 +189,22 @@ namespace SW_Client
 	}
 	void Vessel::DrawShadows()
 	{
-
+		for (size_t i = 0; i < tiles.chunks.dim.y; i++)
+		{
+			for (size_t j = 0; j < tiles.chunks.dim.x; j++)
+			{
+				glm::ivec2 chunkI(currentVessel->tiles.chunks.origin + glm::ivec2(j, i));
+				SW::TileChunk* swChunk = tiles.TryGetChunk(glm::ivec2(chunkI.x, chunkI.y));
+				if (swChunk)
+				{
+					SW_Client::TileChunk* chunk = static_cast<SW_Client::TileChunk*>(swChunk);
+					if (chunk->instantiated)
+					{
+						chunk->DrawShadows();
+					}
+				}
+			}
+		}
 	}
 
 	void Vessel::ReadSetChunkMessage(NetworkReader* nr, NetworkWriter* nw)
