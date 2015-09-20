@@ -318,3 +318,7 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 /SW_Client/nbproject/private/
+SW_Client_Web/public_html/SW_Client.js.map
+SW_Client_Web/public_html/SW_Client.js
+SW_Client_Web/public_html/SW_Client.js.data
+SW_Client_Web/public_html/SW_Client.data
