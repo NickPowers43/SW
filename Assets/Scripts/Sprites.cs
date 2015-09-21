@@ -65,15 +65,23 @@ public class Sprites : MonoBehaviour {
 	}
 	public static void GenerateFloorMeshes()
 	{
-		floorMeshes = new FloorMesh[FloorUVRects.Length][][][];
-		for (int i = 0; i < FloorUVRects.Length; i++) {
-			floorMeshes[i] = new FloorMesh[FloorUVRects.Length][][];
+		floorMeshes = new FloorMesh[FloorUVRects.Length + 1][][][];
+		for (int i = 0; i < FloorUVRects.Length + 1; i++) {
+			floorMeshes[i] = new FloorMesh[FloorUVRects.Length + 1][][];
 		}
 
-		for (int i = 0; i < FloorUVRects.Length; i++) {
-			for (int j = 0; j < FloorUVRects.Length; j++) {
+		for (int i = 0; i < FloorUVRects.Length + 1; i++) {
+			for (int j = 0; j < FloorUVRects.Length + 1; j++) {
+
+				floorMeshes[i][j] = new FloorMesh[9][];
+
 				for (int k = 0; k < 9; k++) {
-					floorMeshes[i][j][k] = GenerateMeshes((WallType)(byte)k, FloorUVRects[i], i == 0, FloorUVRects[j], j == 0);
+					floorMeshes[i][j][k] = GenerateMeshes(
+						(WallType)(byte)k, 
+						(i == 0) ? FloorUVRects[i] : FloorUVRects[i - 1], 
+						i == 0, 
+						(j == 0) ? FloorUVRects[j] : FloorUVRects[j - 1], 
+						j == 0);
 				}
 			}
 		}
@@ -81,6 +89,10 @@ public class Sprites : MonoBehaviour {
 
 	private static FloorMesh[] GenerateMeshes(WallType type, Rect rightFloor, bool none0, Rect leftFloor, bool none1)
 	{
+		if (none0 && none1) {
+			return null;
+		}
+
 		PosUVPair[] v0 = GenerateBaseVertices(rightFloor);
 		PosUVPair[] v1 = GenerateBaseVertices(leftFloor);
 
@@ -152,7 +164,7 @@ public class Sprites : MonoBehaviour {
 			output = new FloorMesh[2]; //wall type OneByTwo
 			if (!none0) {
 				vTemp.Add(v0[0]);
-				vTemp.Add(v0[1]);
+				vTemp.Add(v0[5]);
 				vTemp.Add(v0[2]);
 				vTemp.Add(v0[3]);
 				AddQuad(iTemp);
@@ -342,16 +354,19 @@ public class Sprites : MonoBehaviour {
 	public static void Initialize(Sprite[] floors)
 	{
 		floorUVRects = new Rect[floors.Length];
+		Rect[] dflkjs = floorUVRects;
 
 		for (int i = 0; i < floors.Length; i++) {
 			floorUVRects[i] = GetRect(floors[i]);
 		}
+
+		GenerateFloorMeshes();
 	}
 	public static Rect GetRect(Sprite a)
 	{
 		return new Rect(
 			a.rect.xMin / a.texture.width, 
-			a.rect.yMax / a.texture.height, 
+			a.rect.yMin / a.texture.height, 
 			(a.rect.xMax - a.rect.xMin) / a.texture.width, 
 			(a.rect.yMax - a.rect.yMin) / a.texture.height);
 	}

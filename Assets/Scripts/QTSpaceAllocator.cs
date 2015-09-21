@@ -3,7 +3,7 @@ using System;
 
 public class QTSpaceAllocator
 {
-	public static float MINIMUM_SIZE = 10.0f;
+	public static float MINIMUM_SIZE = 8.0f;
 	private QTNode root;
 
 	public QTSpaceAllocator (int levels)

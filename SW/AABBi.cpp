@@ -1,0 +1,58 @@
+
+#include "AABBi.h"
+
+
+namespace SW
+{
+	AABBi::AABBi(glm::ivec2 bl, glm::ivec2 tr)
+	{
+		AABBi::bl = bl;
+		AABBi::tr = tr;
+	}
+
+
+	AABBi::~AABBi()
+	{
+	}
+
+	bool AABBi::OverlappingInclusive(AABBi a, AABBi b)
+	{
+		return !(((b.tr.x <= a.bl.x) || (b.bl.x > a.tr.x)) || ((b.tr.y <= a.bl.y) || (b.bl.y > a.tr.y)));
+	}
+	bool AABBi::OverlappingExclusive(AABBi a, AABBi b)
+	{
+		return !(((b.tr.x < a.bl.x) || (b.bl.x >= a.tr.x)) || ((b.tr.y < a.bl.y) || (b.bl.y >= a.tr.y)));
+	}
+	bool AABBi::ContainsExclusive(glm::ivec2 point)
+	{
+		return ((point.x >= bl.x) && (point.x < tr.x)) && ((point.y >= bl.y) && (point.y < tr.y));
+	}
+	bool AABBi::ContainsInclusive(glm::ivec2 point)
+	{
+		return ((point.x >= bl.x) && (point.x <= tr.x)) && ((point.y >= bl.y) && (point.y <= tr.y));
+	}
+	void AABBi::FitWhole(glm::ivec2 point)
+	{
+		bl.x = glm::min(point.x++, bl.x);
+		bl.y = glm::min(point.y++, bl.y);
+		tr.x = glm::max(point.x, tr.x);
+		tr.y = glm::max(point.y, tr.y);
+	}
+
+	void AABBi::Fit(glm::ivec2 point)
+	{
+		bl.x = glm::min(point.x, bl.x);
+		bl.y = glm::min(point.y, bl.y);
+		tr.x = glm::max(point.x, tr.x);
+		tr.y = glm::max(point.y, tr.y);
+	}
+
+	void AABBi::FitAABB(AABBi & aabb)
+	{
+		bl.x = glm::min(aabb.bl.x, bl.x);
+		bl.y = glm::min(aabb.bl.y, bl.y);
+
+		tr.x = glm::max(aabb.tr.x, tr.x);
+		tr.y = glm::max(aabb.tr.y, tr.y);
+	}
+}

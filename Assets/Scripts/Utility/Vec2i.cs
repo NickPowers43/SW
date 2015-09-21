@@ -55,6 +55,10 @@ namespace Utility
 		{
 			return new Vec2i (a.x << b, a.y << b);
 		}
+		public static Vec2i operator & (Vec2i a, int b)
+		{
+			return new Vec2i (a.x & b, a.y & b);
+		}
 
 		public static bool operator < (Vec2i a, int b)
 		{
@@ -88,6 +92,11 @@ namespace Utility
 		public static explicit operator Vector2(Vec2i a)
 		{
 			return new Vector2((float)a.x, (float)a.y);
+		}
+
+		public string ToString()
+		{
+			return "(" + this.x + ", " + this.y + ")";
 		}
 	}
 }
