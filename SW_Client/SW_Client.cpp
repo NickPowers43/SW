@@ -175,7 +175,15 @@ extern "C" void HandleClose()
 
 extern "C" void Update()
 {
+
+	deltaTime = 0.005f;
+	elapsedTime += deltaTime;
+
 	SDL_PumpEvents();
+	if (!(SW_Client::keyStates = SDL_GetKeyboardState(NULL)))
+	{
+		PrintMessage((int)"keyStates is NULL");
+	}
 
 	glClear(GL_COLOR_BUFFER_BIT);
 

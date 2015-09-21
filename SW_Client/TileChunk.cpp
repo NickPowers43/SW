@@ -11,6 +11,8 @@ namespace SW_Client
 	{
 		seen = false;
 		instantiated = false;
+		wMeshCreated = false;
+		sMeshCreated = false;
 		fMeshCreated = false;
 	}
 
@@ -50,21 +52,12 @@ namespace SW_Client
 	{
 		if (instantiated)
 		{
-			if (sMeshCreated)
+			if (wMeshCreated)
 			{
-
-				//PrintMessage((int)"Drawing Mesh");
-				/*glm::vec2 offset = TileIToWorld(OriginTileIndex());
-				viewMat = glm::translate(viewMat, glm::vec3(offset.x, offset.y, 0.0f));*/
-				//cout << "Drawing chunk";
-
-				//viewMat = glm::transpose(viewMat);
-
-
 				glBindBuffer(GL_ARRAY_BUFFER, wallVBuffer);
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, wallIBuffer);
 
-				glVertexAttribPointer(coloredVertexProgram.worldPosAttrib, 2, GL_FLOAT, false, 16, NULL);
+				glVertexAttribPointer(coloredVertexProgram.worldPosAttrib, 2, GL_FLOAT, false, 8, NULL);
 				glEnableVertexAttribArray(coloredVertexProgram.worldPosAttrib);
 
 				glDrawElements(GL_TRIANGLES, wIndicesCount, GL_UNSIGNED_INT, 0);
@@ -113,10 +106,10 @@ namespace SW_Client
 		float cosTheta = glm::dot(wall0, wall1);
 		glm::vec2 dir(-wall0.y, wall0.x);
 
-		if (cosTheta < -0.94f)
+		if (cosTheta < -0.93f)
 		{
 			//probably opposites
-			return dir * WALL_THICKNESS * 0.5f;
+			return dir * HALF_WALL_THICKNESS;
 		}
 		else
 		{
@@ -128,11 +121,11 @@ namespace SW_Client
 
 			if (cosThetaDir > 0.0f)
 			{
-				return avg * cMag * WALL_THICKNESS * 0.5f;
+				return avg * cMag * HALF_WALL_THICKNESS;
 			}
 			else
 			{
-				return avg * cMag * WALL_THICKNESS * -0.5f;
+				return avg * cMag * -HALF_WALL_THICKNESS;
 			}
 		}
 	}
@@ -169,7 +162,7 @@ namespace SW_Client
 			}
 			for (int i = 1; i < 9; i++)
 			{
-				if (abs(i - type) < 4)
+				if (abs(i - type) <= 4)
 				{
 					if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
 					{
@@ -192,7 +185,7 @@ namespace SW_Client
 				}
 			}
 			glm::vec2 temp = SW::wallVectorsNormalized[type];
-			v = (temp * WALL_THICKNESS * -0.5f) + (glm::vec2(temp.y, -temp.x) * WALL_THICKNESS * 0.5f);
+			v = (temp * HALF_WALL_THICKNESS) + (glm::vec2(temp.y, -temp.x) * HALF_WALL_THICKNESS);
 			return true;
 		}
 		else
@@ -211,7 +204,7 @@ namespace SW_Client
 			}
 			for (int i = 1; i < 9; i++)
 			{
-				if (abs(i - type) < 4)
+				if (abs(i - type) <= 4)
 				{
 					if (orgtile->Contains(i))
 					{
@@ -234,7 +227,7 @@ namespace SW_Client
 				}
 			}
 			glm::vec2 temp = SW::wallVectorsNormalized[type];
-			v = (temp * WALL_THICKNESS * 0.5f) + (-glm::vec2(temp.y, -temp.x) * WALL_THICKNESS * 0.5f);
+			v = (temp * HALF_WALL_THICKNESS) + (-glm::vec2(temp.y, -temp.x) * HALF_WALL_THICKNESS);
 			return true;
 		}
 	}
@@ -251,19 +244,19 @@ namespace SW_Client
 					if (orgtile->Contains(i))
 					{
 						//calculate the corner vertice location
-						v = WallCorner(SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[i]);
+						v = WallCorner(SW::wallVectorsNormalized[i], SW::wallVectorsNormalized[type]);
 						return false;
 					}
 				}
 			}
-			for (int i = 9; i > 0; i--)
+			for (int i = 8; i > 0; i--)
 			{
-				if (abs(i - type) < 4)
+				if (abs(i - type) <= 4)
 				{
 					if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
 					{
 						//calculate the corner vertice location
-						v = WallCorner(SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[i]);
+						v = WallCorner(-SW::wallVectorsNormalized[i], SW::wallVectorsNormalized[type]);
 						return false;
 					}
 				}
@@ -275,13 +268,13 @@ namespace SW_Client
 					if (orgtile->Contains(i))
 					{
 						//calculate the corner vertice location
-						v = WallCorner(SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[i]);
+						v = WallCorner(SW::wallVectorsNormalized[i], SW::wallVectorsNormalized[type]);
 						return false;
 					}
 				}
 			}
 			glm::vec2 temp = SW::wallVectorsNormalized[type];
-			v = (temp * WALL_THICKNESS * -0.5f) + (-glm::vec2(temp.y, -temp.x) * WALL_THICKNESS * 0.5f);
+			v = (temp * HALF_WALL_THICKNESS) + (-glm::vec2(temp.y, -temp.x) * HALF_WALL_THICKNESS);
 			return true;
 		}
 		else
@@ -293,19 +286,19 @@ namespace SW_Client
 					if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
 					{
 						//calculate the corner vertice location
-						v = WallCorner(SW::wallVectorsNormalized[i], -SW::wallVectorsNormalized[type]);
+						v = WallCorner(-SW::wallVectorsNormalized[i], -SW::wallVectorsNormalized[type]);
 						return false;
 					}
 				}
 			}
 			for (int i = 8; i > 0; i--)
 			{
-				if (abs(i - type) < 4)
+				if (abs(i - type) <= 4)
 				{
 					if (orgtile->Contains(i))
 					{
 						//calculate the corner vertice location
-						v = WallCorner(-SW::wallVectorsNormalized[i], -SW::wallVectorsNormalized[type]);
+						v = WallCorner(SW::wallVectorsNormalized[i], -SW::wallVectorsNormalized[type]);
 						return false;
 					}
 				}
@@ -317,13 +310,13 @@ namespace SW_Client
 					if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
 					{
 						//calculate the corner vertice location
-						v = WallCorner(SW::wallVectorsNormalized[i], -SW::wallVectorsNormalized[type]);
+						v = WallCorner(-SW::wallVectorsNormalized[i], -SW::wallVectorsNormalized[type]);
 						return false;
 					}
 				}
 			}
 			glm::vec2 temp = SW::wallVectorsNormalized[type];
-			v = (temp * WALL_THICKNESS * 0.5f) + (glm::vec2(temp.y, -temp.x) * WALL_THICKNESS * 0.5f);
+			v = (temp * HALF_WALL_THICKNESS) + (glm::vec2(temp.y, -temp.x) * HALF_WALL_THICKNESS);
 			return true;
 		}
 	}
@@ -337,11 +330,15 @@ namespace SW_Client
 		indices.push_back(start + 2);
 		indices.push_back(start + 3);
 	}
-	void AppendShadowVertex(glm::vec2 position, float attrib0, std::vector<float> & vertices)
+	void AppendShadowVertex(glm::vec2 position, float influence, float offset, float alpha, std::vector<float> & vertices)
 	{
 		vertices.push_back(position.x);
 		vertices.push_back(position.y);
-		vertices.push_back(attrib0);
+		vertices.push_back(0.0f);
+		vertices.push_back(0.0f);
+		vertices.push_back(influence);
+		vertices.push_back(offset);
+		vertices.push_back(alpha);
 		vertices.push_back(0.0f);
 
 	}
@@ -376,8 +373,8 @@ namespace SW_Client
 			openEnd = WallVertexSweepCW(ts, orgtile, end, wall0, true, v1End);
 			v1End += endOrigin;
 
-			static float shadowAttrib0 = 0.0f;
-			static float shadowAttrib1 = 1.0f;
+			static float influence0 = 0.0f;
+			static float influence1 = 1.0f;
 
 			//append wall mesh
 			AppendQuadIndices(wIndices, wVertices, WALL_VERTEX_F_COUNT);
@@ -391,15 +388,15 @@ namespace SW_Client
 			wVertices.push_back(v1End.y);
 			//shadow triangles
 			AppendQuadIndices(sIndices, sVertices, SHADOW_VERTEX_F_COUNT);
-			AppendShadowVertex(v0, shadowAttrib1, sVertices);
-			AppendShadowVertex(v0, shadowAttrib0, sVertices);
-			AppendShadowVertex(v0End, shadowAttrib1, sVertices);
-			AppendShadowVertex(v0End, shadowAttrib0, sVertices);
+			AppendShadowVertex(v0, influence1, sVertices);
+			AppendShadowVertex(v0, influence0, sVertices);
+			AppendShadowVertex(v0End, influence1, sVertices);
+			AppendShadowVertex(v0End, influence0, sVertices);
 			AppendQuadIndices(sIndices, sVertices, SHADOW_VERTEX_F_COUNT);
-			AppendShadowVertex(v1, shadowAttrib0, sVertices);
-			AppendShadowVertex(v1, shadowAttrib1, sVertices);
-			AppendShadowVertex(v1End, shadowAttrib0, sVertices);
-			AppendShadowVertex(v1End, shadowAttrib1, sVertices);
+			AppendShadowVertex(v1, influence0, sVertices);
+			AppendShadowVertex(v1, influence1, sVertices);
+			AppendShadowVertex(v1End, influence0, sVertices);
+			AppendShadowVertex(v1End, influence1, sVertices);
 			if (open)
 			{
 				//append triangle to close connection
@@ -478,13 +475,15 @@ namespace SW_Client
 
 				if (tile) {
 
+					glm::vec2 offset = glm::vec2(j, i);
+
 					//print << "non-NULL-tile at: (" << j << ", " << i << ")\n";
-
-					if (tile->floor0 != FloorType::None || tile->floor1 != FloorType::None) {
-
-						glm::vec2 offset = glm::vec2(j, i);
-
+					if (tile->wallMask > 0)
+					{
 						AppendWallMesh(ts, tile, tileI, wVertices, wIndices, sVertices, sIndices);
+					}
+
+					if (tile->floor0 || tile->floor1) {
 
 						if (tile->floor0 == tile->floor1) {
 							AppendMeshData(GetFloorMesh(tile->floor0, FloorType::None, WallType::None, 0), fVertices, fIndices, offset);

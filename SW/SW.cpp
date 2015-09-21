@@ -1,7 +1,8 @@
 #include "SW.h"
 #include "VesselModuleTemplate.h"
 
-float deltaTime = 0.01f;
+float deltaTime = 0.0f;
+float elapsedTime = 0.0f;
 
 namespace SW
 {

@@ -3,6 +3,7 @@ var LibraryMySocket = {
 	StartProgram: function() {
 		console.log("running StartProgram");
 		
+		
 		window.Initialize = Module.cwrap('Initialize', 'number', ['number', 'number']);
 		window.Update = Module.cwrap('Update', '');
 		window.HandleMessage = Module.cwrap('HandleMessage', '', ['number', 'number']);

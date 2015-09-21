@@ -8,6 +8,9 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/matrix.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <SDL/SDL_input.h>
+#include <SDL/SDL_scancode.h>
+#include <SDL/SDL_events.h>
 
 namespace SW_Client
 {
@@ -37,7 +40,52 @@ namespace SW_Client
 	{
 		if (myPlayer)
 		{
-			UpdateChunks(false, nw);
+			SDL_Event event;
+			while (SDL_PollEvent(&event)) {
+				/*if (event.type == SDL_EventType::)
+				{
+
+				}*/
+				if (event.key.keysym.sym == SDLK_w)
+				{
+					myPlayer->pos += glm::vec2(0.0f, 0.02f);
+				}
+				if (event.key.keysym.sym == SDLK_s)
+				{
+					myPlayer->pos += glm::vec2(0.0f, -0.02f);
+				}
+				if (event.key.keysym.sym == SDLK_a)
+				{
+					myPlayer->pos += glm::vec2(-0.02f, 0.0f);
+				}
+				if (event.key.keysym.sym == SDLK_d)
+				{
+					myPlayer->pos += glm::vec2(0.02f, 0.0f);
+				}
+				if (event.key.keysym.sym == SDLK_o)
+				{
+					camera.zoom -= 0.001f;
+				}
+				if (event.key.keysym.sym == SDLK_p)
+				{
+					camera.zoom += 0.001f;
+				}
+			}
+			/*if (keyStates[SDL_SCANCODE_W])
+				myPlayer->pos += glm::vec2(0.0f, 0.01f);
+			if (keyStates[SDL_SCANCODE_S])
+				myPlayer->pos += glm::vec2(0.0f, -0.01f);
+			if (keyStates[SDL_SCANCODE_A])
+				myPlayer->pos += glm::vec2(-0.01f, 0.0f);
+			if (keyStates[SDL_SCANCODE_D])
+				myPlayer->pos += glm::vec2(0.01f, 0.0f);
+
+			if (keyStates[SDL_SCANCODE_KP_MEMADD])
+				camera.zoom -= 0.001f;
+			if (keyStates[SDL_SCANCODE_KP_MEMSUBTRACT])
+				camera.zoom += 0.001f;*/
+			//myPlayer->pos = glm::vec2(glm::cos(elapsedTime * 0.25f), glm::sin(elapsedTime * 0.5f)) * 11.0f;
+			//UpdateChunks(false, nw);
 		}
 
 		DrawWorld();
@@ -139,30 +187,41 @@ namespace SW_Client
 
 	void Vessel::DrawWorld()
 	{
-		glm::mat4 viewMat(1.0f);
-		camera.GenerateView(viewMat);
+		if (myPlayer)
+		{
+			camera.position = myPlayer->pos;
 
-		glUseProgram(floorProgram.program);
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, floorProgram.texture);
-		glUniformMatrix4fv(floorProgram.viewMat, 1, false, glm::value_ptr(viewMat));
-		glUniform1i(floorProgram.textureLoc, 0);
+			glm::mat4 viewMat(1.0f);
+			camera.GenerateView(viewMat);
 
-		DrawFloor();
+			glUseProgram(floorProgram.program);
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, floorProgram.texture);
+			glUniformMatrix4fv(floorProgram.viewMat, 1, false, glm::value_ptr(viewMat));
+			glUniform1i(floorProgram.textureLoc, 0);
 
-		glUseProgram(coloredVertexProgram.program);
-		glm::vec4 color(0.5f, 0.5f, 0.5f, 1.0f);
-		glUniform4fv(coloredVertexProgram.color, 1, &color.x);
-		glUniformMatrix4fv(coloredVertexProgram.viewMat, 1, false, glm::value_ptr(viewMat));
+			DrawFloor();
 
-		DrawWalls();
+			glUseProgram(coloredVertexProgram.program);
+			glm::vec4 color(0.5f, 0.5f, 0.5f, 1.0f);
+			glUniform4fv(coloredVertexProgram.color, 1, glm::value_ptr(color));
+			glUniformMatrix4fv(coloredVertexProgram.viewMat, 1, false, glm::value_ptr(viewMat));
 
-		glUseProgram(shadowProgram.program);
-		glUniform2fv(shadowProgram.playerPos, 1, &myPlayer->pos.x);
-		glUniformMatrix4fv(shadowProgram.viewMat, 1, false, glm::value_ptr(viewMat));
+			DrawWalls();
 
-		DrawShadows();
+			//glDisable(GL_CULL_FACE);
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+			glUseProgram(shadowProgram.program);
+			glUniform2fv(shadowProgram.playerPos, 1, glm::value_ptr(camera.position));
+			glUniformMatrix4fv(shadowProgram.viewMat, 1, false, glm::value_ptr(viewMat));
+
+			DrawShadows();
+
+			//glEnable(GL_CULL_FACE);
+			glDisable(GL_BLEND);
+		}
 	}
 	void Vessel::DrawFloor()
 	{
@@ -185,7 +244,22 @@ namespace SW_Client
 	}
 	void Vessel::DrawWalls()
 	{
-
+		for (size_t i = 0; i < tiles.chunks.dim.y; i++)
+		{
+			for (size_t j = 0; j < tiles.chunks.dim.x; j++)
+			{
+				glm::ivec2 chunkI(currentVessel->tiles.chunks.origin + glm::ivec2(j, i));
+				SW::TileChunk* swChunk = tiles.TryGetChunk(glm::ivec2(chunkI.x, chunkI.y));
+				if (swChunk)
+				{
+					SW_Client::TileChunk* chunk = static_cast<SW_Client::TileChunk*>(swChunk);
+					if (chunk->instantiated)
+					{
+						chunk->DrawWalls();
+					}
+				}
+			}
+		}
 	}
 	void Vessel::DrawShadows()
 	{

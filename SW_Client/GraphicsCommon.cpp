@@ -17,7 +17,7 @@ const char coloredVertexVShaderSource[] =
 "attribute vec2 worldPos;                                                  \n"
 "void main()                                         \n"
 "{                                                   \n"
-"   vec4 transPoint = vec4(worldPos.x, worldPos.y, 0.3, 1.0);\n"
+"   vec4 transPoint = vec4(worldPos.x, worldPos.y, 0.0, 1.0);\n"
 "   transPoint = viewMat * transPoint;                                                \n"
 "   gl_Position = transPoint;                      \n"
 "}                                                   \n";
@@ -42,13 +42,14 @@ const char shadowVShaderSource[] =
 "void main()                                         \n"
 "{                                                   \n"
 "   vec2 fworldPos = worldPos + ((normalize(worldPos - playerPos) * 100.0) * shadowAttrib.x);                                                \n"
-"   vec4 transPoint = vec4(fworldPos.x, fworldPos.y, 0.4, 1.0);\n"
+"   vec4 transPoint = vec4(fworldPos.x, fworldPos.y, 0.0, 1.0);\n"
 "                                                   \n"
 "   transPoint = viewMat * transPoint;                                                \n"
 "                                                   \n"
 "   gl_Position = transPoint;                      \n"
 "   intensity = shadowAttrib.y;             \n"
 "}                                                   \n";
+
 
 const char shadowFShaderSource[] =
 "precision mediump float;                     \n"
@@ -147,7 +148,7 @@ namespace SW_Client
 
 	Camera::Camera()
 	{
-		zoom = 1.0f / 6.0f;
+		zoom = 1.0f / 4.0f;
 		position = glm::vec2(0.0f, 0.0f);
 		dim = glm::vec2(1.0f, 1.0f);
 	}
@@ -159,8 +160,8 @@ namespace SW_Client
 	void Camera::GenerateView(glm::mat4 & viewMat)
 	{
 		float InvAspectRatio = dim.y / dim.x;
-		viewMat = glm::translate(viewMat, glm::vec3(position.x, position.y, 0.0f));
 		viewMat = glm::scale(viewMat, glm::vec3(zoom * InvAspectRatio, zoom, 1.0f));
+		viewMat = glm::translate(viewMat, glm::vec3(-position.x, -position.y, 0.0f));
 	}
 
 	void InitializeClient()

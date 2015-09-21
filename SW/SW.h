@@ -12,7 +12,7 @@
 #define CHUNK_DATA_COUNT (CHUNK_SIZE * CHUNK_SIZE)
 #define PLAYER_CHUNK_RANGE 2
 
-#define WALL_THICKNESS 0.125f
+#define WALL_THICKNESS 0.08f
 #define HALF_WALL_THICKNESS (WALL_THICKNESS* 0.5f)
 
 typedef uint8_t MessageType_t;
@@ -35,6 +35,7 @@ typedef uint16_t VMType_t;
 typedef uint32_t TileChunkVersion_t;
 
 extern float deltaTime;
+extern float elapsedTime;
 
 namespace SW
 {
