@@ -34,29 +34,30 @@ const char shadowVShaderSource[] =
 "uniform mat4 viewMat;                                 \n"
 "uniform vec2 playerPos;                                 \n"
 "                                                   \n"
-"attribute vec2 worldPos;                                                  \n"
-"attribute vec2 shadowAttrib;                                                  \n"
+"attribute vec4 worldPos;                                                  \n"
+"attribute vec4 shadowAttrib;                                                  \n"
 "                                                   \n"
-"varying float intensity;                                 \n"
+"varying float alpha;                                 \n"
 "                                                   \n"
 "void main()                                         \n"
 "{                                                   \n"
-"   vec2 fworldPos = worldPos + ((normalize(worldPos - playerPos) * 100.0) * shadowAttrib.x);                                                \n"
+"   vec2 worldPosV2 = vec2(worldPos.x, worldPos.y);                                                \n"
+"   vec2 fworldPos = worldPosV2 + ((normalize(worldPosV2 - playerPos) * 100.0) * shadowAttrib.x);                                                \n"
 "   vec4 transPoint = vec4(fworldPos.x, fworldPos.y, 0.0, 1.0);\n"
 "                                                   \n"
 "   transPoint = viewMat * transPoint;                                                \n"
 "                                                   \n"
 "   gl_Position = transPoint;                      \n"
-"   intensity = shadowAttrib.y;             \n"
+"   alpha = shadowAttrib.z;             \n"
 "}                                                   \n";
 
 
 const char shadowFShaderSource[] =
 "precision mediump float;                     \n"
-"varying float intensity;                          \n"
+"varying float alpha;                                 \n"
 "void main()                                  \n"
 "{                                            \n"
-"  gl_FragColor = vec4(intensity, intensity, intensity, 1.0);        \n"
+"  gl_FragColor = vec4(0.0, 0.0, 0.0, alpha);        \n"
 "}                                            \n";
 
 const char floorVShaderSource[] =

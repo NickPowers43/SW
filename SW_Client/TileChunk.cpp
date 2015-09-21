@@ -82,9 +82,9 @@ namespace SW_Client
 				glBindBuffer(GL_ARRAY_BUFFER, shadowVBuffer);
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, shadowIBuffer);
 
-				glVertexAttribPointer(shadowProgram.worldPosAttrib, 2, GL_FLOAT, false, 16, NULL);
+				glVertexAttribPointer(shadowProgram.worldPosAttrib, 4, GL_FLOAT, false, 32, NULL);
 				glEnableVertexAttribArray(shadowProgram.worldPosAttrib);
-				glVertexAttribPointer(shadowProgram.shadowAttrib, 2, GL_FLOAT, false, 16, (GLvoid*)8);
+				glVertexAttribPointer(shadowProgram.shadowAttrib, 4, GL_FLOAT, false, 32, (GLvoid*)16);
 				glEnableVertexAttribArray(shadowProgram.shadowAttrib);
 
 				glDrawElements(GL_TRIANGLES, sIndicesCount, GL_UNSIGNED_INT, 0);
@@ -335,12 +335,11 @@ namespace SW_Client
 		vertices.push_back(position.x);
 		vertices.push_back(position.y);
 		vertices.push_back(0.0f);
-		vertices.push_back(0.0f);
+		vertices.push_back(1.0f);
 		vertices.push_back(influence);
 		vertices.push_back(offset);
 		vertices.push_back(alpha);
 		vertices.push_back(0.0f);
-
 	}
 	void TileChunk::AppendWallMesh(TileSet* ts, SW::Tile* tile, glm::ivec2 location, std::vector<float> & wVertices, std::vector<MeshIndex_t> & wIndices, std::vector<float> & sVertices, std::vector<MeshIndex_t> & sIndices)
 	{
@@ -388,15 +387,10 @@ namespace SW_Client
 			wVertices.push_back(v1End.y);
 			//shadow triangles
 			AppendQuadIndices(sIndices, sVertices, SHADOW_VERTEX_F_COUNT);
-			AppendShadowVertex(v0, influence1, sVertices);
-			AppendShadowVertex(v0, influence0, sVertices);
-			AppendShadowVertex(v0End, influence1, sVertices);
-			AppendShadowVertex(v0End, influence0, sVertices);
-			AppendQuadIndices(sIndices, sVertices, SHADOW_VERTEX_F_COUNT);
-			AppendShadowVertex(v1, influence0, sVertices);
-			AppendShadowVertex(v1, influence1, sVertices);
-			AppendShadowVertex(v1End, influence0, sVertices);
-			AppendShadowVertex(v1End, influence1, sVertices);
+			AppendShadowVertex(startOrigin, influence1, 0.0f, 1.0f, sVertices);
+			AppendShadowVertex(startOrigin, influence0, 0.0f, 1.0f, sVertices);
+			AppendShadowVertex(endOrigin, influence1, 0.0f, 1.0f, sVertices);
+			AppendShadowVertex(endOrigin, influence0, 0.0f, 1.0f, sVertices);
 			if (open)
 			{
 				//append triangle to close connection
@@ -437,15 +431,10 @@ namespace SW_Client
 				wVertices.push_back(v1End.y);
 				//shadow triangles
 				AppendQuadIndices(sIndices, sVertices, SHADOW_VERTEX_F_COUNT);
-				AppendShadowVertex(v0, shadowAttrib1, sVertices);
-				AppendShadowVertex(v0, shadowAttrib0, sVertices);
-				AppendShadowVertex(v0End, shadowAttrib1, sVertices);
-				AppendShadowVertex(v0End, shadowAttrib0, sVertices);
-				AppendQuadIndices(sIndices, sVertices, SHADOW_VERTEX_F_COUNT);
-				AppendShadowVertex(v1, shadowAttrib0, sVertices);
-				AppendShadowVertex(v1, shadowAttrib1, sVertices);
-				AppendShadowVertex(v1End, shadowAttrib0, sVertices);
-				AppendShadowVertex(v1End, shadowAttrib1, sVertices);
+				AppendShadowVertex(startOrigin, influence1, 0.0f, 1.0f, sVertices);
+				AppendShadowVertex(startOrigin, influence0, 0.0f, 1.0f, sVertices);
+				AppendShadowVertex(endOrigin, influence1, 0.0f, 1.0f, sVertices);
+				AppendShadowVertex(endOrigin, influence0, 0.0f, 1.0f, sVertices);
 			}
 		}
 	}

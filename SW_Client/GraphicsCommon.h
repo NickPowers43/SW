@@ -7,7 +7,7 @@
 
 #define FLOOR_SHADER_VIEW_MAT_LOC 0
 
-#define SHADOW_VERTEX_F_COUNT 4
+#define SHADOW_VERTEX_F_COUNT 8
 #define WALL_VERTEX_F_COUNT 2
 
 typedef uint32_t MeshIndex_t;
