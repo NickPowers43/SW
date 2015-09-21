@@ -101,88 +101,134 @@ namespace SW_Client
 		}
 	}
 	//point between vectors if considering CCW convention
+	float Determinant(glm::vec2 c0, glm::vec2 c1)
+	{
+		return (c0.x * c1.y) - (c0.y * c1.x);
+	}
 	glm::vec2 WallCorner(glm::vec2 wall0, glm::vec2 wall1)
 	{
-		float cosTheta = glm::dot(wall0, wall1);
-		glm::vec2 dir(-wall0.y, wall0.x);
+		glm::vec2 d(-wall0.y, wall0.x);
 
-		if (cosTheta < -0.93f)
+		float uDenom = wall1.x - wall0.x;
+		float uNum;
+
+		if (abs(uDenom) > 0.001f)
 		{
-			//probably opposites
-			return dir * HALF_WALL_THICKNESS;
+			uNum = d.x - wall1.y;
 		}
 		else
 		{
-			float cosThetaDir = glm::dot(dir, wall1);
-			glm::vec2 avg = glm::normalize((wall0 + wall1) * 0.5f);
+			//may be straight
+			uDenom = wall1.y - wall0.y;
+			uNum = d.y + wall1.x;
+		}
 
-			float theta = glm::acos(cosTheta);
-			float cMag = (1.0f / glm::cos(theta * 0.5f));
+		return d + ((wall0) * (uNum / uDenom));
 
-			if (cosThetaDir > 0.0f)
+		//float cosTheta = glm::dot(wall0, wall1);
+		//glm::vec2 dir(-wall0.y, wall0.x);
+
+		//if (cosTheta < -0.93f)
+		//{
+		//	//probably opposites
+		//	return dir * HALF_WALL_THICKNESS;
+		//}
+		//else
+		//{
+		//	float cosThetaDir = glm::dot(dir, wall1);
+		//	glm::vec2 avg = glm::normalize((wall0 + wall1) * 0.5f);
+
+		//	float theta = glm::acos(cosTheta);
+		//	float cMag = (1.0f / glm::cos(theta * 0.5f));
+
+		//	if (cosThetaDir > 0.0f)
+		//	{
+		//		return avg * cMag * HALF_WALL_THICKNESS;
+		//	}
+		//	else
+		//	{
+		//		return avg * cMag * -HALF_WALL_THICKNESS;
+		//	}
+		//}
+	}
+	WallType_t CCWReverseWallSweepOpposite(int start, int stop, SW::TileSet* ts, glm::ivec2 location, WallType_t type)
+	{
+		for (int i = start; i < stop; i++)
+		{
+			if (abs(i - type) <= 4)
 			{
-				return avg * cMag * HALF_WALL_THICKNESS;
-			}
-			else
-			{
-				return avg * cMag * -HALF_WALL_THICKNESS;
+				SW::Tile* tile;
+				if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
+				{
+					return i;
+				}
 			}
 		}
+		return 0;
 	}
-	//bool TryGetBeginCornerCCW(SW::TileSet* ts, SW::Tile* orgtile, glm::ivec2 location, WallType_t type, glm::vec2 & v)
-	//{
-	//	for (int i = type + 4; i < 9; i++)
-	//	{
-	//		if (orgtile->Contains(i))
-	//		{
-	//			//calculate the corner vertice location
-	//			v = CCWCorner(SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[i]);
-	//			return false;
-	//		}
-	//	}
-	//	return false;
-	//}
+	WallType_t CCWReverseWallSweepLocal(int start, int stop, SW::TileSet* ts, glm::ivec2 location, WallType_t type)
+	{
+		for (int i = start; i < stop; i++)
+		{
+			if (abs(i - type) > 3)
+			{
+				SW::Tile* tile;
+				if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
+				{
+					return i;
+				}
+			}
+		}
+		return 0;
+	}
+	WallType_t CCWWallSweepOpposite(int start, int stop, SW::Tile* orgtile, WallType_t type)
+	{
+		for (int i = start; i < stop; i++)
+		{
+			if (abs(i - type) <= 4)
+			{
+				if (orgtile->Contains(i))
+				{
+					return i;
+				}
+			}
+		}
+		return 0;
+	}
+	WallType_t CCWWallSweepLocal(int start, int stop, SW::Tile* orgtile, WallType_t type)
+	{
+		for (int i = start; i < stop; i++)
+		{
+			if (abs(i - type) > 3)
+			{
+				if (orgtile->Contains(i))
+				{
+					return i;
+				}
+			}
+		}
+		return 0;
+	}
 	bool TileChunk::WallVertexSweepCCW(TileSet* ts, SW::Tile* orgtile, glm::ivec2 location, WallType_t type, bool end, glm::vec2 & v)
 	{
-		SW::Tile* tile;
+		WallType_t otherWall = 0;
 
 		if (!end)
 		{
-			for (int i = type; i < 9; i++)
+			if ((otherWall = CCWWallSweepLocal(type, 9, orgtile, type)))
 			{
-				if (abs(i - type) > 3)
-				{
-					if (orgtile->Contains(i))
-					{
-						//calculate the corner vertice location
-						v = WallCorner(SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[i]);
-						return false;
-					}
-				}
+				v = WallCorner(SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[otherWall]);
+				return false;
 			}
-			for (int i = 1; i < 9; i++)
+			if ((otherWall = CCWReverseWallSweepOpposite(1, 9, ts, location, type)))
 			{
-				if (abs(i - type) <= 4)
-				{
-					if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
-					{
-						//calculate the corner vertice location
-						v = WallCorner(SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[i]);
-						return false;
-					}
-				}
+				v = WallCorner(SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[otherWall]);
+				return false;
 			}
-			for (int i = 1; i < type; i++)
+			if ((otherWall = CCWWallSweepLocal(1, type, orgtile, type)))
 			{
-				if (abs(i - type) > 3)
-				{
-					if (orgtile->Contains(i))
-					{
-						//calculate the corner vertice location
-						v = WallCorner(SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[i]);
-						return false;
-					}
-				}
+				v = WallCorner(SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[otherWall]);
+				return false;
 			}
 			glm::vec2 temp = SW::wallVectorsNormalized[type];
 			v = (temp * HALF_WALL_THICKNESS) + (glm::vec2(temp.y, -temp.x) * HALF_WALL_THICKNESS);
@@ -190,41 +236,20 @@ namespace SW_Client
 		}
 		else
 		{
-			for (int i = type; i < 9; i++)
+			if ((otherWall = CCWReverseWallSweepLocal(type, 9, ts, location, type)))
 			{
-				if (abs(i - type) > 3)
-				{
-					if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
-					{
-						//calculate the corner vertice location
-						v = WallCorner(-SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[i]);
-						return false;
-					}
-				}
+				v = WallCorner(-SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[otherWall]);
+				return false;
 			}
-			for (int i = 1; i < 9; i++)
+			if ((otherWall = CCWWallSweepOpposite(1, 9, orgtile, type)))
 			{
-				if (abs(i - type) <= 4)
-				{
-					if (orgtile->Contains(i))
-					{
-						//calculate the corner vertice location
-						v = WallCorner(-SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[i]);
-						return false;
-					}
-				}
+				v = WallCorner(-SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[otherWall]);
+				return false;
 			}
-			for (int i = 1; i < type; i++)
+			if ((otherWall = CCWReverseWallSweepLocal(1, type, ts, location, type)))
 			{
-				if (abs(i - type) > 3)
-				{
-					if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
-					{
-						//calculate the corner vertice location
-						v = WallCorner(-SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[i]);
-						return false;
-					}
-				}
+				v = WallCorner(-SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[otherWall]);
+				return false;
 			}
 			glm::vec2 temp = SW::wallVectorsNormalized[type];
 			v = (temp * HALF_WALL_THICKNESS) + (-glm::vec2(temp.y, -temp.x) * HALF_WALL_THICKNESS);
@@ -362,14 +387,18 @@ namespace SW_Client
 
 			orgtile = tile;
 			open = WallVertexSweepCW(ts, orgtile, location, wall0, false, v0);
+			v0 *= WALL_THICKNESS * 0.5f;
 			v0 += startOrigin;
 			open = WallVertexSweepCCW(ts, orgtile, location, wall0, false, v1);
+			v1 *= WALL_THICKNESS * 0.5f;
 			v1 += startOrigin;
 
 			orgtile = ts->TryGet(end);
 			openEnd = WallVertexSweepCCW(ts, orgtile, end, wall0, true, v0End);
+			v0End *= WALL_THICKNESS * 0.5f;
 			v0End += endOrigin;
 			openEnd = WallVertexSweepCW(ts, orgtile, end, wall0, true, v1End);
+			v1End *= WALL_THICKNESS * 0.5f;
 			v1End += endOrigin;
 
 			static float influence0 = 0.0f;
@@ -409,14 +438,18 @@ namespace SW_Client
 
 				orgtile = tile;
 				open = WallVertexSweepCW(ts, orgtile, location, wall1, false, v0);
+				v0 *= WALL_THICKNESS * 0.5f;
 				v0 += startOrigin;
 				open = WallVertexSweepCCW(ts, orgtile, location, wall1, false, v1);
+				v1 *= WALL_THICKNESS * 0.5f;
 				v1 += startOrigin;
 
 				orgtile = ts->TryGet(end);
 				openEnd = WallVertexSweepCCW(ts, orgtile, end, wall1, true, v0End);
+				v0End *= WALL_THICKNESS * 0.5f;
 				v0End += endOrigin;
 				openEnd = WallVertexSweepCW(ts, orgtile, end, wall1, true, v1End);
+				v1End *= WALL_THICKNESS * 0.5f;
 				v1End += endOrigin;
 
 				//append wall mesh

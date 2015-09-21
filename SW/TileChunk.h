@@ -2,11 +2,13 @@
 #include "SW.h"
 #include "Tile.h"
 #include "TileSet.h"
+#include "FixedRectangleSet.h"
 
 namespace SW
 {
 	class TileChunk :
-		public TileSet
+		public TileSet,
+		public FixedRectangleSet<Tile*, CHUNK_SIZE, CHUNK_SIZE>
 	{
 	public:
 
@@ -16,7 +18,7 @@ namespace SW
 
 		uint8_t flags;
 		glm::ivec2 index;
-		Tile** data;
+		//Tile** data;
 		uint32_t version;
 
 		virtual Tile* TryGet(glm::ivec2 index) final;

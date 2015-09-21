@@ -12,11 +12,10 @@ namespace SW
 		TileChunk::flags = 0;
 		TileChunk::version = 0;
 		TileChunk::index = index;
-		TileChunk::data = new Tile*[CHUNK_SIZE * CHUNK_SIZE];
 
 		for (size_t i = 0; i < CHUNK_SIZE * CHUNK_SIZE; i++)
 		{
-			data[i] = NULL;
+			elements[i] = NULL;
 		}
 	}
 	TileChunk::TileChunk(glm::ivec2 index)
@@ -25,35 +24,25 @@ namespace SW
 		TileChunk::flags = 0;
 		TileChunk::version = 0;
 		TileChunk::index = index;
-		TileChunk::data = new Tile*[CHUNK_SIZE * CHUNK_SIZE];
 
 		for (size_t i = 0; i < CHUNK_SIZE * CHUNK_SIZE; i++)
 		{
-			data[i] = NULL;
+			elements[i] = NULL;
 		}
 	}
 
 
 	TileChunk::~TileChunk()
 	{
-		for (size_t i = 0; i < CHUNK_SIZE * CHUNK_SIZE; i++)
-		{
-			if (data[i])
-			{
-				DestroyTile(data[i]);
-			}
-		}
-
-		delete data;
 	}
 
 	void TileChunk::Set(glm::ivec2 index, Tile* val)
 	{
-		data[index.x + (index.y * CHUNK_SIZE)] = val;
+		FixedRectangleSet<Tile*, CHUNK_SIZE, CHUNK_SIZE>::Set(index, val);
 	}
 	Tile* TileChunk::TryGet(glm::ivec2 index)
 	{
-		return data[index.x + (index.y * CHUNK_SIZE)];
+		return FixedRectangleSet<Tile*, CHUNK_SIZE, CHUNK_SIZE>::TryGet(index);
 	}
 	AABBi TileChunk::GetAABB()
 	{

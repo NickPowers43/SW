@@ -35,11 +35,11 @@ namespace SW_Server
 		nw->Write((uint16_t)0);
 		for (size_t i = 0; i < CHUNK_DATA_COUNT; i++)
 		{
-			if (data[i])
+			if (elements[i])
 			{
 				(*tile_count)++;
 				nw->Write((uint16_t)i);
-				(static_cast<Tile*>(data[i]))->WriteSetChunkMessage(nw);
+				(static_cast<Tile*>(elements[i]))->WriteSetChunkMessage(nw);
 			}
 		}
 	}
