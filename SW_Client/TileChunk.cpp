@@ -111,7 +111,7 @@ namespace SW_Client
 	glm::vec2 WallCorner(glm::vec2 wall0, glm::vec2 wall1)
 	{
 		float cosTheta = glm::dot(wall0, wall1);
-		glm::vec2 dir(wall0.y, -wall0.x);
+		glm::vec2 dir(-wall0.y, wall0.x);
 
 		if (cosTheta < -0.94f)
 		{
@@ -155,72 +155,86 @@ namespace SW_Client
 
 		if (!end)
 		{
-			for (int i = type + 4; i < 9; i++)
+			for (int i = type; i < 9; i++)
 			{
-				if (orgtile->Contains(i))
+				if (abs(i - type) > 3)
 				{
-					//calculate the corner vertice location
-					v = WallCorner(SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[i]);
-					return false;
+					if (orgtile->Contains(i))
+					{
+						//calculate the corner vertice location
+						v = WallCorner(SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[i]);
+						return false;
+					}
 				}
 			}
-			int stop = glm::min(9 - 4 + type, 9);
-			for (int i = glm::min(-4 + type, 1); i < stop; i++)
+			for (int i = 1; i < 9; i++)
 			{
-				if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
+				if (abs(i - type) < 4)
 				{
-					//calculate the corner vertice location
-					v = WallCorner(SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[i]);
-					return false;
+					if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
+					{
+						//calculate the corner vertice location
+						v = WallCorner(SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[i]);
+						return false;
+					}
 				}
 			}
-			stop = type - 4 + 1;
-			for (int i = 1; i < stop; i++)
+			for (int i = 1; i < type; i++)
 			{
-				if (orgtile->Contains(i))
+				if (abs(i - type) > 3)
 				{
-					//calculate the corner vertice location
-					v = WallCorner(SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[i]);
-					return false;
+					if (orgtile->Contains(i))
+					{
+						//calculate the corner vertice location
+						v = WallCorner(SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[i]);
+						return false;
+					}
 				}
 			}
-			glm::vec2 temp = -SW::wallVectorsNormalized[type];
-			v = (temp * WALL_THICKNESS * 0.5f) + (glm::vec2(temp.y, -temp.x) * WALL_THICKNESS * 0.5f);
+			glm::vec2 temp = SW::wallVectorsNormalized[type];
+			v = (temp * WALL_THICKNESS * -0.5f) + (glm::vec2(temp.y, -temp.x) * WALL_THICKNESS * 0.5f);
 			return true;
 		}
 		else
 		{
-			for (int i = type + 4; i < 9; i++)
+			for (int i = type; i < 9; i++)
 			{
-				if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
+				if (abs(i - type) > 3)
 				{
-					//calculate the corner vertice location
-					v = WallCorner(-SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[i]);
-					return false;
+					if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
+					{
+						//calculate the corner vertice location
+						v = WallCorner(-SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[i]);
+						return false;
+					}
 				}
 			}
-			int stop = glm::min(1 + 4 + type, 9);
-			for (int i = glm::min(type - 4, 1); i < stop; i++)
+			for (int i = 1; i < 9; i++)
 			{
-				if (orgtile->Contains(i))
+				if (abs(i - type) < 4)
 				{
-					//calculate the corner vertice location
-					v = WallCorner(-SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[i]);
-					return false;
+					if (orgtile->Contains(i))
+					{
+						//calculate the corner vertice location
+						v = WallCorner(-SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[i]);
+						return false;
+					}
 				}
 			}
-			stop = type - 4 + 1;
-			for (int i = 1; i < stop; i++)
+			for (int i = 1; i < type; i++)
 			{
-				if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
+				if (abs(i - type) > 3)
 				{
-					//calculate the corner vertice location
-					v = WallCorner(-SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[i]);
-					return false;
+					if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
+					{
+						//calculate the corner vertice location
+						v = WallCorner(-SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[i]);
+						return false;
+					}
 				}
 			}
 			glm::vec2 temp = SW::wallVectorsNormalized[type];
-			v = (temp * WALL_THICKNESS * 0.5f) + (glm::vec2(-temp.y, temp.x) * WALL_THICKNESS * 0.5f);
+			v = (temp * WALL_THICKNESS * 0.5f) + (-glm::vec2(temp.y, -temp.x) * WALL_THICKNESS * 0.5f);
 			return true;
 		}
 	}
@@ -230,71 +244,85 @@ namespace SW_Client
 
 		if (!end)
 		{
-			for (int i = type - 4; i > 0; i--)
+			for (int i = type; i > 0; i--)
 			{
-				if (orgtile->Contains(i))
+				if (abs(i - type) > 3)
 				{
-					//calculate the corner vertice location
-					v = WallCorner(SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[i]);
-					return false;
+					if (orgtile->Contains(i))
+					{
+						//calculate the corner vertice location
+						v = WallCorner(SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[i]);
+						return false;
+					}
 				}
 			}
-			int stop = glm::max(type - 4 - 1, 0);
-			for (int i = glm::min(type + 4, 8); i > stop; i--)
+			for (int i = 9; i > 0; i--)
 			{
-				if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
+				if (abs(i - type) < 4)
 				{
-					//calculate the corner vertice location
-					v = WallCorner(SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[i]);
-					return false;
+					if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
+					{
+						//calculate the corner vertice location
+						v = WallCorner(SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[i]);
+						return false;
+					}
 				}
 			}
-			stop = type + 4 - 1;
-			for (int i = 8; i > stop; i--)
+			for (int i = 8; i > type; i--)
 			{
-				if (orgtile->Contains(i))
+				if (abs(i - type) > 3)
 				{
-					//calculate the corner vertice location
-					v = WallCorner(SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[i]);
-					return false;
+					if (orgtile->Contains(i))
+					{
+						//calculate the corner vertice location
+						v = WallCorner(SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[i]);
+						return false;
+					}
 				}
 			}
-			glm::vec2 temp = -SW::wallVectorsNormalized[type];
-			v = (temp * WALL_THICKNESS * 0.5f) + (glm::vec2(-temp.y, temp.x) * WALL_THICKNESS * 0.5f);
+			glm::vec2 temp = SW::wallVectorsNormalized[type];
+			v = (temp * WALL_THICKNESS * -0.5f) + (-glm::vec2(temp.y, -temp.x) * WALL_THICKNESS * 0.5f);
 			return true;
 		}
 		else
 		{
-			for (int i = type - 4; i > 0; i--)
+			for (int i = type; i > 0; i--)
 			{
-				if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
+				if (abs(i - type) > 3)
 				{
-					//calculate the corner vertice location
-					v = WallCorner(SW::wallVectorsNormalized[i], -SW::wallVectorsNormalized[type]);
-					return false;
+					if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
+					{
+						//calculate the corner vertice location
+						v = WallCorner(SW::wallVectorsNormalized[i], -SW::wallVectorsNormalized[type]);
+						return false;
+					}
 				}
 			}
-			int stop = glm::max(type - 4 - 1, 0);
-			for (int i = glm::max(4 + type, 8); i > stop; i--)
+			for (int i = 8; i > 0; i--)
 			{
-				if (orgtile->Contains(i))
+				if (abs(i - type) < 4)
 				{
-					//calculate the corner vertice location
-					v = WallCorner(-SW::wallVectorsNormalized[i], -SW::wallVectorsNormalized[type]);
-					return false;
+					if (orgtile->Contains(i))
+					{
+						//calculate the corner vertice location
+						v = WallCorner(-SW::wallVectorsNormalized[i], -SW::wallVectorsNormalized[type]);
+						return false;
+					}
 				}
 			}
-			stop = type + 4 - 1;
-			for (int i = 8; i > stop; i--)
+			for (int i = 8; i > type; i--)
 			{
-				if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
+				if (abs(i - type) > 3)
 				{
-					//calculate the corner vertice location
-					v = WallCorner(SW::wallVectorsNormalized[i], -SW::wallVectorsNormalized[type]);
-					return false;
+					if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
+					{
+						//calculate the corner vertice location
+						v = WallCorner(SW::wallVectorsNormalized[i], -SW::wallVectorsNormalized[type]);
+						return false;
+					}
 				}
 			}
-			glm::vec2 temp = -SW::wallVectorsNormalized[type];
+			glm::vec2 temp = SW::wallVectorsNormalized[type];
 			v = (temp * WALL_THICKNESS * 0.5f) + (glm::vec2(temp.y, -temp.x) * WALL_THICKNESS * 0.5f);
 			return true;
 		}
