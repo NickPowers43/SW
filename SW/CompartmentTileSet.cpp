@@ -31,18 +31,146 @@ namespace SW
 	{
 		return new Compartment(0);
 	}
-	void CompartmentTileSet::CopyCompartments(Tile* src, Tile* dst)
+	void CompartmentTileSet::CopyCompartments(Tile* src, glm::ivec2 location, Tile* dst)
 	{
-		SetC0(dst, GetC0(src));
-		SetC1(dst, GetC1(src));
+		SetC0(dst, location, GetC0(src));
+		SetC1(dst, location, GetC1(src));
 	}
-	void CompartmentTileSet::SetC0(Tile* tile, Compartment* c)
+	float CompartmentTileSet::C0Area(Tile* tile, glm::ivec2 location)
 	{
+		float c0Area;
+		SW::Tile* lTile = TryGet(glm::ivec2(location.x - 1, location.y));
+		SW::Tile* rTile = TryGet(glm::ivec2(location.x + 1, location.y));
+		SW::Tile* r2Tile = TryGet(glm::ivec2(location.x + 2, location.y));
+		SW::Tile* bTile = TryGet(glm::ivec2(location.x, location.y - 1));
+		SW::Tile* brTile = TryGet(glm::ivec2(location.x + 1, location.y - 1));
+
+		if (tile->ContainsMask(WallTypeMask::TwoByOne)) { //this tile contains a TwoByOne
+			c0Area = 0.25f;
+		}
+		else if (tile->ContainsMask(WallTypeMask::OneByTwo)) { //this tile contains a OneByTwo
+			c0Area = 0.75f;
+		}
+		else if (tile->ContainsMask(WallTypeMask::OneByOne)) { //this tile contains a OneByOne
+			c0Area = 0.5f;
+		}
+		else if (lTile && lTile->ContainsMask(WallTypeMask::TwoByOne)) { //left tile contains a TwoByOne
+			c0Area = 0.75f;
+		}
+		else if (bTile && bTile->ContainsMask(WallTypeMask::OneByTwo)) { //bottom tile contains a OneByTwo
+			c0Area = 0.25f;
+		}
+		else if (brTile && brTile->ContainsMask(WallTypeMask::OneByTwoFlipped)) { //br tile contains a OneByTwoFlipped
+			c0Area = 0.75f;
+		}
+		else if (rTile && rTile->ContainsMask(WallTypeMask::TwoByOneFlipped)) { //r tile contains a TwoByOneFlipped
+			c0Area = 0.75f;
+		}
+		else if (rTile && rTile->ContainsMask(WallTypeMask::OneByOneFlipped)) { //r tile contains a OneByOneFlipped
+			c0Area = 0.5f;
+		}
+		else if (rTile && rTile->ContainsMask(WallTypeMask::OneByTwoFlipped)) { //r tile contains a OneByTwoFlipped
+			c0Area = 0.25f;
+		}
+		else if (r2Tile && r2Tile->ContainsMask(WallTypeMask::TwoByOneFlipped)) { //r2 tile contains a TwoByOneFlipped
+			c0Area = 0.25f;
+		}
+		else {
+			c0Area = 1.0f;
+		}
+		return c0Area;
+	}
+	float CompartmentTileSet::C0Area(AdjacentTiles* t)
+	{
+		float c0Area;
+
+		if (t->tile->ContainsMask(WallTypeMask::TwoByOne)) { //this tile contains a TwoByOne
+			c0Area = 0.25f;
+		}
+		else if (t->tile->ContainsMask(WallTypeMask::OneByTwo)) { //this tile contains a OneByTwo
+			c0Area = 0.75f;
+		}
+		else if (t->tile->ContainsMask(WallTypeMask::OneByOne)) { //this tile contains a OneByOne
+			c0Area = 0.5f;
+		}
+		else if (t->lTile && t->lTile->ContainsMask(WallTypeMask::TwoByOne)) { //left tile contains a TwoByOne
+			c0Area = 0.75f;
+		}
+		else if (t->bTile && t->bTile->ContainsMask(WallTypeMask::OneByTwo)) { //bottom tile contains a OneByTwo
+			c0Area = 0.25f;
+		}
+		else if (t->brTile && t->brTile->ContainsMask(WallTypeMask::OneByTwoFlipped)) { //br tile contains a OneByTwoFlipped
+			c0Area = 0.75f;
+		}
+		else if (t->rTile && t->rTile->ContainsMask(WallTypeMask::TwoByOneFlipped)) { //r tile contains a TwoByOneFlipped
+			c0Area = 0.75f;
+		}
+		else if (t->rTile && t->rTile->ContainsMask(WallTypeMask::OneByOneFlipped)) { //r tile contains a OneByOneFlipped
+			c0Area = 0.5f;
+		}
+		else if (t->rTile && t->rTile->ContainsMask(WallTypeMask::OneByTwoFlipped)) { //r tile contains a OneByTwoFlipped
+			c0Area = 0.25f;
+		}
+		else if (t->r2Tile && t->r2Tile->ContainsMask(WallTypeMask::TwoByOneFlipped)) { //r2 tile contains a TwoByOneFlipped
+			c0Area = 0.25f;
+		}
+		else {
+			c0Area = 1.0f;
+		}
+
+		return c0Area;
+	}
+	void CompartmentTileSet::SetC0(AdjacentTiles* t, Compartment* c)
+	{
+		float area = C0Area(t);
+		SetC0(t->tile, t->pos, area, c);
+	}
+	void CompartmentTileSet::SetC1(AdjacentTiles* t, Compartment* c)
+	{
+		float area = 1.0f - C0Area(t);
+		SetC1(t->tile, t->pos, area, c);
+	}
+	void CompartmentTileSet::SetC0(Tile* tile, glm::ivec2 location, Compartment* c)
+	{
+		float area = C0Area(tile, location);
+		SetC0(tile, location, area, c);
+	}
+	void CompartmentTileSet::SetC1(Tile* tile, glm::ivec2 location, Compartment* c)
+	{
+		float area = 1.0f - C0Area(tile, location);
+		SetC1(tile, location, area, c);
+	}
+	void CompartmentTileSet::SetC0(Tile* tile, glm::ivec2 location, float area, Compartment* c)
+	{
+		if (c)
+		{
+			//increment c reference counter
+			//add area
+			c->aabb.FitWhole(location);
+		}
+		Compartment* c0Old = (static_cast<CompartmentTile*>(tile))->c0;
 		(static_cast<CompartmentTile*>(tile))->c0 = c;
+		if (c0Old)
+		{
+			//decrement c0Old reference counter
+			//subtract area
+		}
 	}
-	void CompartmentTileSet::SetC1(Tile* tile, Compartment* c)
+	void CompartmentTileSet::SetC1(Tile* tile, glm::ivec2 location, float area, Compartment* c)
 	{
+		if (c)
+		{
+			//increment c reference counter
+			//add area
+			c->aabb.FitWhole(location);
+		}
+		Compartment* c1Old = (static_cast<CompartmentTile*>(tile))->c1;
 		(static_cast<CompartmentTile*>(tile))->c1 = c;
+		if (c1Old)
+		{
+			//decrement c0Old reference counter
+			//subtract area
+		}
 	}
 	void CompartmentTileSet::SetCompartmentFloor(uint8_t type, Compartment* c)
 	{
@@ -89,16 +217,15 @@ namespace SW
 		return temp;
 	}
 
-
-	void CompartmentTileSet::FillTile(AdjacentTiles* t)
+	void CompartmentTileSet::FillTile(bool force, AdjacentTiles* t)
 	{
 		//take the compartments from left or bottom no matter what in these cases
 		if ((t->bTile && t->bTile->ContainsMask(WallTypeMask::WallTypeMask::OneByTwo)) || (t->brTile && t->brTile->ContainsMask(WallTypeMask::WallTypeMask::OneByTwoFlipped))) {
-			CopyCompartments(t->bTile, t->tile);
+			CopyCompartments(t->bTile, t->pos, t->tile);
 			return;
 		}
 		if ((t->lTile && t->lTile->ContainsMask(WallTypeMask::WallTypeMask::TwoByOne)) || (t->rTile && t->rTile->ContainsMask(WallTypeMask::WallTypeMask::TwoByOneFlipped))) {
-			CopyCompartments(t->lTile, t->tile);
+			CopyCompartments(t->lTile, t->pos, t->tile);
 			return;
 		}
 		//
@@ -129,222 +256,131 @@ namespace SW
 			}
 		}
 
-
 		if ((t->r2Tile && t->r2Tile->ContainsMask(WallTypeMask::WallTypeMask::TwoByOneFlipped)) ||
 			(t->rTile && t->rTile->ContainsMask((WallTypeMask::WallTypeMask)(WallTypeMask::WallTypeMask::OneByOneFlipped | WallTypeMask::WallTypeMask::OneByTwoFlipped)))) {
-			if (t->tile->floor1)
+			if (!(!force && !t->tile->floor1))
 			{
 				if (l)
 				{
 					if (b)
 					{
 						l->Reference(b);
-						SetC1(t->tile, b);
+						SetC1(t, b);
 					}
 					else
 					{
-						SetC1(t->tile, l);
+						SetC1(t, l);
 					}
 				}
 				else
 				{
 					if (b)
 					{
-						SetC1(t->tile, b);
+						SetC1(t, b);
 					}
 					else
 					{
-						SetC1(t->tile, CreateCompartment());
+						SetC1(t, CreateCompartment());
 					}
 				}
 			}
 			else
 			{
-				SetC1(t->tile, NULL);
+				SetC1(t, NULL);
 			}
 
-			if (t->tile->floor0)
+			if (!(!force && !t->tile->floor0))
 			{
-				SetC0(t->tile, CreateCompartment());
+				SetC0(t, CreateCompartment());
 			}
 			else
 			{
-				SetC0(t->tile, NULL);
+				SetC0(t, NULL);
 			}
-
 			return;
 		}
 		else if (t->tile->ContainsMask((WallTypeMask::WallTypeMask)(WallTypeMask::WallTypeMask::TwoByOne | WallTypeMask::WallTypeMask::OneByOne | WallTypeMask::WallTypeMask::OneByTwo))) {
-			if (t->tile->floor0)
+			if (!(!force && !t->tile->floor0))
 			{
-				SetC0(t->tile, (b) ? b : CreateCompartment());
+				SetC0(t, (b) ? b : CreateCompartment());
 			}
 			else
 			{
-				SetC0(t->tile, NULL);
+				SetC0(t, NULL);
 			}
-			if (t->tile->floor1)
+			if (!(!force && !t->tile->floor1))
 			{
-				SetC1(t->tile, (l) ? l : CreateCompartment());
+				SetC1(t, (l) ? l : CreateCompartment());
 			}
 			else
 			{
-				SetC1(t->tile, NULL);
+				SetC1(t, NULL);
 			}
 			return;
 		}
 		else {
-			if (t->tile->floor0)
+			if (!(!force && !t->tile->floor0))
 			{
 				if (l)
 				{
 					if (b)
 					{
 						l->Reference(b);
-						SetC0(t->tile, l->Instance());
+						SetC0(t, l->Instance());
 					}
 					else
 					{
-						SetC0(t->tile, l);
+						SetC0(t, l);
 					}
 				}
 				else
 				{
 					if (b)
 					{
-						SetC0(t->tile, b);
+						SetC0(t, b);
 					}
 					else
 					{
-						SetC0(t->tile, CreateCompartment());
+						SetC0(t, CreateCompartment());
 					}
 				}
 			}
 			else
 			{
-				SetC0(t->tile, NULL);
+				SetC0(t, NULL);
 			}
 
-			SetC1(t->tile, NULL);
-
+			SetC1(t, NULL);
 			return;
 		}
 	}
-	void CompartmentTileSet::FillTileFloorless(AdjacentTiles* t)
+	void CompartmentTileSet::EraseCompartments(AABBi aabb)
 	{
-		//take the compartments from left or bottom no matter what in these cases
-		if ((t->bTile && t->bTile->ContainsMask(WallTypeMask::WallTypeMask::OneByTwo)) || (t->brTile && t->brTile->ContainsMask(WallTypeMask::WallTypeMask::OneByTwoFlipped))) {
-			CopyCompartments(t->bTile, t->tile);
-			return;
-		}
-		if ((t->lTile && t->lTile->ContainsMask(WallTypeMask::WallTypeMask::TwoByOne)) || (t->rTile && t->rTile->ContainsMask(WallTypeMask::WallTypeMask::TwoByOneFlipped))) {
-			CopyCompartments(t->lTile, t->tile);
-			return;
-		}
-		//
+		for (int i = aabb.bl.y; i < aabb.tr.y; i++) {
 
-		//try take from bottom
-		Compartment* b = NULL;
-		if (t->bTile)
-		{
-			if (!t->tile->ContainsMask(WallTypeMask::WallTypeMask::OneByZero))
-			{
-				//set the appropriate compartment field depending on how "bTile" is cut
-				if ((t->blTile && t->blTile->ContainsMask(WallTypeMask::WallTypeMask::TwoByOne)) ||
-					(t->bTile->ContainsMask(WallTypeMask::WallTypeMask::OneByOne)) ||
-					(t->b2Tile && t->b2Tile->ContainsMask(WallTypeMask::WallTypeMask::OneByTwo))) {
-					b = GetC1(t->bTile);
-				}
-				else {
-					b = GetC0(t->bTile);
+			for (int j = aabb.bl.x; j < aabb.tr.x; j++) {
+				glm::ivec2 tileI(j, i);
+				Tile* tile = TryGet(tileI);
+				if (tile)
+				{
+					SetC0(tile, tileI, NULL);
+					SetC1(tile, tileI, NULL);
 				}
 			}
-		}
-		Compartment* l = NULL;
-		if (t->lTile)
-		{
-			if (!t->tile->ContainsMask(WallTypeMask::WallTypeMask::ZeroByOne))
-			{
-				l = GetC0(t->lTile);
-			}
-		}
-
-
-		if ((t->r2Tile && t->r2Tile->ContainsMask(WallTypeMask::WallTypeMask::TwoByOneFlipped)) ||
-			(t->rTile && t->rTile->ContainsMask((WallTypeMask::WallTypeMask)(WallTypeMask::WallTypeMask::OneByOneFlipped | WallTypeMask::WallTypeMask::OneByTwoFlipped)))) {
-			if (l)
-			{
-				if (b)
-				{
-					l->Reference(b);
-					SetC1(t->tile, b);
-				}
-				else
-				{
-					SetC1(t->tile, l);
-				}
-			}
-			else
-			{
-				if (b)
-				{
-					SetC1(t->tile, b);
-				}
-				else
-				{
-					SetC1(t->tile, CreateCompartment());
-				}
-			}
-			SetC0(t->tile, CreateCompartment());
-			return;
-		}
-		else if (t->tile->ContainsMask((WallTypeMask::WallTypeMask)(WallTypeMask::WallTypeMask::TwoByOne | WallTypeMask::WallTypeMask::OneByOne | WallTypeMask::WallTypeMask::OneByTwo))) {
-			SetC0(t->tile, (b) ? b : CreateCompartment());
-			SetC1(t->tile, (l) ? l : CreateCompartment());
-			return;
-		}
-		else {
-			if (l)
-			{
-				if (b)
-				{
-					l->Reference(b);
-					SetC0(t->tile, l->Instance());
-				}
-				else
-				{
-					SetC0(t->tile, l);
-				}
-			}
-			else
-			{
-				if (b)
-				{
-					SetC0(t->tile, b);
-				}
-				else
-				{
-					SetC0(t->tile, CreateCompartment());
-				}
-			}
-			SetC1(t->tile, NULL);
-			return;
 		}
 	}
-	void CompartmentTileSet::RebuildCompartments()
+	void CompartmentTileSet::RebuildCompartmentsForRegion(bool force, AABBi aabb)
 	{
-		AABBi aabb = GetAABB();
-
 		AdjacentTiles* at = new AdjacentTiles(this);
 
 		for (int i = aabb.bl.y; i < aabb.tr.y; i++) {
 
 			at->Reset(glm::ivec2(aabb.bl.x, i));
 
-			for (int j = aabb.bl.x; j < aabb.tr.x; j++) {
+			for (int j = aabb.bl.x; j <= aabb.tr.x; j++) {
 				if (at->tile) {
 
-					FillTile(at);
+					FillTile(force, at);
 
 				}
 				at->MoveRight();
@@ -353,27 +389,9 @@ namespace SW
 
 		return;
 	}
-	void CompartmentTileSet::RebuildCompartmentsFloorless()
+	void CompartmentTileSet::RebuildCompartments(bool force)
 	{
-		AABBi aabb = GetAABB();
-
-		AdjacentTiles* at = new AdjacentTiles(this);
-
-		for (int i = aabb.bl.y; i < aabb.tr.y; i++) {
-
-			at->Reset(glm::ivec2(aabb.bl.x, i));
-
-			for (int j = aabb.bl.x; j < aabb.tr.x; j++) {
-				if (at->tile) {
-
-					FillTileFloorless(at);
-
-				}
-				at->MoveRight();
-			}
-		}
-
-		return;
+		RebuildCompartmentsForRegion(force, GetAABB());
 	}
 	Compartment* CompartmentTileSet::CompartmentAt(glm::vec2 world)
 	{

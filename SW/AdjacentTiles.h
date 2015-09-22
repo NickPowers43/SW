@@ -26,8 +26,6 @@ namespace SW
 		Tile* rTile;
 		Tile* r2Tile;
 
-	protected:
-		
 		TileSet* tileSet;
 		glm::ivec2 pos;
 	};

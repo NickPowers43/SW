@@ -23,7 +23,7 @@ namespace SW_Client
 				if (swChunk)
 				{
 					TileChunk* chunk = static_cast<TileChunk*>(swChunk);
-					chunk->Destroy();
+					delete chunk;
 				}
 			}
 		}
@@ -32,7 +32,7 @@ namespace SW_Client
 	SW::TileChunk* TileChunks::CreateChunkAt(glm::ivec2 index)
 	{
 		TileChunk* chunk = new TileChunk(index);
-		chunks.Set(index, chunk);
+		chunks.Set(index, static_cast<SW::TileChunk*>(chunk));
 		return chunk;
 	}
 }

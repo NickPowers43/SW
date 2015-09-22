@@ -5,6 +5,7 @@
 #include <sstream>
 #include <SW/Tile.h>
 #include <SW/SW.h>
+#include <SW/AABBi.h>
 #include "Player.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -19,11 +20,20 @@ namespace SW_Client
 	Vessel::Vessel(VesselIndex_t index) : SW::Vessel(index)
 	{
 		myPlayer = NULL;
+		fMeshCreated = false;
+		floorVBuffer = 0;
+		floorIBuffer = 0;
 	}
 
 
 	Vessel::~Vessel()
 	{
+		if (floorVBuffer)
+		{
+			glDeleteBuffers(1, &floorIBuffer);
+			glDeleteBuffers(1, &floorVBuffer);
+			fMeshCreated = false;
+		}
 	}
 
 	void Vessel::AddMyPlayer(Player* player, NetworkWriter* nw)
@@ -117,15 +127,28 @@ namespace SW_Client
 			glm::mat4 viewMat(1.0f);
 			camera.GenerateView(viewMat);
 
-			glUseProgram(floorProgram.program);
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, floorProgram.texture);
-			glUniformMatrix4fv(floorProgram.viewMat, 1, false, glm::value_ptr(viewMat));
-			glUniform1i(floorProgram.textureLoc, 0);
+			if (floorVBuffer)
+			{
+				glUseProgram(floorProgram.program);
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, floorProgram.texture);
+				glUniformMatrix4fv(floorProgram.viewMat, 1, false, glm::value_ptr(viewMat));
+				glUniform1i(floorProgram.textureLoc, 0);
 
-			DrawFloor();
+				glBindBuffer(GL_ARRAY_BUFFER, floorVBuffer);
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, floorIBuffer);
 
-			glUseProgram(coloredVertexProgram.program);
+				glVertexAttribPointer(floorProgram.posAttrib, 2, GL_FLOAT, false, 16, NULL);
+				glEnableVertexAttribArray(floorProgram.posAttrib);
+				glVertexAttribPointer(floorProgram.uvAttrib, 2, GL_FLOAT, false, 16, (GLvoid*)8);
+				glEnableVertexAttribArray(floorProgram.uvAttrib);
+
+				glDrawElements(GL_TRIANGLES, fIndicesCount, GL_UNSIGNED_INT, 0);
+			}
+
+			DrawWalls(dynamic_cast<SW::TileSet*>(&tiles), tiles.GetAABB());
+
+			/*glUseProgram(coloredVertexProgram.program);
 			glm::vec4 color(0.5f, 0.5f, 0.5f, 1.0f);
 			glUniform4fv(coloredVertexProgram.color, 1, glm::value_ptr(color));
 			glUniformMatrix4fv(coloredVertexProgram.viewMat, 1, false, glm::value_ptr(viewMat));
@@ -143,65 +166,364 @@ namespace SW_Client
 			DrawShadows();
 
 			glEnable(GL_CULL_FACE);
-			glDisable(GL_BLEND);
+			glDisable(GL_BLEND);*/
 		}
 	}
-	void Vessel::DrawFloor()
+	void Vessel::DrawWalls(SW::TileSet* ts, SW::AABBi region)
 	{
-		for (size_t i = 0; i < tiles.chunks.dim.y; i++)
+		for (int i = region.bl.y; i < region.tr.y; i++)
 		{
-			for (size_t j = 0; j < tiles.chunks.dim.x; j++)
+			for (int j = region.bl.x; j < region.tr.x; j++)
 			{
-				glm::ivec2 chunkI(currentVessel->tiles.chunks.origin + glm::ivec2(j, i));
-				SW::TileChunk* swChunk = tiles.TryGetChunk(glm::ivec2(chunkI.x, chunkI.y));
-				if (swChunk)
+				glm::ivec2 tileI(j, i);
+				SW::Tile* tile = ts->TryGet(tileI);
+
+				if (tile)
 				{
-					SW_Client::TileChunk* chunk = static_cast<SW_Client::TileChunk*>(swChunk);
-					if (chunk->instantiated)
-					{
-						chunk->DrawFloor();
-					}
+
+					glm::vec2 offset = glm::vec2(j, i);
 				}
 			}
 		}
 	}
-	void Vessel::DrawWalls()
+	//point between vectors if considering CCW convention
+	float Determinant(glm::vec2 c0, glm::vec2 c1)
 	{
-		for (size_t i = 0; i < tiles.chunks.dim.y; i++)
+		return (c0.x * c1.y) - (c0.y * c1.x);
+	}
+	glm::vec2 WallCorner(glm::vec2 wall0, glm::vec2 wall1)
+	{
+		glm::vec2 d(-wall0.y, wall0.x);
+
+		float uDenom = wall1.x - wall0.x;
+		float uNum;
+
+		if (abs(uDenom) > 0.001f)
 		{
-			for (size_t j = 0; j < tiles.chunks.dim.x; j++)
+			uNum = d.x - wall1.y;
+		}
+		else
+		{
+			//may be straight
+			uDenom = wall1.y - wall0.y;
+			uNum = d.y + wall1.x;
+		}
+
+		return d + ((wall0)* (uNum / uDenom));
+	}
+	WallType_t CCWReverseWallSweepOpposite(int start, int stop, SW::TileSet* ts, glm::ivec2 location, WallType_t type)
+	{
+		for (int i = start; i < stop; i++)
+		{
+			if (abs(i - type) <= 4)
 			{
-				glm::ivec2 chunkI(currentVessel->tiles.chunks.origin + glm::ivec2(j, i));
-				SW::TileChunk* swChunk = tiles.TryGetChunk(glm::ivec2(chunkI.x, chunkI.y));
-				if (swChunk)
+				SW::Tile* tile;
+				if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
 				{
-					SW_Client::TileChunk* chunk = static_cast<SW_Client::TileChunk*>(swChunk);
-					if (chunk->instantiated)
-					{
-						chunk->DrawWalls();
-					}
+					return i;
 				}
 			}
+		}
+		return 0;
+	}
+	WallType_t CCWReverseWallSweepLocal(int start, int stop, SW::TileSet* ts, glm::ivec2 location, WallType_t type)
+	{
+		for (int i = start; i < stop; i++)
+		{
+			if (abs(i - type) > 3)
+			{
+				SW::Tile* tile;
+				if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
+				{
+					return i;
+				}
+			}
+		}
+		return 0;
+	}
+	WallType_t CCWWallSweepOpposite(int start, int stop, SW::Tile* orgtile, WallType_t type)
+	{
+		for (int i = start; i < stop; i++)
+		{
+			if (abs(i - type) <= 4)
+			{
+				if (orgtile->Contains(i))
+				{
+					return i;
+				}
+			}
+		}
+		return 0;
+	}
+	WallType_t CCWWallSweepLocal(int start, int stop, SW::Tile* orgtile, WallType_t type)
+	{
+		for (int i = start; i < stop; i++)
+		{
+			if (abs(i - type) > 3)
+			{
+				if (orgtile->Contains(i))
+				{
+					return i;
+				}
+			}
+		}
+		return 0;
+	}
+
+	static glm::vec2 Rotate90CCW(glm::vec2 v)
+	{
+		return glm::vec2(-v.y, v.x);
+	}
+	static glm::vec2 Rotate90CW(glm::vec2 v)
+	{
+		return glm::vec2(v.y, -v.x);
+	}
+	bool WallVertexSweepCCW(SW::TileSet* ts, SW::Tile* orgtile, glm::ivec2 location, WallType_t type, bool end, glm::vec2 & v)
+	{
+		WallType_t otherWall = 0;
+
+		if (!end)
+		{
+			if ((otherWall = CCWWallSweepLocal(type, 9, orgtile, type)))
+			{
+				v = WallCorner(SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[otherWall]);
+				return false;
+			}
+			if ((otherWall = CCWReverseWallSweepOpposite(1, 9, ts, location, type)))
+			{
+				v = WallCorner(SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[otherWall]);
+				return false;
+			}
+			if ((otherWall = CCWWallSweepLocal(1, type, orgtile, type)))
+			{
+				v = WallCorner(SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[otherWall]);
+				return false;
+			}
+			glm::vec2 temp = SW::wallVectorsNormalized[type];
+			v = Rotate90CCW(temp) - temp;
+			return true;
+		}
+		else
+		{
+			if ((otherWall = CCWReverseWallSweepLocal(type, 9, ts, location, type)))
+			{
+				v = WallCorner(-SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[otherWall]);
+				return false;
+			}
+			if ((otherWall = CCWWallSweepOpposite(1, 9, orgtile, type)))
+			{
+				v = WallCorner(-SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[otherWall]);
+				return false;
+			}
+			if ((otherWall = CCWReverseWallSweepLocal(1, type, ts, location, type)))
+			{
+				v = WallCorner(-SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[otherWall]);
+				return false;
+			}
+			glm::vec2 temp = -SW::wallVectorsNormalized[type];
+			v = Rotate90CCW(temp) - temp;
+			return true;
 		}
 	}
-	void Vessel::DrawShadows()
+	bool WallVertexSweepCW(SW::TileSet* ts, SW::Tile* orgtile, glm::ivec2 location, WallType_t type, bool end, glm::vec2 & v)
 	{
-		for (size_t i = 0; i < tiles.chunks.dim.y; i++)
+		SW::Tile* tile;
+
+		if (!end)
 		{
-			for (size_t j = 0; j < tiles.chunks.dim.x; j++)
+			for (int i = type; i > 0; i--)
 			{
-				glm::ivec2 chunkI(currentVessel->tiles.chunks.origin + glm::ivec2(j, i));
-				SW::TileChunk* swChunk = tiles.TryGetChunk(glm::ivec2(chunkI.x, chunkI.y));
-				if (swChunk)
+				if (abs(i - type) > 3)
 				{
-					SW_Client::TileChunk* chunk = static_cast<SW_Client::TileChunk*>(swChunk);
-					if (chunk->instantiated)
+					if (orgtile->Contains(i))
 					{
-						chunk->DrawShadows();
+						//calculate the corner vertice location
+						v = WallCorner(SW::wallVectorsNormalized[i], SW::wallVectorsNormalized[type]);
+						return false;
+					}
+				}
+			}
+			for (int i = 8; i > 0; i--)
+			{
+				if (abs(i - type) <= 4)
+				{
+					if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
+					{
+						//calculate the corner vertice location
+						v = WallCorner(-SW::wallVectorsNormalized[i], SW::wallVectorsNormalized[type]);
+						return false;
+					}
+				}
+			}
+			for (int i = 8; i > type; i--)
+			{
+				if (abs(i - type) > 3)
+				{
+					if (orgtile->Contains(i))
+					{
+						//calculate the corner vertice location
+						v = WallCorner(SW::wallVectorsNormalized[i], SW::wallVectorsNormalized[type]);
+						return false;
+					}
+				}
+			}
+			glm::vec2 temp = SW::wallVectorsNormalized[type];
+			v = Rotate90CW(temp) - temp;
+			return true;
+		}
+		else
+		{
+			for (int i = type; i > 0; i--)
+			{
+				if (abs(i - type) > 3)
+				{
+					if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
+					{
+						//calculate the corner vertice location
+						v = WallCorner(-SW::wallVectorsNormalized[i], -SW::wallVectorsNormalized[type]);
+						return false;
+					}
+				}
+			}
+			for (int i = 8; i > 0; i--)
+			{
+				if (abs(i - type) <= 4)
+				{
+					if (orgtile->Contains(i))
+					{
+						//calculate the corner vertice location
+						v = WallCorner(SW::wallVectorsNormalized[i], -SW::wallVectorsNormalized[type]);
+						return false;
+					}
+				}
+			}
+			for (int i = 8; i > type; i--)
+			{
+				if (abs(i - type) > 3)
+				{
+					if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
+					{
+						//calculate the corner vertice location
+						v = WallCorner(-SW::wallVectorsNormalized[i], -SW::wallVectorsNormalized[type]);
+						return false;
+					}
+				}
+			}
+			glm::vec2 temp = -SW::wallVectorsNormalized[type];
+			v = Rotate90CW(temp) - temp;
+			return true;
+		}
+	}
+	void AppendQuadIndices(std::vector<MeshIndex_t> & indices, std::vector<float> & vertices, int vertexSize)
+	{
+		MeshIndex_t start = vertices.size() / vertexSize;
+		indices.push_back(start + 0);
+		indices.push_back(start + 3);
+		indices.push_back(start + 1);
+		indices.push_back(start + 0);
+		indices.push_back(start + 2);
+		indices.push_back(start + 3);
+	}
+	void AppendShadowVertex(glm::vec2 position, float influence, float offset, float alpha, std::vector<float> & vertices)
+	{
+		vertices.push_back(position.x);
+		vertices.push_back(position.y);
+		vertices.push_back(0.0f);
+		vertices.push_back(1.0f);
+		vertices.push_back(influence);
+		vertices.push_back(offset);
+		vertices.push_back(alpha);
+		vertices.push_back(0.0f);
+	}
+	void Vessel::GenerateFloorMesh(SW::TileSet* ts, SW::AABBi region)
+	{
+		std::vector<float> fVertices;
+		std::vector<MeshIndex_t> fIndices;
+
+		for (int i = region.bl.y; i < region.tr.y; i++)
+		{
+			for (int j = region.bl.x; j < region.tr.x; j++)
+			{
+				glm::ivec2 tileI(j, i);
+				SW::Tile* tile = ts->TryGet(tileI);
+
+				if (tile)
+				{
+					glm::vec2 offset = glm::vec2(j, i);
+
+					if (tile->floor0 || tile->floor1) {
+
+						if (tile->floor0 == tile->floor1) {
+							AppendMeshData(GetFloorMesh(tile->floor0, FloorType::None, WallType::None, 0), fVertices, fIndices, offset);
+						}
+						else {
+
+							SW::Tile* lTile = ts->TryGet(glm::ivec2(j - 1, i));
+							SW::Tile* rTile = ts->TryGet(glm::ivec2(j + 1, i));
+							SW::Tile* r2Tile = ts->TryGet(glm::ivec2(j + 2, i));
+							SW::Tile* bTile = ts->TryGet(glm::ivec2(j, i - 1));
+							SW::Tile* brTile = ts->TryGet(glm::ivec2(j + 1, i - 1));
+
+							if (tile->ContainsMask(WallTypeMask::TwoByOne)) { //this tile contains a TwoByOne
+								AppendMeshData(GetFloorMesh(tile->floor0, tile->floor1, WallType::TwoByOne, 0), fVertices, fIndices, offset);
+							}
+							else if (tile->ContainsMask(WallTypeMask::OneByTwo)) { //this tile contains a OneByTwo
+								AppendMeshData(GetFloorMesh(tile->floor0, tile->floor1, WallType::OneByTwo, 0), fVertices, fIndices, offset);
+							}
+							else if (tile->ContainsMask(WallTypeMask::OneByOne)) { //this tile contains a OneByOne
+								AppendMeshData(GetFloorMesh(tile->floor0, tile->floor1, WallType::OneByOne, 0), fVertices, fIndices, offset);
+							}
+							else if (lTile && lTile->ContainsMask(WallTypeMask::TwoByOne)) { //left tile contains a TwoByOne
+								AppendMeshData(GetFloorMesh(tile->floor0, tile->floor1, WallType::TwoByOne, 1), fVertices, fIndices, offset);
+							}
+							else if (bTile && bTile->ContainsMask(WallTypeMask::OneByTwo)) { //bottom tile contains a OneByTwo
+								AppendMeshData(GetFloorMesh(tile->floor0, tile->floor1, WallType::OneByTwo, 1), fVertices, fIndices, offset);
+							}
+							else if (brTile && brTile->ContainsMask(WallTypeMask::OneByTwoFlipped)) { //br tile contains a OneByTwoFlipped
+								AppendMeshData(GetFloorMesh(tile->floor0, tile->floor1, WallType::OneByTwoFlipped, 1), fVertices, fIndices, offset);
+							}
+							else if (rTile && rTile->ContainsMask(WallTypeMask::TwoByOneFlipped)) { //r tile contains a TwoByOneFlipped
+								AppendMeshData(GetFloorMesh(tile->floor0, tile->floor1, WallType::TwoByOneFlipped, 0), fVertices, fIndices, offset);
+							}
+							else if (rTile && rTile->ContainsMask(WallTypeMask::OneByOneFlipped)) { //r tile contains a OneByOneFlipped
+								AppendMeshData(GetFloorMesh(tile->floor0, tile->floor1, WallType::OneByOneFlipped, 0), fVertices, fIndices, offset);
+							}
+							else if (rTile && rTile->ContainsMask(WallTypeMask::OneByTwoFlipped)) { //r tile contains a OneByTwoFlipped
+								AppendMeshData(GetFloorMesh(tile->floor0, tile->floor1, WallType::OneByTwoFlipped, 0), fVertices, fIndices, offset);
+							}
+							else if (r2Tile && r2Tile->ContainsMask(WallTypeMask::TwoByOneFlipped)) { //r2 tile contains a TwoByOneFlipped
+								AppendMeshData(GetFloorMesh(tile->floor0, tile->floor1, WallType::TwoByOneFlipped, 1), fVertices, fIndices, offset);
+							}
+							else {
+								//no walls cut this tile
+								AppendMeshData(GetFloorMesh(tile->floor0, FloorType::None, WallType::None, 0), fVertices, fIndices, offset);
+							}
+						}
 					}
 				}
 			}
 		}
+
+		if (!floorVBuffer)
+		{
+			glGenBuffers(1, &floorIBuffer);
+			glGenBuffers(1, &floorVBuffer);
+		}
+
+		if (fIndices.size() > 0)
+		{
+			glBindBuffer(GL_ARRAY_BUFFER, floorVBuffer);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(float) * fVertices.size(), (GLvoid*)&fVertices[0], GL_STATIC_DRAW);
+
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, floorIBuffer);
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(MeshIndex_t) * fIndices.size(), (GLvoid*)&fIndices[0], GL_STATIC_DRAW);
+			fIndicesCount = fIndices.size();
+		}
+		else
+		{
+			fMeshCreated = false;
+		}
+
 	}
 
 	void Vessel::ReadSetTilesMessage(NetworkReader* nr, NetworkWriter* nw)
@@ -214,62 +536,47 @@ namespace SW_Client
 		size.x = nr->ReadInt32();
 		size.y = nr->ReadInt32();
 
-		//std::ostringstream print;
-		//print << "ReadSetTilesMessage: (";
-		//print << "origin: (" << origin.x << ", " << origin.y << "), size: (" << size.x << ", " << size.y << "))";
+		glm::ivec2 end(origin + size);
 
-		SW::FixedCompartmentTileSet tileBuffer(size);
+		SW::AABBi compRegion(origin - glm::ivec2(2, 2), end + glm::ivec2(2, 2));
+		tiles.EraseCompartments(compRegion);
 
-		//glm::ivec2 end(origin + size);
-
-		for (int i = 0; i < size.y; i++)
+		for (int i = origin.y; i < end.y; i++)
 		{
-			for (int j = 0; j < size.x; j++)
+			for (int j = origin.x; j < end.x; j++)
 			{
 				glm::ivec2 tileI(j, i);
 
-				SW::CompartmentTile* tile = new SW::CompartmentTile();
+				SW::Tile* tile;
+				if (!(tile = tiles.TryGet(tileI)))
+				{
+					tile = static_cast<SW::Tile*>(new SW::CompartmentTile());
+					tiles.Set(tileI, static_cast<SW::Tile*>(tile));
+				}
 
 				tile->flags = nr->ReadUint16();
 				tile->wallMask = nr->ReadUint8();
 				tile->floor0 = nr->ReadUint8();
 				tile->floor1 = nr->ReadUint8();
-
-				tileBuffer.Set(tileI, static_cast<SW::Tile*>(tile));
 			}
 		}
 
-		tileBuffer.RebuildCompartments();
+		tiles.RebuildCompartmentsForRegion(false, compRegion);
+		//tileBuffer.RebuildCompartments();
 
-		for (int i = 0; i < size.y; i++)
-		{
-			for (int j = 0; j < size.x; j++)
-			{
-				//compare the two tiles
-				glm::ivec2 tileI(j, i);
-				SW::Tile* tile = tileBuffer.TryGet(tileI);
-				tileBuffer.Set(tileI, NULL);
+		//for (int i = 0; i < size.y; i++)
+		//{
+		//	for (int j = 0; j < size.x; j++)
+		//	{
+		//		//compare the two tiles
+		//		glm::ivec2 tileI(j, i);
+		//		SW::Tile* tile = tileBuffer.TryGet(tileI);
+		//		tileBuffer.Set(tileI, NULL);
 
-				tiles.Set(tileI + origin, tile);
-			}
-		}
+		//		tiles.Set(tileI + origin, tile);
+		//	}
+		//}
 
-		for (int i = 0; i < tiles.chunks.dim.y; i++)
-		{
-			for (int j = 0; j < tiles.chunks.dim.x; j++)
-			{
-				glm::ivec2 chunkI(tiles.chunks.origin + glm::ivec2(j, i));
-
-				if (tiles.chunks.TryGet(chunkI))
-				{
-					InstantiateChunk(dynamic_cast<SW_Client::TileChunk*>(tiles.chunks.TryGet(chunkI)));
-				}
-			}
-		}
-	}
-
-	void Vessel::InstantiateChunk(TileChunk* chunk)
-	{
-		chunk->Instantiate(dynamic_cast<SW::TileSet*>(&tiles));
+		GenerateFloorMesh(dynamic_cast<SW::TileSet*>(&tiles), tiles.GetAABB());
 	}
 }

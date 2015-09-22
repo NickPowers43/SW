@@ -18,7 +18,7 @@ namespace SW
 		output->tiles.BuildWall(&temp, 8, WallType::ZeroByOne, true);
 		output->tiles.BuildWall(&temp, 3, WallType::OneByZero, true);
 
-		output->tiles.RebuildCompartmentsFloorless();
+		output->tiles.RebuildCompartments(true);
 		output->tiles.SetCompartmentFloorAt(FloorType::Basic, glm::vec2(1.5f, 1.5f));
 
 		return output;
@@ -37,7 +37,7 @@ namespace SW
 		output->tiles.BuildWall(&temp, 7, WallType::ZeroByOne, true);
 		output->tiles.BuildWall(&temp, 3, WallType::OneByZero, true);
 
-		output->tiles.RebuildCompartmentsFloorless();
+		output->tiles.RebuildCompartments(true);
 		output->tiles.SetCompartmentFloorAt(FloorType::Basic, glm::vec2(1.5f, 1.5f));
 
 		return output;
