@@ -86,7 +86,6 @@
   <ItemGroup>
     <ClCompile Include="Compartment.cpp" />
     <ClCompile Include="Player.cpp" />
-    <ClCompile Include="Tile.cpp" />
     <ClCompile Include="TileChunk.cpp" />
     <ClCompile Include="TileChunks.cpp" />
     <ClCompile Include="Vessel.cpp" />
@@ -100,7 +99,6 @@
   <ItemGroup>
     <ClInclude Include="Compartment.h" />
     <ClInclude Include="Player.h" />
-    <ClInclude Include="Tile.h" />
     <ClInclude Include="TileChunk.h" />
     <ClInclude Include="TileChunks.h" />
     <ClInclude Include="Vessel.h" />

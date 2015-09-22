@@ -11,4 +11,9 @@ namespace SW
 	TrackedTileSet::~TrackedTileSet()
 	{
 	}
+
+	void TrackedTileSet::MarkTileAsModified(glm::ivec2 index)
+	{
+
+	}
 }

@@ -69,10 +69,10 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 						throw std::exception("cannot read module request message for player not assigned a vessel");
 					}
 					break;
-				case ClientMessageType::RequestChunk:
+				case ClientMessageType::RequestTiles:
 					if (player->currentVessel)
 					{
-						player->currentVessel->ReadChunkRequestMessage(player, nw_main, &nr);
+						player->currentVessel->ReadRequestTilesMessage(player, nw_main, &nr);
 						//SendPingMessage(hdl, &nw_main, 100);
 					}
 					else

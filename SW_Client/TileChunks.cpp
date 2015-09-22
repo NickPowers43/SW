@@ -29,18 +29,9 @@ namespace SW_Client
 		}
 	}
 
-	TileChunk* TileChunks::ClientChunkTop(SW::TileChunk* chunk) { SW::TileChunk* temp; if ((temp = TryGetChunk(glm::ivec2(chunk->index.x, chunk->index.y + 1)))) return static_cast<TileChunk*>(temp); else return NULL; }
-	TileChunk* TileChunks::ClientChunkBottom(SW::TileChunk* chunk) { SW::TileChunk* temp; if ((temp = TryGetChunk(glm::ivec2(chunk->index.x, chunk->index.y - 1)))) return static_cast<TileChunk*>(temp); else return NULL; }
-	TileChunk* TileChunks::ClientChunkLeft(SW::TileChunk* chunk) { SW::TileChunk* temp; if ((temp = TryGetChunk(glm::ivec2(chunk->index.x - 1, chunk->index.y)))) return static_cast<TileChunk*>(temp); else return NULL; }
-	TileChunk* TileChunks::ClientChunkRight(SW::TileChunk* chunk) { SW::TileChunk* temp; if ((temp = TryGetChunk(glm::ivec2(chunk->index.x + 1, chunk->index.y)))) return static_cast<TileChunk*>(temp); else return NULL; }
-	TileChunk* TileChunks::ClientChunkTopLeft(SW::TileChunk* chunk) { SW::TileChunk* temp; if ((temp = TryGetChunk(glm::ivec2(chunk->index.x - 1, chunk->index.y + 1)))) return static_cast<TileChunk*>(temp); else return NULL; }
-	TileChunk* TileChunks::ClientChunkTopRight(SW::TileChunk* chunk) { SW::TileChunk* temp; if ((temp = TryGetChunk(glm::ivec2(chunk->index.x + 1, chunk->index.y + 1)))) return static_cast<TileChunk*>(temp); else return NULL; }
-	TileChunk* TileChunks::ClientChunkBottomLeft(SW::TileChunk* chunk) { SW::TileChunk* temp; if ((temp = TryGetChunk(glm::ivec2(chunk->index.x - 1, chunk->index.y - 1)))) return static_cast<TileChunk*>(temp); else return NULL; }
-	TileChunk* TileChunks::ClientChunkBottomRight(SW::TileChunk* chunk) { SW::TileChunk* temp; if ((temp = TryGetChunk(glm::ivec2(chunk->index.x + 1, chunk->index.y - 1)))) return static_cast<TileChunk*>(temp); else return NULL; }
-
-	SW::TileChunk* TileChunks::CreateChunkAt(glm::ivec2 index, TileChunkVersion_t version)
+	SW::TileChunk* TileChunks::CreateChunkAt(glm::ivec2 index)
 	{
-		TileChunk* chunk = new TileChunk(index, version);
+		TileChunk* chunk = new TileChunk(index);
 		chunks.Set(index, chunk);
 		return chunk;
 	}

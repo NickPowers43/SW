@@ -10,7 +10,7 @@ namespace SW
 		TrackedTileSet();
 		~TrackedTileSet();
 
-		virtual void MarkTileAsModified(glm::ivec2 index) = 0;
+		virtual void MarkTileAsModified(glm::ivec2 index);
 	};
 
 }

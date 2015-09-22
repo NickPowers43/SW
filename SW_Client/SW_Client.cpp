@@ -144,12 +144,9 @@ extern "C" void HandleMessage(int dPtr, int length)
 			//PrintMessage((int)"PingMessage message received");
 			SW_Client::RespondToPingMessage(&nr, nw_main);
 			break;
-		case ServerMessageType::SetChunk:
+		case ServerMessageType::SetTiles:
 			//PrintMessage((int)"SetChunk message received");
-			if (currentVessel)
-			{
-				currentVessel->ReadSetChunkMessage(&nr, nw_main);
-			}
+			currentVessel->ReadSetTilesMessage(&nr, nw_main);
 			break;
 		case ServerMessageType::MakeVesselActive:
 			//PrintMessage((int)"MakeVesselActive message received");

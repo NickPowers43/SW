@@ -7,7 +7,7 @@
 
 namespace SW_Client
 {
-	TileChunk::TileChunk(glm::ivec2 index, TileChunkVersion_t version) : SW::TileChunk(index, version)
+	TileChunk::TileChunk(glm::ivec2 index) : SW::TileChunk(index)
 	{
 		seen = false;
 		instantiated = false;
@@ -209,6 +209,15 @@ namespace SW_Client
 		}
 		return 0;
 	}
+
+	static glm::vec2 Rotate90CCW(glm::vec2 v)
+	{
+		return glm::vec2(-v.y, v.x);
+	}
+	static glm::vec2 Rotate90CW(glm::vec2 v)
+	{
+		return glm::vec2(v.y, -v.x);
+	}
 	bool TileChunk::WallVertexSweepCCW(TileSet* ts, SW::Tile* orgtile, glm::ivec2 location, WallType_t type, bool end, glm::vec2 & v)
 	{
 		WallType_t otherWall = 0;
@@ -231,7 +240,7 @@ namespace SW_Client
 				return false;
 			}
 			glm::vec2 temp = SW::wallVectorsNormalized[type];
-			v = (temp * HALF_WALL_THICKNESS) + (glm::vec2(temp.y, -temp.x) * HALF_WALL_THICKNESS);
+			v = Rotate90CCW(temp) - temp;
 			return true;
 		}
 		else
@@ -251,8 +260,8 @@ namespace SW_Client
 				v = WallCorner(-SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[otherWall]);
 				return false;
 			}
-			glm::vec2 temp = SW::wallVectorsNormalized[type];
-			v = (temp * HALF_WALL_THICKNESS) + (-glm::vec2(temp.y, -temp.x) * HALF_WALL_THICKNESS);
+			glm::vec2 temp = -SW::wallVectorsNormalized[type];
+			v = Rotate90CCW(temp) - temp;
 			return true;
 		}
 	}
@@ -299,7 +308,7 @@ namespace SW_Client
 				}
 			}
 			glm::vec2 temp = SW::wallVectorsNormalized[type];
-			v = (temp * HALF_WALL_THICKNESS) + (-glm::vec2(temp.y, -temp.x) * HALF_WALL_THICKNESS);
+			v = Rotate90CW(temp) - temp;
 			return true;
 		}
 		else
@@ -340,8 +349,8 @@ namespace SW_Client
 					}
 				}
 			}
-			glm::vec2 temp = SW::wallVectorsNormalized[type];
-			v = (temp * HALF_WALL_THICKNESS) + (glm::vec2(temp.y, -temp.x) * HALF_WALL_THICKNESS);
+			glm::vec2 temp = -SW::wallVectorsNormalized[type];
+			v = Rotate90CW(temp) - temp;
 			return true;
 		}
 	}
@@ -403,6 +412,8 @@ namespace SW_Client
 
 			static float influence0 = 0.0f;
 			static float influence1 = 1.0f;
+			static float shadowAlpha0 = 0.0f;
+			static float shadowAlpha1 = 0.5f;
 
 			//append wall mesh
 			AppendQuadIndices(wIndices, wVertices, WALL_VERTEX_F_COUNT);
@@ -416,10 +427,10 @@ namespace SW_Client
 			wVertices.push_back(v1End.y);
 			//shadow triangles
 			AppendQuadIndices(sIndices, sVertices, SHADOW_VERTEX_F_COUNT);
-			AppendShadowVertex(startOrigin, influence1, 0.0f, 1.0f, sVertices);
-			AppendShadowVertex(startOrigin, influence0, 0.0f, 1.0f, sVertices);
-			AppendShadowVertex(endOrigin, influence1, 0.0f, 1.0f, sVertices);
-			AppendShadowVertex(endOrigin, influence0, 0.0f, 1.0f, sVertices);
+			AppendShadowVertex(startOrigin, influence1, 0.0f, shadowAlpha1, sVertices);
+			AppendShadowVertex(startOrigin, influence0, 0.0f, shadowAlpha1, sVertices);
+			AppendShadowVertex(endOrigin, influence1, 0.0f, shadowAlpha1, sVertices);
+			AppendShadowVertex(endOrigin, influence0, 0.0f, shadowAlpha1, sVertices);
 			if (open)
 			{
 				//append triangle to close connection
@@ -464,10 +475,10 @@ namespace SW_Client
 				wVertices.push_back(v1End.y);
 				//shadow triangles
 				AppendQuadIndices(sIndices, sVertices, SHADOW_VERTEX_F_COUNT);
-				AppendShadowVertex(startOrigin, influence1, 0.0f, 1.0f, sVertices);
-				AppendShadowVertex(startOrigin, influence0, 0.0f, 1.0f, sVertices);
-				AppendShadowVertex(endOrigin, influence1, 0.0f, 1.0f, sVertices);
-				AppendShadowVertex(endOrigin, influence0, 0.0f, 1.0f, sVertices);
+				AppendShadowVertex(startOrigin, influence1, 0.0f, shadowAlpha1, sVertices);
+				AppendShadowVertex(startOrigin, influence0, 0.0f, shadowAlpha1, sVertices);
+				AppendShadowVertex(endOrigin, influence1, 0.0f, shadowAlpha1, sVertices);
+				AppendShadowVertex(endOrigin, influence0, 0.0f, shadowAlpha1, sVertices);
 			}
 		}
 	}

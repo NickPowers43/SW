@@ -13,7 +13,7 @@ window.Connect = function(address)
         // Listen for messages
         window.mySocket.onmessage = function(event) {
             var msgData = new Uint8Array(event.data);
-            //console.log("Message received. Length: ", msgData.length, msgData);
+            console.log("Message received. Length: ", msgData.length, msgData);
             var bufPtr = Module._malloc(msgData.length);
             var buffer = new Uint8Array(Module.HEAPU8.buffer, bufPtr, msgData.length);
             buffer.set(msgData);

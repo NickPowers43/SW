@@ -19,7 +19,7 @@ namespace SW_Server
 
 	void StartingVessel::Initialize()
 	{
-		tiles.BuildFoundation(glm::ivec2(-50, -50), glm::ivec2(100, 100));
+		tiles.BuildFoundation(glm::ivec2(-20, -20), glm::ivec2(40, 40));
 		//tip
 		//		BuildWall(glm::ivec2(4,13), 1, WallType::WallType::OneByZero);
 		//		//outer left
@@ -101,6 +101,8 @@ namespace SW_Server
 		tiles.RebuildCompartmentsFloorless();
 
 		tiles.SetCompartmentFloorAt(FloorType::SmoothWhite, glm::vec2(0.0f, 0.0f));
+		tiles.SetCompartmentFloorAt(FloorType::Basic, glm::vec2(19.0f, 0.0f));
+		tiles.SetCompartmentFloorAt(FloorType::Basic, glm::vec2(4.0f, 0.0f));
 	}
 	SW::VesselObject* StartingVessel::PlaceObject(ObjectType::ObjectType type, glm::vec2 location)
 	{

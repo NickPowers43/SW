@@ -15,20 +15,19 @@ namespace SW_Client
 		Vessel(VesselIndex_t index);
 		~Vessel();
 
-		TileChunks tiles;
 		Player* myPlayer;
+		TileChunks tiles;
 
 		void AddMyPlayer(Player* player, NetworkWriter* nw);
 		void Update(NetworkWriter* nw);
 		void Clear();
-		void UpdateChunks(bool force, NetworkWriter* nw);
 
 		void DrawWorld();
 		void DrawFloor();
 		void DrawWalls();
 		void DrawShadows();
 
-		void ReadSetChunkMessage(NetworkReader* nr, NetworkWriter* nw);
+		void ReadSetTilesMessage(NetworkReader* nr, NetworkWriter* nw);
 		void InstantiateChunk(TileChunk* chunk);
 	};
 

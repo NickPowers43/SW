@@ -10,7 +10,7 @@ namespace SW_Client
 		public SW::TileChunk
 	{
 	public:
-		TileChunk(glm::ivec2 index, TileChunkVersion_t version);
+		TileChunk(glm::ivec2 index);
 		~TileChunk();
 
 		void DrawFloor();

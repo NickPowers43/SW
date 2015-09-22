@@ -6,23 +6,9 @@
 
 namespace SW
 {
-	TileChunk::TileChunk(glm::ivec2 index, uint32_t version)
-	{
-		TileChunk::version = version;
-		TileChunk::flags = 0;
-		TileChunk::version = 0;
-		TileChunk::index = index;
-
-		for (size_t i = 0; i < CHUNK_SIZE * CHUNK_SIZE; i++)
-		{
-			elements[i] = NULL;
-		}
-	}
 	TileChunk::TileChunk(glm::ivec2 index)
 	{
-		version = 0;
 		TileChunk::flags = 0;
-		TileChunk::version = 0;
 		TileChunk::index = index;
 
 		for (size_t i = 0; i < CHUNK_SIZE * CHUNK_SIZE; i++)

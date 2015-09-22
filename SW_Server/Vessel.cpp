@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "Vessel.h"
 #include "Player.h"
-#include "TileChunk.h"
+#include <SW\TileChunk.h>
 #include <SW\NetworkWriter.h>
 #include <SW\NetworkReader.h>
 #include <SW\VesselModule.h>
@@ -32,40 +32,70 @@ namespace SW_Server
 	{
 	}
 
-	void Vessel::ReadChunkRequestMessage(Player* player, NetworkWriter* nw, NetworkReader* nr)
+	void Vessel::ReadRequestTilesMessage(Player* player, NetworkWriter* nw, NetworkReader* nr)
 	{
-		nw->Write(ServerMessageType::SetChunk);
-		uint8_t* response_count = (uint8_t*)nw->cursor;
-		nw->Write((uint8_t)0);
+		glm::ivec2 origin;
+		glm::ivec2 size;
 
-		uint8_t chunk_count = nr->ReadUint8();
-		for (size_t i = 0; i < chunk_count; i++)
+		origin.x = nr->ReadInt32();
+		origin.y = nr->ReadInt32();
+		size.x = nr->ReadInt32();
+		size.y = nr->ReadInt32();
+
+		if (!size.x || !size.y)
 		{
-			int16_t x = nr->ReadInt16();
-			int16_t y = nr->ReadInt16();
-			uint32_t version = nr->ReadUint32();
+			AABBi aabb = tiles.GetAABB();
+			origin = aabb.bl;
+			size = aabb.tr - aabb.bl;
+		}
 
-			cout << "Client requesting chunk at (" << x << ", " << y << ")\n";
+		nw->Write(ServerMessageType::SetTiles);
+		nw->Write((int32_t)origin.x);
+		nw->Write((int32_t)origin.y);
+		nw->Write((int32_t)size.x);
+		int32_t* sizeYLocation = (int32_t*)nw->cursor;
+		nw->Write((int32_t)0);
 
-			TileChunk* vc = static_cast<TileChunk*>(tiles.TryGetChunk(glm::ivec2(x, y)));
-			if (vc)
+		glm::ivec2 end(origin + size);
+
+		for (int i = origin.y; i < end.y; i++)
+		{
+			if (nw->Remaining() < (TILE_MESSAGE_SIZE * size.x))
 			{
-				if (version != vc->version)
-				{
-					if (nw->Remaining() < SW::MAX_VESSELCHUNK_MESSAGE_SIZE)
-					{
-						//start a new message
-						player->FlushBuffer(nw);
-						nw->Write(ServerMessageType::SetChunk);
-						response_count = (uint8_t*)nw->cursor;
-						nw->Write((uint8_t)0);
-					}
+				*sizeYLocation = end.y - i;
+				origin.y = i;
+				player->FlushBuffer(nw);
 
-					(*response_count)++;
-					vc->WriteSetChunkMessage(nw);
+				nw->Write(ServerMessageType::SetTiles);
+				nw->Write((int32_t)origin.x);
+				nw->Write((int32_t)origin.y);
+				nw->Write((int32_t)size.x);
+				sizeYLocation = (int32_t*)nw->cursor;
+				nw->Write((int32_t)0);
+			}
+
+			for (int j = origin.x; j < end.x; j++)
+			{
+				SW::Tile* tile = tiles.TryGet(glm::ivec2(j, i));
+				if (tile)
+				{
+					nw->Write(tile->flags);
+					nw->Write(tile->wallMask);
+					nw->Write(tile->floor0);
+					nw->Write(tile->floor1);
+				}
+				else
+				{
+					nw->Write((TileFlag_t)0);
+					nw->Write((WallTypeMask_t)0);
+					nw->Write((FloorType_t)0);
+					nw->Write((FloorType_t)0);
 				}
 			}
 		}
+
+		*sizeYLocation = end.y - origin.y;
+		player->FlushBuffer(nw);
 	}
 	void Vessel::ReadModuleRequestMessage(Player* player, NetworkWriter* nw, NetworkReader* nr)
 	{

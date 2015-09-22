@@ -23,15 +23,6 @@ namespace SW
 		chunks.Set(chunk->index, chunk);
 	}
 
-	TileChunk* TileChunks::Top(TileChunk* chunk) { return TryGetChunk(glm::ivec2(chunk->index.x, chunk->index.y + 1)); }
-	TileChunk* TileChunks::Bottom(TileChunk* chunk) { return TryGetChunk(glm::ivec2(chunk->index.x, chunk->index.y - 1)); }
-	TileChunk* TileChunks::Left(TileChunk* chunk) { return TryGetChunk(glm::ivec2(chunk->index.x - 1, chunk->index.y)); }
-	TileChunk* TileChunks::Right(TileChunk* chunk) { return TryGetChunk(glm::ivec2(chunk->index.x + 1, chunk->index.y)); }
-	TileChunk* TileChunks::TopLeft(TileChunk* chunk) { return TryGetChunk(glm::ivec2(chunk->index.x - 1, chunk->index.y + 1)); }
-	TileChunk* TileChunks::TopRight(TileChunk* chunk) { return TryGetChunk(glm::ivec2(chunk->index.x + 1, chunk->index.y + 1)); }
-	TileChunk* TileChunks::BottomLeft(TileChunk* chunk) { return TryGetChunk(glm::ivec2(chunk->index.x - 1, chunk->index.y - 1)); }
-	TileChunk* TileChunks::BottomRight(TileChunk* chunk) { return TryGetChunk(glm::ivec2(chunk->index.x + 1, chunk->index.y - 1)); }
-
 	Tile* TileChunks::TryGet(glm::ivec2 index)
 	{
 		glm::ivec2 chunkI = TileIToChunkI(index);
@@ -51,7 +42,7 @@ namespace SW
 		TileChunk* chunk = chunks.TryGet(chunkI);
 
 		if (!chunk) {
-			chunk = CreateChunkAt(chunkI, 0);
+			chunk = CreateChunkAt(chunkI);
 		}
 
 		index -= chunk->OriginTileIndex();

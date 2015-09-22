@@ -1,14 +1,14 @@
 #pragma once
-#include <SW\Vessel.h>
+#include "TileChunks.h"
+#include <SW/Vessel.h>
 #include <SW/RigidBody.h>
 #include <SW/LinkedListNode.h>
-#include "TileChunks.h"
 
 #include <SW/VesselObject.h>
-#include <SW\DynamicArray2D.h>
-#include <SW\AABBi.h>
-#include <SW\NetworkWriter.h>
-#include <SW\NetworkReader.h>
+#include <SW/DynamicArray2D.h>
+#include <SW/AABBi.h>
+#include <SW/NetworkWriter.h>
+#include <SW/NetworkReader.h>
 #include <SW/VesselModule.h>
 
 namespace SW_Server
@@ -22,8 +22,9 @@ namespace SW_Server
 		Vessel(VesselIndex_t index, VesselVecType vel, VesselValueType m, VesselVecType pos, VesselValueType rot, Vessel* next);
 		~Vessel();
 
-		void ReadChunkRequestMessage(Player* player, NetworkWriter* nw, NetworkReader* nr);
+		void ReadRequestTilesMessage(Player* player, NetworkWriter* nw, NetworkReader* nr);
 		void ReadModuleRequestMessage(Player* player, NetworkWriter* nw, NetworkReader* nr);
+		void WriteSetChunkMessage(SW::NetworkWriter* nw);
 
 		void BroadcastPlayerAddition(Player* player, NetworkWriter* nw);
 		size_t GetOnBoardPlayerInformationMessageSize();

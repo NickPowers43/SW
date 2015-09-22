@@ -76,17 +76,10 @@ namespace SW
 
 	//Server message sizes
 	static int MAX_MODULE_MESSAGE_SIZE = sizeof(VMType_t) + (2 * sizeof(uint32_t));
-	static int VESSEL_TILE_MESSAGE_SIZE =
-		sizeof(uint16_t) + /*index*/
+	static int TILE_MESSAGE_SIZE =
 		sizeof(TileFlag_t) +
 		sizeof(WallTypeMask_t) +
-		(sizeof(FloorType_t) * 2) +
-		(sizeof(CompartmentIndex_t) * 2);
-	static int MAX_VESSELCHUNK_MESSAGE_SIZE =
-		(sizeof(int16_t) * 2) + /*index*/
-		sizeof(uint32_t) + /*version*/
-		sizeof(uint16_t) + /*tile_count*/
-		(CHUNK_DATA_COUNT * VESSEL_TILE_MESSAGE_SIZE) /*tiles*/;
+		(sizeof(FloorType_t) * 2);
 
 	void Initialize();
 
@@ -158,7 +151,7 @@ namespace FloorType
 namespace ClientMessageType
 {
 	enum ClientMessageType : MessageType_t {
-		RequestChunk = 0,
+		RequestTiles = 0,
 		Inputs = 1,
 		FillAt = 2,
 		PingMessageResponse = 3,
@@ -169,7 +162,7 @@ namespace ClientMessageType
 namespace ServerMessageType
 {
 	enum ServerMessageType : MessageType_t {
-		SetChunk = 0,
+		SetTiles = 0,
 		SyncVessel = 1,
 		UpdatePlayer = 2,
 		RemovePlayer = 3,
