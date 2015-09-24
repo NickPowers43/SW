@@ -2,6 +2,8 @@
 #include <GLES2/gl2.h>
 #include <SW/SW.h>
 #include <vector>
+#include "SpriteRect.h"
+#include "Camera.h"
 
 #define FLOOR_TEXTURE_RES 256
 
@@ -12,18 +14,12 @@
 
 typedef uint32_t MeshIndex_t;
 
+const float CEILING_HEIGHT = 1.0f;
+
 namespace SW_Client
 {
-	struct SpriteRect
-	{
-		float x;
-		float y;
-		float width;
-		float height;
+	class BufferedMeshArray;
 
-		SpriteRect();
-		SpriteRect(glm::vec2 bl, glm::vec2 dim);
-	};
 
 	struct PosUVPair
 	{
@@ -50,6 +46,7 @@ namespace SW_Client
 		GLuint program;
 
 		int viewMat;
+		int projMat;
 		GLuint texture;
 		GLuint textureLoc;
 
@@ -73,23 +70,14 @@ namespace SW_Client
 		GLuint program;
 
 		int viewMat;
-		int color;
+		int projMat;
+		int objMat;
 
-		GLuint worldPosAttrib;
+		GLuint posAttrib;
+		GLuint normalAttrib;
+		GLuint colorAttrib;
 	};
 
-	class Camera
-	{
-	public: 
-		float zoom;
-		glm::vec2 position;
-		glm::vec2 dim;
-
-		Camera();
-		~Camera();
-
-		void GenerateView(glm::mat4 & viewMat);
-	};
 
 	extern uint8_t* keyStates;
 
@@ -98,7 +86,8 @@ namespace SW_Client
 	extern ShadowProgram shadowProgram;
 	extern ColoredVertexProgram coloredVertexProgram;
 
-
+	extern BufferedMeshArray* wallMeshes;
+	extern BufferedMeshArray* cornerFloorMeshes;
 	extern SpriteRect* floorUVRects;
 	extern PosUVMesh* floorMeshes;
 

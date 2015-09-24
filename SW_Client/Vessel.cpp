@@ -14,12 +14,14 @@
 #include <SDL/SDL_input.h>
 #include <SDL/SDL_scancode.h>
 #include <SDL/SDL_events.h>
+#include "BufferedMeshArray.h"
 
 namespace SW_Client
 {
 	Vessel::Vessel(VesselIndex_t index) : SW::Vessel(index)
 	{
 		myPlayer = NULL;
+		playerComp = NULL;
 		fMeshCreated = false;
 		floorVBuffer = 0;
 		floorIBuffer = 0;
@@ -41,6 +43,7 @@ namespace SW_Client
 		if (player)
 		{
 			myPlayer = player;
+			playerComp = tiles.CompartmentAt(myPlayer->pos);
 
 			nw->WriteMessageType(ClientMessageType::RequestTiles);
 			nw->WriteInt32(0);
@@ -122,18 +125,26 @@ namespace SW_Client
 	{
 		if (myPlayer)
 		{
-			camera.position = myPlayer->pos;
-
+			camera.pos = glm::vec3(glm::cos(elapsedTime * 0.5f), 0.0f, glm::sin(elapsedTime * 0.5f));
+			camera.pos *= 0.86f;
+			camera.pos.y = 0.86f;
+			camera.pos *= 11.0f;
+			camera.rot = glm::vec2(-(glm::pi<float>() * 0.5f) - (elapsedTime * 0.5f), glm::pi<float>() * 0.25f);
 			glm::mat4 viewMat(1.0f);
 			camera.GenerateView(viewMat);
+			glm::mat4 projMat(1.0f);
+			camera.GenerateProjection(projMat);
 
 			if (floorVBuffer)
 			{
 				glUseProgram(floorProgram.program);
+
 				glActiveTexture(GL_TEXTURE0);
 				glBindTexture(GL_TEXTURE_2D, floorProgram.texture);
-				glUniformMatrix4fv(floorProgram.viewMat, 1, false, glm::value_ptr(viewMat));
 				glUniform1i(floorProgram.textureLoc, 0);
+
+				glUniformMatrix4fv(floorProgram.viewMat, 1, false, glm::value_ptr(viewMat));
+				glUniformMatrix4fv(floorProgram.projMat, 1, false, glm::value_ptr(projMat));
 
 				glBindBuffer(GL_ARRAY_BUFFER, floorVBuffer);
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, floorIBuffer);
@@ -146,6 +157,11 @@ namespace SW_Client
 				glDrawElements(GL_TRIANGLES, fIndicesCount, GL_UNSIGNED_INT, 0);
 			}
 
+			glUseProgram(coloredVertexProgram.program);
+			glUniformMatrix4fv(coloredVertexProgram.viewMat, 1, false, glm::value_ptr(viewMat));
+			glUniformMatrix4fv(coloredVertexProgram.projMat, 1, false, glm::value_ptr(projMat));
+
+			wallMeshes->Bind();
 			DrawWalls(dynamic_cast<SW::TileSet*>(&tiles), tiles.GetAABB());
 
 			/*glUseProgram(coloredVertexProgram.program);
@@ -180,240 +196,42 @@ namespace SW_Client
 
 				if (tile)
 				{
+					glm::vec4 offset(j, 0.0f, i, 1.0f);
 
-					glm::vec2 offset = glm::vec2(j, i);
+
+					glVertexAttribPointer(coloredVertexProgram.posAttrib, 4, GL_FLOAT, false, 48, (GLvoid*)0);
+					glVertexAttribPointer(coloredVertexProgram.normalAttrib, 4, GL_FLOAT, false, 48, (GLvoid*)16);
+					glVertexAttribPointer(coloredVertexProgram.colorAttrib, 4, GL_FLOAT, false, 48, (GLvoid*)32);
+
+
+					WallType_t wall0;
+					WallType_t wall1;
+					int wCount = tile->GetWalls(&wall0, &wall1);
+					if (wCount > 0)
+					{
+
+						glm::mat4 objMat(1.0f);
+						objMat = glm::translate(objMat, glm::vec3(j, 0.0f, i));
+						objMat = glm::rotate(objMat, SW::wallRotations[wall0], glm::vec3(0.0f, 1.0f, 0.0f));
+						glUniformMatrix4fv(coloredVertexProgram.objMat, 1, false, glm::value_ptr(objMat));
+						wallMeshes->meshes[0].Draw();
+
+						if (wCount > 1)
+						{
+							objMat = glm::mat4(1.0f);
+							objMat = glm::translate(objMat, glm::vec3(j, 0.0f, i));
+							objMat = glm::rotate(objMat, SW::wallRotations[wall1], glm::vec3(0.0f, 1.0f, 0.0f));
+							glUniformMatrix4fv(coloredVertexProgram.objMat, 1, false, glm::value_ptr(objMat));
+							wallMeshes->meshes[0].Draw();
+						}
+					}
 				}
 			}
 		}
 	}
 	//point between vectors if considering CCW convention
-	float Determinant(glm::vec2 c0, glm::vec2 c1)
-	{
-		return (c0.x * c1.y) - (c0.y * c1.x);
-	}
-	glm::vec2 WallCorner(glm::vec2 wall0, glm::vec2 wall1)
-	{
-		glm::vec2 d(-wall0.y, wall0.x);
 
-		float uDenom = wall1.x - wall0.x;
-		float uNum;
-
-		if (abs(uDenom) > 0.001f)
-		{
-			uNum = d.x - wall1.y;
-		}
-		else
-		{
-			//may be straight
-			uDenom = wall1.y - wall0.y;
-			uNum = d.y + wall1.x;
-		}
-
-		return d + ((wall0)* (uNum / uDenom));
-	}
-	WallType_t CCWReverseWallSweepOpposite(int start, int stop, SW::TileSet* ts, glm::ivec2 location, WallType_t type)
-	{
-		for (int i = start; i < stop; i++)
-		{
-			if (abs(i - type) <= 4)
-			{
-				SW::Tile* tile;
-				if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
-				{
-					return i;
-				}
-			}
-		}
-		return 0;
-	}
-	WallType_t CCWReverseWallSweepLocal(int start, int stop, SW::TileSet* ts, glm::ivec2 location, WallType_t type)
-	{
-		for (int i = start; i < stop; i++)
-		{
-			if (abs(i - type) > 3)
-			{
-				SW::Tile* tile;
-				if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
-				{
-					return i;
-				}
-			}
-		}
-		return 0;
-	}
-	WallType_t CCWWallSweepOpposite(int start, int stop, SW::Tile* orgtile, WallType_t type)
-	{
-		for (int i = start; i < stop; i++)
-		{
-			if (abs(i - type) <= 4)
-			{
-				if (orgtile->Contains(i))
-				{
-					return i;
-				}
-			}
-		}
-		return 0;
-	}
-	WallType_t CCWWallSweepLocal(int start, int stop, SW::Tile* orgtile, WallType_t type)
-	{
-		for (int i = start; i < stop; i++)
-		{
-			if (abs(i - type) > 3)
-			{
-				if (orgtile->Contains(i))
-				{
-					return i;
-				}
-			}
-		}
-		return 0;
-	}
-
-	static glm::vec2 Rotate90CCW(glm::vec2 v)
-	{
-		return glm::vec2(-v.y, v.x);
-	}
-	static glm::vec2 Rotate90CW(glm::vec2 v)
-	{
-		return glm::vec2(v.y, -v.x);
-	}
-	bool WallVertexSweepCCW(SW::TileSet* ts, SW::Tile* orgtile, glm::ivec2 location, WallType_t type, bool end, glm::vec2 & v)
-	{
-		WallType_t otherWall = 0;
-
-		if (!end)
-		{
-			if ((otherWall = CCWWallSweepLocal(type, 9, orgtile, type)))
-			{
-				v = WallCorner(SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[otherWall]);
-				return false;
-			}
-			if ((otherWall = CCWReverseWallSweepOpposite(1, 9, ts, location, type)))
-			{
-				v = WallCorner(SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[otherWall]);
-				return false;
-			}
-			if ((otherWall = CCWWallSweepLocal(1, type, orgtile, type)))
-			{
-				v = WallCorner(SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[otherWall]);
-				return false;
-			}
-			glm::vec2 temp = SW::wallVectorsNormalized[type];
-			v = Rotate90CCW(temp) - temp;
-			return true;
-		}
-		else
-		{
-			if ((otherWall = CCWReverseWallSweepLocal(type, 9, ts, location, type)))
-			{
-				v = WallCorner(-SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[otherWall]);
-				return false;
-			}
-			if ((otherWall = CCWWallSweepOpposite(1, 9, orgtile, type)))
-			{
-				v = WallCorner(-SW::wallVectorsNormalized[type], SW::wallVectorsNormalized[otherWall]);
-				return false;
-			}
-			if ((otherWall = CCWReverseWallSweepLocal(1, type, ts, location, type)))
-			{
-				v = WallCorner(-SW::wallVectorsNormalized[type], -SW::wallVectorsNormalized[otherWall]);
-				return false;
-			}
-			glm::vec2 temp = -SW::wallVectorsNormalized[type];
-			v = Rotate90CCW(temp) - temp;
-			return true;
-		}
-	}
-	bool WallVertexSweepCW(SW::TileSet* ts, SW::Tile* orgtile, glm::ivec2 location, WallType_t type, bool end, glm::vec2 & v)
-	{
-		SW::Tile* tile;
-
-		if (!end)
-		{
-			for (int i = type; i > 0; i--)
-			{
-				if (abs(i - type) > 3)
-				{
-					if (orgtile->Contains(i))
-					{
-						//calculate the corner vertice location
-						v = WallCorner(SW::wallVectorsNormalized[i], SW::wallVectorsNormalized[type]);
-						return false;
-					}
-				}
-			}
-			for (int i = 8; i > 0; i--)
-			{
-				if (abs(i - type) <= 4)
-				{
-					if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
-					{
-						//calculate the corner vertice location
-						v = WallCorner(-SW::wallVectorsNormalized[i], SW::wallVectorsNormalized[type]);
-						return false;
-					}
-				}
-			}
-			for (int i = 8; i > type; i--)
-			{
-				if (abs(i - type) > 3)
-				{
-					if (orgtile->Contains(i))
-					{
-						//calculate the corner vertice location
-						v = WallCorner(SW::wallVectorsNormalized[i], SW::wallVectorsNormalized[type]);
-						return false;
-					}
-				}
-			}
-			glm::vec2 temp = SW::wallVectorsNormalized[type];
-			v = Rotate90CW(temp) - temp;
-			return true;
-		}
-		else
-		{
-			for (int i = type; i > 0; i--)
-			{
-				if (abs(i - type) > 3)
-				{
-					if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
-					{
-						//calculate the corner vertice location
-						v = WallCorner(-SW::wallVectorsNormalized[i], -SW::wallVectorsNormalized[type]);
-						return false;
-					}
-				}
-			}
-			for (int i = 8; i > 0; i--)
-			{
-				if (abs(i - type) <= 4)
-				{
-					if (orgtile->Contains(i))
-					{
-						//calculate the corner vertice location
-						v = WallCorner(SW::wallVectorsNormalized[i], -SW::wallVectorsNormalized[type]);
-						return false;
-					}
-				}
-			}
-			for (int i = 8; i > type; i--)
-			{
-				if (abs(i - type) > 3)
-				{
-					if ((tile = ts->TryGet(location - SW::wallOffsets[i])) && tile->Contains(i))
-					{
-						//calculate the corner vertice location
-						v = WallCorner(-SW::wallVectorsNormalized[i], -SW::wallVectorsNormalized[type]);
-						return false;
-					}
-				}
-			}
-			glm::vec2 temp = -SW::wallVectorsNormalized[type];
-			v = Rotate90CW(temp) - temp;
-			return true;
-		}
-	}
+	
 	void AppendQuadIndices(std::vector<MeshIndex_t> & indices, std::vector<float> & vertices, int vertexSize)
 	{
 		MeshIndex_t start = vertices.size() / vertexSize;
@@ -578,5 +396,6 @@ namespace SW_Client
 		//}
 
 		GenerateFloorMesh(dynamic_cast<SW::TileSet*>(&tiles), tiles.GetAABB());
+		playerComp = tiles.CompartmentAt(myPlayer->pos);
 	}
 }

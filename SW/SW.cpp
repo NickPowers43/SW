@@ -1,5 +1,6 @@
 #include "SW.h"
 #include "VesselModuleTemplate.h"
+#include <glm/gtc/matrix_transform.hpp>
 
 float deltaTime = 0.0f;
 float elapsedTime = 0.0f;
@@ -45,6 +46,7 @@ namespace SW
 
 	VesselModuleTemplate** vesselModuleTemplates;
 
+
 	glm::ivec2* wallOffsets = new glm::ivec2[9] {
 		glm::ivec2(0, 0),
 		glm::ivec2(1, 0),
@@ -68,6 +70,31 @@ namespace SW
 		glm::vec2(-1.0f, 1.0f),
 		glm::vec2(-2.0f, 1.0f)
 	};
+
+	float* wallMagnitudes = new float[9]{
+		0.0f,
+		glm::length(glm::vec2(1.0f, 0.0f)),
+		glm::length(glm::vec2(2.0f, 1.0f)),
+		glm::length(glm::vec2(1.0f, 1.0f)),
+		glm::length(glm::vec2(1.0f, 2.0f)),
+		glm::length(glm::vec2(0.0f, 1.0f)),
+		glm::length(glm::vec2(-1.0f, 2.0f)),
+		glm::length(glm::vec2(-1.0f, 1.0f)),
+		glm::length(glm::vec2(-2.0f, 1.0f))
+	};
+
+	float* wallRotations = new float[9]{
+		0.0f,
+		-glm::atan(0.0f, 1.0f),
+		-glm::atan(1.0f, 2.0f),
+		-glm::atan(1.0f, 1.0f),
+		-glm::atan(2.0f, 1.0f),
+		-glm::atan(1.0f, 0.0f),
+		-glm::atan(2.0f, -1.0f),
+		-glm::atan(1.0f, -1.0f),
+		-glm::atan(1.0f, -2.0f)
+	};
+
 
 	void Initialize()
 	{

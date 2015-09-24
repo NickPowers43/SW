@@ -67,21 +67,31 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BufferedMeshArray.h" />
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="GraphicsCommon.h" />
+    <ClInclude Include="MCVertex.h" />
+    <ClInclude Include="MeshConstructor.h" />
     <ClInclude Include="NetworkReader.h" />
     <ClInclude Include="NetworkWriter.h" />
     <ClInclude Include="Player.h" />
+    <ClInclude Include="SpriteRect.h" />
     <ClInclude Include="SW_Client.h" />
     <ClInclude Include="TileChunk.h" />
     <ClInclude Include="TileChunks.h" />
     <ClInclude Include="Vessel.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BufferedMeshArray.cpp" />
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="GraphicsCommon.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MCVertex.cpp" />
+    <ClCompile Include="MeshConstructor.cpp" />
     <ClCompile Include="NetworkReader.cpp" />
     <ClCompile Include="NetworkWriter.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="SpriteRect.cpp" />
     <ClCompile Include="SW_Client.cpp" />
     <ClCompile Include="TileChunk.cpp" />
     <ClCompile Include="TileChunks.cpp" />

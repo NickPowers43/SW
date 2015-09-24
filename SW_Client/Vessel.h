@@ -16,6 +16,7 @@ namespace SW_Client
 		Vessel(VesselIndex_t index);
 		~Vessel();
 
+		SW::Compartment* playerComp;
 		Player* myPlayer;
 		TileChunks tiles;
 

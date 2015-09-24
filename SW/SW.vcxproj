@@ -94,6 +94,7 @@
     <ClCompile Include="VesselModuleTileSet.cpp" />
     <ClCompile Include="VesselObject.cpp" />
     <ClCompile Include="Tile.cpp" />
+    <ClCompile Include="WallUtilities.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AABBi.h" />

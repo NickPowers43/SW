@@ -84,6 +84,8 @@ namespace SW
 	void Initialize();
 
 	extern VesselModuleTemplate** vesselModuleTemplates;
+	extern float* wallRotations;
+	extern float* wallMagnitudes;
 	extern glm::ivec2* wallOffsets;
 	extern glm::vec2* wallVectorsNormalized;
 }
@@ -217,3 +219,14 @@ value_type abs(value_type val)
 		return val;
 	}
 }
+
+float Determinant(glm::vec2 c0, glm::vec2 c1);
+glm::vec2 WallCorner(glm::vec2 wall0, glm::vec2 wall1);
+WallType_t CCWReverseWallSweepOpposite(int start, int stop, SW::TileSet* ts, glm::ivec2 location, WallType_t type);
+WallType_t CCWReverseWallSweepLocal(int start, int stop, SW::TileSet* ts, glm::ivec2 location, WallType_t type);
+WallType_t CCWWallSweepOpposite(int start, int stop, SW::Tile* orgtile, WallType_t type);
+WallType_t CCWWallSweepLocal(int start, int stop, SW::Tile* orgtile, WallType_t type);
+glm::vec2 Rotate90CCW(glm::vec2 v);
+glm::vec2 Rotate90CW(glm::vec2 v);
+bool WallVertexSweepCCW(SW::TileSet* ts, SW::Tile* orgtile, glm::ivec2 location, WallType_t type, bool end, glm::vec2 & v);
+bool WallVertexSweepCW(SW::TileSet* ts, SW::Tile* orgtile, glm::ivec2 location, WallType_t type, bool end, glm::vec2 & v);

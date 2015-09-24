@@ -8,101 +8,106 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <SDL/SDL_image.h>
 #include <SDL/SDL_input.h>
+#include <iostream>
+#include <fstream>
+#include "BufferedMeshArray.h"
 
+std::string readFile(const char *filePath) {
+	std::string content;
+	std::ifstream fileStream(filePath, std::ios::in);
+
+	if (!fileStream.is_open()) {
+		std::cerr << "Could not read file " << filePath << ". File does not exist." << std::endl;
+		return "";
+	}
+
+	std::string line = "";
+	while (!fileStream.eof()) {
+		std::getline(fileStream, line);
+		content.append(line + "\n");
+	}
+
+	fileStream.close();
+	return content;
+}
 
 using namespace std;
 
-const char coloredVertexVShaderSource[] =
-"uniform mat4 viewMat;                                 \n"
-"attribute vec2 worldPos;                                                  \n"
-"void main()                                         \n"
-"{                                                   \n"
-"   vec4 transPoint = vec4(worldPos.x, worldPos.y, 0.0, 1.0);\n"
-"   transPoint = viewMat * transPoint;                                                \n"
-"   gl_Position = transPoint;                      \n"
-"}                                                   \n";
-
-const char coloredVertexFShaderSource[] =
-"precision mediump float;                     \n"
-"uniform vec4 color;                                 \n"
-"void main()                                  \n"
-"{                                            \n"
-"  gl_FragColor = color;        \n"
-"}                                            \n";
-
-const char shadowVShaderSource[] =
-"uniform mat4 viewMat;                                 \n"
-"uniform vec2 playerPos;                                 \n"
-"                                                   \n"
-"attribute vec4 worldPos;                                                  \n"
-"attribute vec4 shadowAttrib;                                                  \n"
-"                                                   \n"
-"varying float alpha;                                 \n"
-"                                                   \n"
-"void main()                                         \n"
-"{                                                   \n"
-"   vec2 worldPosV2 = vec2(worldPos.x, worldPos.y);                                                \n"
-"   vec2 fworldPos = worldPosV2 + ((normalize(worldPosV2 - playerPos) * 100.0) * shadowAttrib.x);                                                \n"
-"   vec4 transPoint = vec4(fworldPos.x, fworldPos.y, 0.0, 1.0);\n"
-"                                                   \n"
-"   transPoint = viewMat * transPoint;                                                \n"
-"                                                   \n"
-"   gl_Position = transPoint;                      \n"
-"   alpha = shadowAttrib.z;             \n"
-"}                                                   \n";
-
-
-const char shadowFShaderSource[] =
-"precision mediump float;                     \n"
-"varying float alpha;                                 \n"
-"void main()                                  \n"
-"{                                            \n"
-"  gl_FragColor = vec4(0.0, 0.0, 0.0, alpha);        \n"
-"}                                            \n";
-
-const char floorVShaderSource[] =
-"uniform mat4 viewMat;                                 \n"
-"                                                   \n"
-"                                                   \n"
-"attribute vec2 floorPos;                                                  \n"
-"attribute vec2 floorUV;                                                  \n"
-"                                                   \n"
-"varying vec2 myUV;                                 \n"
-"                                                   \n"
-"void main()                                         \n"
-"{                                                   \n"
-"   vec4 transPoint = vec4(floorPos.x, floorPos.y, 0.0, 1.0);\n"
-"                                                   \n"
-"   transPoint = viewMat * transPoint;                                                \n"
-"                                                   \n"
-"   gl_Position = transPoint;\n"
-"   myUV = floorUV;             \n"
-"}                                                   \n";
-
-const char floorFShaderSource[] =
-"precision mediump float;                     \n"
-"uniform sampler2D floorTexture;                                                   \n"
-"varying vec2 myUV;                          \n"
-"void main()                                  \n"
-"{                                            \n"
-"  gl_FragColor = texture2D(floorTexture, myUV);        \n"
-"}                                            \n";
-
 namespace SW_Client
 {
-	SpriteRect::SpriteRect()
+	void AppendVertex(std::vector<float> & vertices, glm::vec4 pos, glm::vec4 normal, glm::vec4 color)
 	{
-		x = 0.0f;
-		y = 0.0f;
-		width = 0.0f;
-		height = 0.0f;
+		vertices.push_back(pos.x);
+		vertices.push_back(pos.y);
+		vertices.push_back(pos.z);
+		vertices.push_back(1.0f);
+		vertices.push_back(normal.x);
+		vertices.push_back(normal.y);
+		vertices.push_back(normal.z);
+		vertices.push_back(1.0f);
+		vertices.push_back(color.x);
+		vertices.push_back(color.y);
+		vertices.push_back(color.z);
+		vertices.push_back(1.0f);
 	}
-	SpriteRect::SpriteRect(glm::vec2 bl, glm::vec2 dim)
+
+	void GenerateWallMeshes()
 	{
-		x = bl.x;
-		y = bl.y;
-		width = dim.x;
-		height = dim.y;
+		std::vector<float> vertices;
+		std::vector<MeshIndex_t> indices;
+
+		glm::vec4 zero(0.0f, 0.0f, 0.0f, 0.0f);
+		glm::vec4 color(0.77f, 0.77f, 0.77f, 1.0f);
+
+		for (size_t i = 0; i < 3; i++)
+		{
+			glm::vec4 normal;
+			float mag;
+			switch (i)
+			{
+			case 0:
+				mag = SW::wallMagnitudes[1];
+				normal = glm::vec4(-SW::wallVectorsNormalized[0].y, 0.0f, SW::wallVectorsNormalized[0].x, 0.0f);
+				break;
+			case 1:
+				mag = SW::wallMagnitudes[3];
+				normal = glm::vec4(-SW::wallVectorsNormalized[3].y, 0.0f, SW::wallVectorsNormalized[3].x, 0.0f);
+				break;
+			case 3:
+				mag = SW::wallMagnitudes[2];
+				normal = glm::vec4(-SW::wallVectorsNormalized[2].y, 0.0f, SW::wallVectorsNormalized[2].x, 0.0f);
+				break;
+			default:
+				break;
+			}
+
+			normal *= -1.0f;
+
+			glm::vec4 up(0.0f, CEILING_HEIGHT, 0.0f, 0.0f);
+			glm::vec4 right(mag, 0.0f, 0.0f, 0.0f);
+
+			AppendVertex(vertices, zero, normal, color);
+			AppendVertex(vertices, up, normal, color);
+			AppendVertex(vertices, right, normal, color);
+			AppendVertex(vertices, up + right, normal, color);
+
+			wallMeshes->meshes[i].offset = indices.size();
+
+			MeshIndex_t start = indices.size();
+			indices.push_back(start + 0);
+			indices.push_back(start + 3);
+			indices.push_back(start + 1);
+			indices.push_back(start + 0);
+			indices.push_back(start + 2);
+			indices.push_back(start + 3);
+
+			wallMeshes->meshes[i].count = 6;
+		}
+
+
+		wallMeshes->Bind();
+		glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertices.size(), (GLvoid*)&vertices[0], GL_STATIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(MeshIndex_t) * indices.size(), (GLvoid*)&indices[0], GL_STATIC_DRAW);
 	}
 
 	PosUVPair::PosUVPair()
@@ -147,31 +152,16 @@ namespace SW_Client
 		}
 	}
 
-	Camera::Camera()
-	{
-		zoom = 1.0f / 4.0f;
-		position = glm::vec2(0.0f, 0.0f);
-		dim = glm::vec2(1.0f, 1.0f);
-	}
-	Camera::~Camera()
-	{
-
-	}
-
-	void Camera::GenerateView(glm::mat4 & viewMat)
-	{
-		float InvAspectRatio = dim.y / dim.x;
-		viewMat = glm::scale(viewMat, glm::vec3(zoom * InvAspectRatio, zoom, 1.0f));
-		viewMat = glm::translate(viewMat, glm::vec3(-position.x, -position.y, 0.0f));
-	}
 
 	void InitializeClient()
 	{
 		SW::Initialize();
 
-		keyStates = SDL_GetKeyboardState(NULL);
+		wallMeshes = new BufferedMeshArray(4);
+		cornerFloorMeshes = new BufferedMeshArray(4);
+		GenerateWallMeshes();
 
-		glEnable(GL_TEXTURE_2D);
+		keyStates = SDL_GetKeyboardState(NULL);
 
 		SDL_Surface* surface = IMG_Load("data/textures/floors.png");
 		GLenum texture_format;
@@ -222,8 +212,12 @@ namespace SW_Client
 
 		GenerateFloorMeshes();
 
-		GLuint floorVShader = loadShader(GL_VERTEX_SHADER, floorVShaderSource);
-		GLuint floorFShader = loadShader(GL_FRAGMENT_SHADER, floorFShaderSource);
+		std::string shaderSource;
+
+		shaderSource = readFile("data/shaders/floor.vs");
+		GLuint floorVShader = loadShader(GL_VERTEX_SHADER, shaderSource.c_str());
+		shaderSource = readFile("data/shaders/floor.fs");
+		GLuint floorFShader = loadShader(GL_FRAGMENT_SHADER, shaderSource.c_str());
 		floorProgram.program = buildProgram(floorVShader, floorFShader);
 
 		//check if the program linked successfully
@@ -237,13 +231,16 @@ namespace SW_Client
 		else
 		{
 			floorProgram.viewMat = glGetUniformLocation(floorProgram.program, "viewMat");
+			floorProgram.projMat = glGetUniformLocation(floorProgram.program, "projMat");
 			floorProgram.posAttrib = glGetAttribLocation(floorProgram.program, "floorPos");
 			floorProgram.uvAttrib = glGetAttribLocation(floorProgram.program, "floorUV");
 			floorProgram.textureLoc = glGetUniformLocation(floorProgram.program, "floorTexture");
 		}
 
-		GLuint shadowVShader = loadShader(GL_VERTEX_SHADER, shadowVShaderSource);
-		GLuint shadowFShader = loadShader(GL_FRAGMENT_SHADER, shadowFShaderSource);
+		shaderSource = readFile("data/shaders/shadow.vs");
+		GLuint shadowVShader = loadShader(GL_VERTEX_SHADER, shaderSource.c_str());
+		shaderSource = readFile("data/shaders/shadow.fs");
+		GLuint shadowFShader = loadShader(GL_FRAGMENT_SHADER, shaderSource.c_str());
 		shadowProgram.program = buildProgram(shadowVShader, shadowFShader);
 
 		//check if the program linked successfully
@@ -261,8 +258,10 @@ namespace SW_Client
 			shadowProgram.shadowAttrib = glGetAttribLocation(shadowProgram.program, "shadowAttrib");
 		}
 
-		GLuint coloredVertexVShader = loadShader(GL_VERTEX_SHADER, coloredVertexVShaderSource);
-		GLuint coloredVertexFShader = loadShader(GL_FRAGMENT_SHADER, coloredVertexFShaderSource);
+		shaderSource = readFile("data/shaders/colored_vertex.vs");
+		GLuint coloredVertexVShader = loadShader(GL_VERTEX_SHADER, shaderSource.c_str());
+		shaderSource = readFile("data/shaders/colored_vertex.fs");
+		GLuint coloredVertexFShader = loadShader(GL_FRAGMENT_SHADER, shaderSource.c_str());
 		coloredVertexProgram.program = buildProgram(coloredVertexVShader, coloredVertexFShader);
 
 		//check if the program linked successfully
@@ -274,9 +273,13 @@ namespace SW_Client
 		}
 		else
 		{
-			coloredVertexProgram.color = glGetUniformLocation(coloredVertexProgram.program, "color");
 			coloredVertexProgram.viewMat = glGetUniformLocation(coloredVertexProgram.program, "viewMat");
-			coloredVertexProgram.worldPosAttrib = glGetAttribLocation(coloredVertexProgram.program, "worldPos");
+			coloredVertexProgram.projMat = glGetUniformLocation(coloredVertexProgram.program, "projMat");
+			coloredVertexProgram.objMat = glGetUniformLocation(coloredVertexProgram.program, "objMat");
+
+			coloredVertexProgram.posAttrib = glGetAttribLocation(coloredVertexProgram.program, "position");
+			coloredVertexProgram.normalAttrib = glGetAttribLocation(coloredVertexProgram.program, "normal");
+			coloredVertexProgram.colorAttrib = glGetAttribLocation(coloredVertexProgram.program, "color");
 		}
 	}
 
@@ -352,6 +355,8 @@ namespace SW_Client
 	ShadowProgram shadowProgram;
 	ColoredVertexProgram coloredVertexProgram;;
 
+	BufferedMeshArray* wallMeshes = NULL;
+	BufferedMeshArray* cornerFloorMeshes = NULL;
 	SpriteRect* floorUVRects;
 	PosUVMesh* floorMeshes = new PosUVMesh[FloorCount * FloorCount * WallTypeCount * 2];
 	//
