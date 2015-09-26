@@ -33,22 +33,21 @@ namespace SW
 	}
 	int Tile::GetWalls(WallType_t* wall0, WallType_t* wall1)
 	{
-		*wall0 = WallType::WallType::None;
-		*wall1 = WallType::WallType::None;
-		bool firstSet = false;
+		*wall0 = WallType::None;
+		*wall1 = WallType::None;
 
 		int count = 0;
 
-		for (int i = 0; i < 8; i++) {
-			if (((wallMask >> i) & 1) > 0) {
-				count++;
-				if (!firstSet) {
-					*wall0 = (i + 1);
-					firstSet = true;
+		for (int i = 1; i < 9; i++) {
+			if (Contains(i)) {
+				if (count < 1) {
+					*wall0 = i;
 				}
 				else {
-					*wall1 = (i + 1);
+					*wall1 = i;
+					return 2;
 				}
+				count++;
 			}
 		}
 

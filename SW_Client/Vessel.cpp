@@ -135,6 +135,22 @@ namespace SW_Client
 			glm::mat4 projMat(1.0f);
 			camera.GenerateProjection(projMat);
 
+			float lightIntensity = 1.0f;
+			glm::vec3 lightPosition(glm::cos(elapsedTime), 0.5f, glm::sin(elapsedTime));
+
+			glUseProgram(litColoredVertexProgram.program);
+			glUniform1f(litColoredVertexProgram.lightIntensity, lightIntensity);
+			glUniform3fv(litColoredVertexProgram.lightPosition, 1, glm::value_ptr(lightPosition));
+			glUniformMatrix4fv(litColoredVertexProgram.viewMat, 1, false, glm::value_ptr(viewMat));
+			glUniformMatrix4fv(litColoredVertexProgram.projMat, 1, false, glm::value_ptr(projMat));
+
+			wallMeshes->Bind();
+			glVertexAttribPointer(litColoredVertexProgram.posAttrib, 4, GL_FLOAT, false, 48, (GLvoid*)0);
+			glVertexAttribPointer(litColoredVertexProgram.normalAttrib, 4, GL_FLOAT, false, 48, (GLvoid*)16);
+			glVertexAttribPointer(litColoredVertexProgram.colorAttrib, 4, GL_FLOAT, false, 48, (GLvoid*)32);
+
+			DrawWalls(dynamic_cast<SW::TileSet*>(&tiles), tiles.GetAABB());
+
 			if (floorVBuffer)
 			{
 				glUseProgram(floorProgram.program);
@@ -157,17 +173,11 @@ namespace SW_Client
 				glDrawElements(GL_TRIANGLES, fIndicesCount, GL_UNSIGNED_INT, 0);
 			}
 
-			glUseProgram(coloredVertexProgram.program);
-			glUniformMatrix4fv(coloredVertexProgram.viewMat, 1, false, glm::value_ptr(viewMat));
-			glUniformMatrix4fv(coloredVertexProgram.projMat, 1, false, glm::value_ptr(projMat));
 
-			wallMeshes->Bind();
-			DrawWalls(dynamic_cast<SW::TileSet*>(&tiles), tiles.GetAABB());
-
-			/*glUseProgram(coloredVertexProgram.program);
+			/*glUseProgram(litColoredVertexProgram.program);
 			glm::vec4 color(0.5f, 0.5f, 0.5f, 1.0f);
-			glUniform4fv(coloredVertexProgram.color, 1, glm::value_ptr(color));
-			glUniformMatrix4fv(coloredVertexProgram.viewMat, 1, false, glm::value_ptr(viewMat));
+			glUniform4fv(litColoredVertexProgram.color, 1, glm::value_ptr(color));
+			glUniformMatrix4fv(litColoredVertexProgram.viewMat, 1, false, glm::value_ptr(viewMat));
 
 			DrawWalls();
 
@@ -185,6 +195,46 @@ namespace SW_Client
 			glDisable(GL_BLEND);*/
 		}
 	}
+	int GetWallMeshIndex(WallType_t type)
+	{
+		switch (type)
+		{
+		case WallType::OneByZero:
+		case WallType::ZeroByOne:
+			return 0;
+		case WallType::OneByOne:
+		case WallType::OneByOneFlipped:
+			return 1;
+		case WallType::TwoByOne:
+		case WallType::TwoByOneFlipped:
+		case WallType::OneByTwo:
+		case WallType::OneByTwoFlipped:
+			return 2;
+		default:
+			return -1;
+		}
+	}
+	void DrawWallRight(WallType_t type, int x, int z)
+	{
+		glm::mat4 objMat(1.0f);
+		objMat = glm::translate(objMat, glm::vec3(x, 0.0f, z));
+		objMat = glm::rotate(objMat, SW::wallRotations[type], glm::vec3(0.0f, -1.0f, 0.0f));
+		glUniformMatrix4fv(litColoredVertexProgram.objMat, 1, false, glm::value_ptr(objMat));
+
+		int wallMesh = GetWallMeshIndex(type);
+		wallMeshes->meshes[wallMesh * 2].Draw();
+	}
+	void DrawWallLeft(WallType_t type, int x, int z)
+	{
+		glm::mat4 objMat(1.0f);
+		objMat = glm::translate(objMat, glm::vec3(x, 0.0f, z));
+		objMat = glm::rotate(objMat, SW::wallRotations[type] + glm::pi<float>(), glm::vec3(0.0f, -1.0f, 0.0f));
+		objMat = glm::scale(objMat, glm::vec3(-1.0f, 1.0f, 1.0f));
+		glUniformMatrix4fv(litColoredVertexProgram.objMat, 1, false, glm::value_ptr(objMat));
+
+		int wallMesh = GetWallMeshIndex(type);
+		wallMeshes->meshes[(wallMesh * 2) + 1].Draw();
+	}
 	void Vessel::DrawWalls(SW::TileSet* ts, SW::AABBi region)
 	{
 		for (int i = region.bl.y; i < region.tr.y; i++)
@@ -196,33 +246,20 @@ namespace SW_Client
 
 				if (tile)
 				{
-					glm::vec4 offset(j, 0.0f, i, 1.0f);
-
-
-					glVertexAttribPointer(coloredVertexProgram.posAttrib, 4, GL_FLOAT, false, 48, (GLvoid*)0);
-					glVertexAttribPointer(coloredVertexProgram.normalAttrib, 4, GL_FLOAT, false, 48, (GLvoid*)16);
-					glVertexAttribPointer(coloredVertexProgram.colorAttrib, 4, GL_FLOAT, false, 48, (GLvoid*)32);
-
+					//glm::vec4 offset(j, 0.0f, i, 1.0f);
 
 					WallType_t wall0;
 					WallType_t wall1;
 					int wCount = tile->GetWalls(&wall0, &wall1);
 					if (wCount > 0)
 					{
-
-						glm::mat4 objMat(1.0f);
-						objMat = glm::translate(objMat, glm::vec3(j, 0.0f, i));
-						objMat = glm::rotate(objMat, SW::wallRotations[wall0], glm::vec3(0.0f, 1.0f, 0.0f));
-						glUniformMatrix4fv(coloredVertexProgram.objMat, 1, false, glm::value_ptr(objMat));
-						wallMeshes->meshes[0].Draw();
+						DrawWallRight(wall0, j, i);
+						DrawWallLeft(wall0, j, i);
 
 						if (wCount > 1)
 						{
-							objMat = glm::mat4(1.0f);
-							objMat = glm::translate(objMat, glm::vec3(j, 0.0f, i));
-							objMat = glm::rotate(objMat, SW::wallRotations[wall1], glm::vec3(0.0f, 1.0f, 0.0f));
-							glUniformMatrix4fv(coloredVertexProgram.objMat, 1, false, glm::value_ptr(objMat));
-							wallMeshes->meshes[0].Draw();
+							DrawWallRight(wall1, j, i);
+							DrawWallLeft(wall1, j, i);
 						}
 					}
 				}

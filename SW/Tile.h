@@ -16,9 +16,9 @@ namespace SW
 		FloorType_t floor1;
 
 		int WallCount();
-		int GetWalls(uint8_t* wall0, uint8_t* wall1);
-		bool Contains(uint8_t wall);
-		bool ContainsMask(uint8_t wall);
+		int GetWalls(WallType_t* wall0, WallType_t* wall1);
+		bool Contains(WallType_t wall);
+		bool ContainsMask(WallTypeMask_t wall);
 	};
 }
 

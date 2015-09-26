@@ -17,7 +17,7 @@ namespace SW_Client
 
 	void BufferedSubMesh::Draw()
 	{
-		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, (GLvoid*)offset);
+		glDrawElements(GL_TRIANGLES, count, GL_UNSIGNED_INT, (void*)(offset * sizeof(GLuint)));
 	}
 
 	BufferedMeshArray::BufferedMeshArray(int count)

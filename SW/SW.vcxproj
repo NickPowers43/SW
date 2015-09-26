@@ -69,6 +69,7 @@
   <ItemGroup>
     <ClCompile Include="AABBi.cpp" />
     <ClCompile Include="AdjacentTiles.cpp" />
+    <ClCompile Include="Collider.cpp" />
     <ClCompile Include="Compartment.cpp" />
     <ClCompile Include="CompartmentTile.cpp" />
     <ClCompile Include="CompartmentTileSet.cpp" />
@@ -99,6 +100,7 @@
   <ItemGroup>
     <ClInclude Include="AABBi.h" />
     <ClInclude Include="AdjacentTiles.h" />
+    <ClInclude Include="Collider.h" />
     <ClInclude Include="Compartment.h" />
     <ClInclude Include="CompartmentTile.h" />
     <ClInclude Include="CompartmentTileSet.h" />

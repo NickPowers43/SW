@@ -54,6 +54,9 @@
     <ClInclude Include="MCVertex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MCPlane.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Vessel.cpp">
@@ -96,6 +99,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="MCVertex.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MCPlane.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

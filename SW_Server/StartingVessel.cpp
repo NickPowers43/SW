@@ -101,8 +101,8 @@ namespace SW_Server
 		tiles.RebuildCompartments(true);
 
 		tiles.SetCompartmentFloorAt(FloorType::SmoothWhite, glm::vec2(0.0f, 0.0f));
-		tiles.SetCompartmentFloorAt(FloorType::Basic, glm::vec2(19.0f, 0.0f));
-		tiles.SetCompartmentFloorAt(FloorType::Basic, glm::vec2(4.0f, 0.0f));
+		//tiles.SetCompartmentFloorAt(FloorType::Basic, glm::vec2(19.0f, 0.0f));
+		//tiles.SetCompartmentFloorAt(FloorType::Basic, glm::vec2(4.0f, 0.0f));
 	}
 	SW::VesselObject* StartingVessel::PlaceObject(ObjectType::ObjectType type, glm::vec2 location)
 	{

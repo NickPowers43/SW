@@ -70,6 +70,7 @@
     <ClInclude Include="BufferedMeshArray.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="GraphicsCommon.h" />
+    <ClInclude Include="MCPlane.h" />
     <ClInclude Include="MCVertex.h" />
     <ClInclude Include="MeshConstructor.h" />
     <ClInclude Include="NetworkReader.h" />
@@ -86,6 +87,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="GraphicsCommon.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="MCPlane.cpp" />
     <ClCompile Include="MCVertex.cpp" />
     <ClCompile Include="MeshConstructor.cpp" />
     <ClCompile Include="NetworkReader.cpp" />

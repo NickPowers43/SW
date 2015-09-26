@@ -19,7 +19,7 @@ namespace SW_Client
 
 		MCTriangle(MCIndex a, MCIndex b, MCIndex c);
 	};
-
+	
 	class MeshConstructor
 	{
 	public:
@@ -29,16 +29,18 @@ namespace SW_Client
 		void RecomputeNormals();
 		void SimpleChamferEdges(std::vector<MCIndexPair> edges, float amount);
 
+		int FaceContainingSequence(MCIndex a, MCIndex b, MCIndex c);
+		static void Replace(MCIndex org, MCIndex n, std::vector<MCIndex> face);
 		int CommonVertex(MCTriangle t0, MCTriangle t1, MCIndex exclude);
-		int References(int vIndex);
-		static void TrianglesReferencingEdge(MCIndexPair edge, std::vector<MCTriangle> & triangles, int & t0, int & t1);
+		//int References(int vIndex);
+		//static void TrianglesReferencingEdge(MCIndexPair edge, std::vector<MCTriangle> & triangles, int & t0, int & t1);
 		static void RemoveVertex(int vIndex, std::vector<MCIndex> & indices);
-		static void RemoveVertex(int vIndex, std::vector<MCIndex> & vertices);
-		glm::vec3 TriangleNormal(MCTriangle t);
+		static void RemoveVertex(int vIndex, std::vector<MCVertex> & vertices);
+		glm::vec3 FaceCross(MCTriangle triangle);
 		void AddQuad(MCIndex a, MCIndex b, MCIndex c, MCIndex d);
 
-		std::vector<MCTriangle> triangles;
-		std::vector<MCVertex> vertices;
+		std::vector<MCTriangle> t;
+		std::vector<MCVertex> v;
 	};
 }
 

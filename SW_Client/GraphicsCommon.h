@@ -78,6 +78,20 @@ namespace SW_Client
 		GLuint colorAttrib;
 	};
 
+	struct LitColoredVertexProgram
+	{
+		GLuint program;
+
+		int lightPosition;
+		int lightIntensity;
+		int viewMat;
+		int projMat;
+		int objMat;
+
+		GLuint posAttrib;
+		GLuint normalAttrib;
+		GLuint colorAttrib;
+	};
 
 	extern uint8_t* keyStates;
 
@@ -85,6 +99,7 @@ namespace SW_Client
 	extern FloorProgram floorProgram;
 	extern ShadowProgram shadowProgram;
 	extern ColoredVertexProgram coloredVertexProgram;
+	extern LitColoredVertexProgram litColoredVertexProgram;
 
 	extern BufferedMeshArray* wallMeshes;
 	extern BufferedMeshArray* cornerFloorMeshes;
@@ -104,8 +119,9 @@ namespace SW_Client
 	void GenerateFloorMeshes();
 	void AppendMeshData(PosUVMesh* floorMesh, std::vector<float> & vertices, std::vector<MeshIndex_t> & indices, glm::vec2 offset);
 
-	GLuint loadShader(GLenum type, const char *source);
-	GLuint buildProgram(GLuint vertexShader, GLuint fragmentShader);
+	GLuint LoadProgram(const char *vs, const char *fs);
+	GLuint LoadShader(GLenum type, const char *source);
+	GLuint BuildProgram(GLuint vertexShader, GLuint fragmentShader);
 }
 
 

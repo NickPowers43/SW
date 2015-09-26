@@ -73,34 +73,42 @@ namespace SW
 
 	float* wallMagnitudes = new float[9]{
 		0.0f,
-		glm::length(glm::vec2(1.0f, 0.0f)),
-		glm::length(glm::vec2(2.0f, 1.0f)),
-		glm::length(glm::vec2(1.0f, 1.0f)),
-		glm::length(glm::vec2(1.0f, 2.0f)),
-		glm::length(glm::vec2(0.0f, 1.0f)),
-		glm::length(glm::vec2(-1.0f, 2.0f)),
-		glm::length(glm::vec2(-1.0f, 1.0f)),
-		glm::length(glm::vec2(-2.0f, 1.0f))
+		1.0f,
+		5.0f,
+		2.0f,
+		5.0f,
+		1.0f,
+		5.0f,
+		2.0f,
+		5.0f
 	};
 
 	float* wallRotations = new float[9]{
 		0.0f,
-		-glm::atan(0.0f, 1.0f),
-		-glm::atan(1.0f, 2.0f),
-		-glm::atan(1.0f, 1.0f),
-		-glm::atan(2.0f, 1.0f),
-		-glm::atan(1.0f, 0.0f),
-		-glm::atan(2.0f, -1.0f),
-		-glm::atan(1.0f, -1.0f),
-		-glm::atan(1.0f, -2.0f)
+		0.0f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.0f,
+		0.0f
 	};
 
 
 	void Initialize()
 	{
-		for (size_t i = 0; i < 9; i++)
+		for (size_t i = 1; i < 9; i++)
 		{
 			wallVectorsNormalized[i] = glm::normalize(wallVectorsNormalized[i]);
+		}
+		for (size_t i = 1; i < 9; i++)
+		{
+			wallMagnitudes[i] = glm::sqrt(wallMagnitudes[i]);
+		}
+		for (size_t i = 1; i < 9; i++)
+		{
+			wallRotations[i] = glm::acos(wallVectorsNormalized[i].x);
 		}
 
 		vesselModuleTemplates = new VesselModuleTemplate*[2];

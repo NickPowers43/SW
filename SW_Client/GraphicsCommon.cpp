@@ -11,6 +11,8 @@
 #include <iostream>
 #include <fstream>
 #include "BufferedMeshArray.h"
+#include "MeshConstructor.h"
+#include "MCPlane.h"
 
 std::string readFile(const char *filePath) {
 	std::string content;
@@ -35,7 +37,7 @@ using namespace std;
 
 namespace SW_Client
 {
-	void AppendVertex(std::vector<float> & vertices, glm::vec4 pos, glm::vec4 normal, glm::vec4 color)
+	void AppendVertex(std::vector<float> & vertices, glm::vec3 pos, glm::vec3 normal, glm::vec4 color)
 	{
 		vertices.push_back(pos.x);
 		vertices.push_back(pos.y);
@@ -44,7 +46,7 @@ namespace SW_Client
 		vertices.push_back(normal.x);
 		vertices.push_back(normal.y);
 		vertices.push_back(normal.z);
-		vertices.push_back(1.0f);
+		vertices.push_back(0.0f);
 		vertices.push_back(color.x);
 		vertices.push_back(color.y);
 		vertices.push_back(color.z);
@@ -56,52 +58,66 @@ namespace SW_Client
 		std::vector<float> vertices;
 		std::vector<MeshIndex_t> indices;
 
-		glm::vec4 zero(0.0f, 0.0f, 0.0f, 0.0f);
-		glm::vec4 color(0.77f, 0.77f, 0.77f, 1.0f);
+		glm::vec4 color(1.0f, 1.0f, 1.0f, 1.0f);
 
 		for (size_t i = 0; i < 3; i++)
 		{
-			glm::vec4 normal;
-			float mag;
-			switch (i)
+			MeshConstructor mc;
+
+			float mag = SW::wallMagnitudes[WallType::OneByZero];
+			if (i == 1)
 			{
-			case 0:
-				mag = SW::wallMagnitudes[1];
-				normal = glm::vec4(-SW::wallVectorsNormalized[0].y, 0.0f, SW::wallVectorsNormalized[0].x, 0.0f);
-				break;
-			case 1:
-				mag = SW::wallMagnitudes[3];
-				normal = glm::vec4(-SW::wallVectorsNormalized[3].y, 0.0f, SW::wallVectorsNormalized[3].x, 0.0f);
-				break;
-			case 3:
-				mag = SW::wallMagnitudes[2];
-				normal = glm::vec4(-SW::wallVectorsNormalized[2].y, 0.0f, SW::wallVectorsNormalized[2].x, 0.0f);
-				break;
-			default:
-				break;
+				mag = SW::wallMagnitudes[WallType::OneByZero];
+			}
+			else if (i == 2)
+			{
+				mag = SW::wallMagnitudes[WallType::OneByOne];
+			}
+			else if (i == 0)
+			{
+				mag = SW::wallMagnitudes[WallType::TwoByOne];
 			}
 
-			normal *= -1.0f;
 
-			glm::vec4 up(0.0f, CEILING_HEIGHT, 0.0f, 0.0f);
-			glm::vec4 right(mag, 0.0f, 0.0f, 0.0f);
 
-			AppendVertex(vertices, zero, normal, color);
-			AppendVertex(vertices, up, normal, color);
-			AppendVertex(vertices, right, normal, color);
-			AppendVertex(vertices, up + right, normal, color);
+			glm::vec3 zero(0.0f, 0.0f, 0.0f);
+			glm::vec3 up(0.0f, CEILING_HEIGHT, 0.0f);
+			glm::vec3 right(mag, 0.0f, 0.0f);
 
-			wallMeshes->meshes[i].offset = indices.size();
+			mc.v.push_back(MCVertex(zero));
+			mc.v.push_back(MCVertex(up));
+			mc.v.push_back(MCVertex(right));
+			mc.v.push_back(MCVertex(up + right));
 
-			MeshIndex_t start = indices.size();
-			indices.push_back(start + 0);
-			indices.push_back(start + 3);
-			indices.push_back(start + 1);
-			indices.push_back(start + 0);
-			indices.push_back(start + 2);
-			indices.push_back(start + 3);
+			mc.AddQuad(0, 1, 2, 3);
 
-			wallMeshes->meshes[i].count = 6;
+			mc.RecomputeNormals();
+
+			for (size_t i = 0; i < mc.v.size(); i++)
+			{
+				AppendVertex(vertices, mc.v[i].pos, mc.v[i].normal, color);
+			}
+
+			MeshIndex_t start;
+
+			wallMeshes->meshes[(i * 2)].offset = indices.size();
+			wallMeshes->meshes[(i * 2)].count = mc.t.size() * 3;
+			start = (vertices.size() / 12);
+			for (size_t i = 0; i < mc.t.size(); i++)
+			{
+				indices.push_back(start + mc.t[i].i[0]);
+				indices.push_back(start + mc.t[i].i[1]);
+				indices.push_back(start + mc.t[i].i[2]);
+			}
+			wallMeshes->meshes[(i * 2) + 1].offset = indices.size();
+			wallMeshes->meshes[(i * 2) + 1].count = mc.t.size() * 3;
+			start = (vertices.size() / 12);
+			for (size_t i = 0; i < mc.t.size(); i++)
+			{
+				indices.push_back(start + mc.t[i].i[2]);
+				indices.push_back(start + mc.t[i].i[1]);
+				indices.push_back(start + mc.t[i].i[0]);
+			}
 		}
 
 
@@ -157,7 +173,7 @@ namespace SW_Client
 	{
 		SW::Initialize();
 
-		wallMeshes = new BufferedMeshArray(4);
+		wallMeshes = new BufferedMeshArray(6);
 		cornerFloorMeshes = new BufferedMeshArray(4);
 		GenerateWallMeshes();
 
@@ -212,75 +228,38 @@ namespace SW_Client
 
 		GenerateFloorMeshes();
 
-		std::string shaderSource;
+		glFinish();
 
-		shaderSource = readFile("data/shaders/floor.vs");
-		GLuint floorVShader = loadShader(GL_VERTEX_SHADER, shaderSource.c_str());
-		shaderSource = readFile("data/shaders/floor.fs");
-		GLuint floorFShader = loadShader(GL_FRAGMENT_SHADER, shaderSource.c_str());
-		floorProgram.program = buildProgram(floorVShader, floorFShader);
+		floorProgram.program = LoadProgram("data/shaders/floor.vs", "data/shaders/floor.fs");
+		floorProgram.viewMat = glGetUniformLocation(floorProgram.program, "viewMat");
+		floorProgram.projMat = glGetUniformLocation(floorProgram.program, "projMat");
+		floorProgram.posAttrib = glGetAttribLocation(floorProgram.program, "floorPos");
+		floorProgram.uvAttrib = glGetAttribLocation(floorProgram.program, "floorUV");
+		floorProgram.textureLoc = glGetUniformLocation(floorProgram.program, "floorTexture");
 
-		//check if the program linked successfully
-		GLint linked;
-		glGetProgramiv(floorProgram.program, GL_LINK_STATUS, &linked);
-		if (!linked)
-		{
-			printf("floorShaderProgram link error");
-			glDeleteProgram(floorProgram.program);
-		}
-		else
-		{
-			floorProgram.viewMat = glGetUniformLocation(floorProgram.program, "viewMat");
-			floorProgram.projMat = glGetUniformLocation(floorProgram.program, "projMat");
-			floorProgram.posAttrib = glGetAttribLocation(floorProgram.program, "floorPos");
-			floorProgram.uvAttrib = glGetAttribLocation(floorProgram.program, "floorUV");
-			floorProgram.textureLoc = glGetUniformLocation(floorProgram.program, "floorTexture");
-		}
+		shadowProgram.program = LoadProgram("data/shaders/shadow.vs", "data/shaders/shadow.fs");
+		shadowProgram.viewMat = glGetUniformLocation(shadowProgram.program, "viewMat");
+		shadowProgram.playerPos = glGetUniformLocation(shadowProgram.program, "playerPos");
+		shadowProgram.worldPosAttrib = glGetAttribLocation(shadowProgram.program, "worldPos");
+		shadowProgram.shadowAttrib = glGetAttribLocation(shadowProgram.program, "shadowAttrib");
 
-		shaderSource = readFile("data/shaders/shadow.vs");
-		GLuint shadowVShader = loadShader(GL_VERTEX_SHADER, shaderSource.c_str());
-		shaderSource = readFile("data/shaders/shadow.fs");
-		GLuint shadowFShader = loadShader(GL_FRAGMENT_SHADER, shaderSource.c_str());
-		shadowProgram.program = buildProgram(shadowVShader, shadowFShader);
+		coloredVertexProgram.program = LoadProgram("data/shaders/colored_vertex.vs", "data/shaders/colored_vertex.fs");
+		coloredVertexProgram.viewMat = glGetUniformLocation(coloredVertexProgram.program, "viewMat");
+		coloredVertexProgram.projMat = glGetUniformLocation(coloredVertexProgram.program, "projMat");
+		coloredVertexProgram.objMat = glGetUniformLocation(coloredVertexProgram.program, "objMat");
+		coloredVertexProgram.posAttrib = glGetAttribLocation(coloredVertexProgram.program, "position");
+		coloredVertexProgram.normalAttrib = glGetAttribLocation(coloredVertexProgram.program, "normal");
+		coloredVertexProgram.colorAttrib = glGetAttribLocation(coloredVertexProgram.program, "color");
 
-		//check if the program linked successfully
-		glGetProgramiv(shadowProgram.program, GL_LINK_STATUS, &linked);
-		if (!linked)
-		{
-			printf("shadowShaderProgram link error");
-			glDeleteProgram(shadowProgram.program);
-		}
-		else
-		{
-			shadowProgram.viewMat = glGetUniformLocation(shadowProgram.program, "viewMat");
-			shadowProgram.playerPos = glGetUniformLocation(shadowProgram.program, "playerPos");
-			shadowProgram.worldPosAttrib = glGetAttribLocation(shadowProgram.program, "worldPos");
-			shadowProgram.shadowAttrib = glGetAttribLocation(shadowProgram.program, "shadowAttrib");
-		}
-
-		shaderSource = readFile("data/shaders/colored_vertex.vs");
-		GLuint coloredVertexVShader = loadShader(GL_VERTEX_SHADER, shaderSource.c_str());
-		shaderSource = readFile("data/shaders/colored_vertex.fs");
-		GLuint coloredVertexFShader = loadShader(GL_FRAGMENT_SHADER, shaderSource.c_str());
-		coloredVertexProgram.program = buildProgram(coloredVertexVShader, coloredVertexFShader);
-
-		//check if the program linked successfully
-		glGetProgramiv(coloredVertexProgram.program, GL_LINK_STATUS, &linked);
-		if (!linked)
-		{
-			printf("coloredVertexShaderProgram link error");
-			glDeleteProgram(coloredVertexProgram.program);
-		}
-		else
-		{
-			coloredVertexProgram.viewMat = glGetUniformLocation(coloredVertexProgram.program, "viewMat");
-			coloredVertexProgram.projMat = glGetUniformLocation(coloredVertexProgram.program, "projMat");
-			coloredVertexProgram.objMat = glGetUniformLocation(coloredVertexProgram.program, "objMat");
-
-			coloredVertexProgram.posAttrib = glGetAttribLocation(coloredVertexProgram.program, "position");
-			coloredVertexProgram.normalAttrib = glGetAttribLocation(coloredVertexProgram.program, "normal");
-			coloredVertexProgram.colorAttrib = glGetAttribLocation(coloredVertexProgram.program, "color");
-		}
+		litColoredVertexProgram.program = LoadProgram("data/shaders/lit_colored_vertex.vs", "data/shaders/lit_colored_vertex.fs");
+		litColoredVertexProgram.lightIntensity = glGetUniformLocation(litColoredVertexProgram.program, "lightIntensity");
+		litColoredVertexProgram.lightPosition = glGetUniformLocation(litColoredVertexProgram.program, "lightPosition");
+		litColoredVertexProgram.viewMat = glGetUniformLocation(litColoredVertexProgram.program, "viewMat");
+		litColoredVertexProgram.projMat = glGetUniformLocation(litColoredVertexProgram.program, "projMat");
+		litColoredVertexProgram.objMat = glGetUniformLocation(litColoredVertexProgram.program, "objMat");
+		litColoredVertexProgram.posAttrib = glGetAttribLocation(litColoredVertexProgram.program, "position");
+		litColoredVertexProgram.normalAttrib = glGetAttribLocation(litColoredVertexProgram.program, "normal");
+		litColoredVertexProgram.colorAttrib = glGetAttribLocation(litColoredVertexProgram.program, "color");
 	}
 
 	void GenerateBaseVertices(SpriteRect rect, PosUVPair* output)
@@ -353,7 +332,8 @@ namespace SW_Client
 	Camera camera = Camera();
 	FloorProgram floorProgram;
 	ShadowProgram shadowProgram;
-	ColoredVertexProgram coloredVertexProgram;;
+	ColoredVertexProgram coloredVertexProgram;
+	LitColoredVertexProgram litColoredVertexProgram;
 
 	BufferedMeshArray* wallMeshes = NULL;
 	BufferedMeshArray* cornerFloorMeshes = NULL;
@@ -635,7 +615,35 @@ namespace SW_Client
 		}
 	}
 
-	GLuint loadShader(GLenum type, const char *source)
+	GLuint LoadProgram(const char *vs, const char *fs)
+	{
+		std::string shaderSource;
+
+		shaderSource = readFile(vs);
+		GLuint vShader = LoadShader(GL_VERTEX_SHADER, shaderSource.c_str());
+		shaderSource = readFile(fs);
+		GLuint fShader = LoadShader(GL_FRAGMENT_SHADER, shaderSource.c_str());
+
+		GLuint output = BuildProgram(vShader, fShader);
+
+		GLint linked;
+		glGetProgramiv(output, GL_LINK_STATUS, &linked);
+		if (!linked)
+		{
+			std::ostringstream print;
+			print << "Program Link error: \n";
+			print << "VS: " << vs << "\n";
+			print << "FS: " << fs << "\n";
+			PrintMessage((int)print.str().c_str());
+			glDeleteProgram(output);
+			return 0;
+		}
+		else
+		{
+			return output;
+		}
+	}
+	GLuint LoadShader(GLenum type, const char *source)
 	{
 		//create a shader
 		GLuint shader = glCreateShader(type);
@@ -670,7 +678,7 @@ namespace SW_Client
 		return shader;
 	}
 
-	GLuint buildProgram(GLuint vertexShader, GLuint fragmentShader)
+	GLuint BuildProgram(GLuint vertexShader, GLuint fragmentShader)
 	{
 		//create a GL program and link it
 		GLuint programObject = glCreateProgram();
