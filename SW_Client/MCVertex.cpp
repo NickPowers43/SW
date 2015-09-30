@@ -3,6 +3,10 @@
 
 namespace SW_Client
 {
+	MCVertex::MCVertex()
+	{
+
+	}
 	MCVertex::MCVertex(glm::vec3 pos)
 	{
 		MCVertex::pos = pos;

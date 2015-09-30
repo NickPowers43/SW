@@ -153,10 +153,15 @@ BOOL WINAPI OnUserClose(_In_ DWORD dwCtrlType)
 }
 
 
+ULONGLONG prevTickCount;
 void game_thread_run()
 {
 	while (running)
 	{
+		ULONGLONG currTickCount = GetTickCount64();
+		elapsedTime = (prevTickCount - currTickCount) / 1000.0f;
+		prevTickCount = currTickCount;
+
 		SW::QTNode* root_adj[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 		qt->UpdateSurrounding((SW::QTNode**)&root_adj);
 

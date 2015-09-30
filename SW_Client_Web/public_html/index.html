@@ -37,6 +37,10 @@
         <<script type="text/javascript">
             window.mySocket = null;
             var canvas = document.getElementById("canvas");
+			canvas.addEventListener('click', function(event) {
+				canvas.requestPointerLock = canvas.requestPointerLock || canvas.mozRequestPointerLock || canvas.webkitRequestPointerLock;
+				canvas.requestPointerLock();
+			});
             //make the canvas fullscreen
 			window.canvasWidth = canvas.clientWidth;
 			window.canvasHeight = (canvas.clientWidth * (1080.0 / 1920.0))|0;

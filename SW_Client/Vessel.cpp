@@ -15,6 +15,58 @@
 #include <SDL/SDL_scancode.h>
 #include <SDL/SDL_events.h>
 #include "BufferedMeshArray.h"
+#include <emscripten\html5.h>
+
+bool pointerLockRequested = false;
+bool pointerLocked = false;
+
+EM_BOOL key_callback(int eventType, const EmscriptenKeyboardEvent *e, void *userData)
+{
+	if (eventType == EMSCRIPTEN_EVENT_KEYPRESS && (!strcmp(e->key, "l") || e->which == 112)) {
+		EmscriptenPointerlockChangeEvent plce;
+		EMSCRIPTEN_RESULT ret = emscripten_get_pointerlock_status(&plce);
+		if (!plce.isActive) {
+			PrintMessage((int)"emscripten_request_pointerlock");
+			ret = emscripten_request_pointerlock(0, 1);
+		}
+		else {
+			ret = emscripten_exit_pointerlock();
+			ret = emscripten_get_pointerlock_status(&plce);
+			if (plce.isActive) {
+				PrintMessage((int)"Pointer lock exit did not work!\n");
+			}
+		}
+	}
+
+	return 0;
+}
+
+EM_BOOL pointerlockchange_callback_func(int eventType, const EmscriptenPointerlockChangeEvent *pointerlockChangeEvent, void *userData)
+{
+	pointerLocked = pointerlockChangeEvent->isActive;
+
+	pointerLockRequested = !pointerLocked;
+
+	return 0;
+
+}
+
+EM_BOOL myMouseMoveCallback(int eventType, const EmscriptenMouseEvent *mouseEvent, void *userData)
+{
+	/*if (!pointerLockRequested && !pointerLocked)
+	{
+		PrintMessage((int)"Requesting pointer lock");
+		emscripten_request_pointerlock("canvas", true);
+		pointerLockRequested = true;
+	}*/
+
+	SW_Client::Vessel* v = (SW_Client::Vessel*)userData;
+
+	v->myPlayer->facing.x += (0.006f) * (float)mouseEvent->movementX;
+	v->myPlayer->facing.y += (0.006f) * (float)mouseEvent->movementY;
+
+	return 0;
+}
 
 namespace SW_Client
 {
@@ -25,6 +77,7 @@ namespace SW_Client
 		fMeshCreated = false;
 		floorVBuffer = 0;
 		floorIBuffer = 0;
+
 	}
 
 
@@ -50,6 +103,11 @@ namespace SW_Client
 			nw->WriteInt32(0);
 			nw->WriteInt32(0);
 			nw->WriteInt32(0);
+
+			//emscripten_set_keydown_callback(0, 0, 1, key_callback);
+			//emscripten_set_pointerlockchange_callback(NULL, NULL, true, pointerlockchange_callback_func);
+			emscripten_set_mousemove_callback(0, this, true, myMouseMoveCallback);
+			//emscripten_request_pointerlock("canvas", true);
 		}
 		else
 		{
@@ -60,50 +118,41 @@ namespace SW_Client
 	{
 		if (myPlayer)
 		{
-			SDL_Event event;
-			while (SDL_PollEvent(&event)) {
-				/*if (event.type == SDL_EventType::)
+			if (keyStates[SDLK_w] || keyStates[SDLK_a] || keyStates[SDLK_s] || keyStates[SDLK_d])
+			{
+				glm::vec4 translate(0.0f, 0.0f, 0.0f, 0.0f);
+				if (keyStates[SDLK_w])
 				{
-
-				}*/
-				if (event.key.keysym.sym == SDLK_w)
-				{
-					myPlayer->pos += glm::vec2(0.0f, 0.02f);
+					translate += glm::vec4(0.0f, 0.0f, 1.0f, 0.0f);
 				}
-				if (event.key.keysym.sym == SDLK_s)
+				if (keyStates[SDLK_s])
 				{
-					myPlayer->pos += glm::vec2(0.0f, -0.02f);
+					translate += glm::vec4(0.0f, 0.0f, -1.0f, 0.0f);
 				}
-				if (event.key.keysym.sym == SDLK_a)
+				if (keyStates[SDLK_a])
 				{
-					myPlayer->pos += glm::vec2(-0.02f, 0.0f);
+					translate += glm::vec4(-1.0f, 0.0f, 0.0f, 0.0f);
 				}
-				if (event.key.keysym.sym == SDLK_d)
+				if (keyStates[SDLK_d])
 				{
-					myPlayer->pos += glm::vec2(0.02f, 0.0f);
+					translate += glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
 				}
-				if (event.key.keysym.sym == SDLK_o)
-				{
-					camera.zoom -= 0.001f;
-				}
-				if (event.key.keysym.sym == SDLK_p)
-				{
-					camera.zoom += 0.001f;
-				}
+				translate = glm::normalize(translate) * deltaTime;
+				translate = glm::rotate(glm::mat4(1.0f), myPlayer->facing.x, glm::vec3(0.0f, 1.0f, 0.0f)) * translate;
+				myPlayer->pos += glm::vec2(translate.x, translate.z);
 			}
-			/*if (keyStates[SDL_SCANCODE_W])
-				myPlayer->pos += glm::vec2(0.0f, 0.01f);
-			if (keyStates[SDL_SCANCODE_S])
-				myPlayer->pos += glm::vec2(0.0f, -0.01f);
-			if (keyStates[SDL_SCANCODE_A])
-				myPlayer->pos += glm::vec2(-0.01f, 0.0f);
-			if (keyStates[SDL_SCANCODE_D])
-				myPlayer->pos += glm::vec2(0.01f, 0.0f);
 
-			if (keyStates[SDL_SCANCODE_KP_MEMADD])
+			if (keyStates[SDLK_o])
+			{
 				camera.zoom -= 0.001f;
-			if (keyStates[SDL_SCANCODE_KP_MEMSUBTRACT])
-				camera.zoom += 0.001f;*/
+			}
+			if (keyStates[SDLK_p])
+			{
+				camera.zoom += 0.001f;
+			}
+
+
+
 			//myPlayer->pos = glm::vec2(glm::cos(elapsedTime * 0.25f), glm::sin(elapsedTime * 0.5f)) * 11.0f;
 			//UpdateChunks(false, nw);
 		}
@@ -125,11 +174,15 @@ namespace SW_Client
 	{
 		if (myPlayer)
 		{
-			camera.pos = glm::vec3(glm::cos(elapsedTime * 0.5f), 0.0f, glm::sin(elapsedTime * 0.5f));
-			camera.pos *= 0.86f;
-			camera.pos.y = 0.86f;
-			camera.pos *= 11.0f;
-			camera.rot = glm::vec2(-(glm::pi<float>() * 0.5f) - (elapsedTime * 0.5f), glm::pi<float>() * 0.25f);
+			/*camera.pos = glm::vec3(glm::cos(elapsedTime * 0.5f), 0.0f, glm::sin(elapsedTime * 0.5f));
+			camera.pos *= glm::cos(glm::pi<float>() * 0.2f);
+			camera.pos.y = glm::sin(glm::pi<float>() * 0.2f);
+			camera.pos *= 14.0f;
+			camera.rot = glm::vec2(-(glm::pi<float>() * 0.5f) - (elapsedTime * 0.5f), glm::pi<float>() * 0.25f);*/
+
+			camera.pos = glm::vec3(myPlayer->pos.x, 1.0f, myPlayer->pos.y);
+			camera.rot = myPlayer->facing;
+
 			glm::mat4 viewMat(1.0f);
 			camera.GenerateView(viewMat);
 			glm::mat4 projMat(1.0f);
@@ -149,7 +202,7 @@ namespace SW_Client
 			glVertexAttribPointer(litColoredVertexProgram.normalAttrib, 4, GL_FLOAT, false, 48, (GLvoid*)16);
 			glVertexAttribPointer(litColoredVertexProgram.colorAttrib, 4, GL_FLOAT, false, 48, (GLvoid*)32);
 
-			DrawWalls(dynamic_cast<SW::TileSet*>(&tiles), tiles.GetAABB());
+			DrawTiles(dynamic_cast<SW::TileSet*>(&tiles), tiles.GetAABB());
 
 			if (floorVBuffer)
 			{
@@ -235,7 +288,7 @@ namespace SW_Client
 		int wallMesh = GetWallMeshIndex(type);
 		wallMeshes->meshes[(wallMesh * 2) + 1].Draw();
 	}
-	void Vessel::DrawWalls(SW::TileSet* ts, SW::AABBi region)
+	void Vessel::DrawTiles(SW::TileSet* ts, SW::AABBi region)
 	{
 		for (int i = region.bl.y; i < region.tr.y; i++)
 		{

@@ -170,11 +170,32 @@ extern "C" void HandleClose()
 	glClearColor(0.2f, 0.0f, 0.0f, 1.0f);
 }
 
+using namespace SW_Client;
+
+Uint32 old_time, current_time;
+
 extern "C" void Update()
 {
-
-	deltaTime = 0.005f;
+	old_time = current_time;
+	current_time = SDL_GetTicks();
+	deltaTime = (current_time - old_time) / 1000.0f;
 	elapsedTime += deltaTime;
+
+	SDL_Event event;
+	while (SDL_PollEvent(&event)) {
+		if (event.type == SDL_KEYDOWN)
+		{
+			keyStates[event.key.keysym.sym] = 1;
+		}
+		if (event.type == SDL_KEYUP)
+		{
+			keyStates[event.key.keysym.sym] = 0;
+		}
+	}
+
+	if (keyStates[SDLK_ESCAPE])
+	{
+	}
 
 	SDL_PumpEvents();
 	if (!(SW_Client::keyStates = SDL_GetKeyboardState(NULL)))

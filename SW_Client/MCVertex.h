@@ -7,6 +7,7 @@ namespace SW_Client
 	class MCVertex
 	{
 	public:
+		MCVertex();
 		MCVertex(glm::vec3 pos);
 		MCVertex(glm::vec3 pos, glm::vec2 uv);
 		MCVertex(glm::vec3 pos, glm::vec3 normal);

@@ -7,7 +7,7 @@
 //#include <emscripten/emscripten.h>
 #include "SW_Client.h"
 #include "GraphicsCommon.h"
-
+#include <emscripten\html5.h>
 
 
 
@@ -25,6 +25,11 @@ using namespace std;
 
 SDL_Surface* screen;
 
+EM_BOOL pointerlockchange_callback(int eventType, const EmscriptenPointerlockChangeEvent *e, void *userData)
+{
+	
+	return 0;
+}
 
 extern "C" int Initialize(int width, int height)
 {

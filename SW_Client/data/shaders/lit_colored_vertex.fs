@@ -9,16 +9,15 @@ varying vec3 positionOut;
 
 void main()
 {
+    vec3 lightSourcePosition = vec3(floor(positionOut.x), 1.7, floor(positionOut.z));
+    lightSourcePosition += vec3(0.5, 0.0, 0.5);
 	vec3 normalInter = normalize(normalOut);
-	vec3 lightOffset = lightPosition - positionOut;
-	//float cosTheta = clamp(dot(normalInter, lightOffset), 0.0, 1.0);
+	vec3 lightOffset = lightSourcePosition - positionOut;
 	float lightDistance = length(lightOffset);
-	float colorBrightness = abs(sin(lightDistance));
-	if(false)
-	{
-		lightDistance += 1.0;
-		float lightBounce = 1.0 / (lightDistance);
-		colorBrightness = lightBounce * lightIntensity;
-	}
-	gl_FragColor = vec4(colorOut.x * colorBrightness, colorOut.y * colorBrightness, colorOut.z * colorBrightness, colorOut.w);
+	float colorBrightness;
+	lightDistance *= 0.5;
+	lightDistance += 1.0;
+	float lightBounce = 1.0 / (lightDistance * lightDistance * lightDistance);
+	colorBrightness = lightBounce;
+	gl_FragColor.rgb = vec3(colorBrightness, colorBrightness, colorBrightness);//vec3(colorOut.x * colorBrightness, colorOut.y * colorBrightness, colorOut.z * colorBrightness);
 }

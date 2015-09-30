@@ -30,7 +30,7 @@ namespace SW_Client
 		void Clear();
 
 		void DrawWorld();
-		void DrawWalls(SW::TileSet* ts, SW::AABBi region);
+		void DrawTiles(SW::TileSet* ts, SW::AABBi region);
 		void GenerateFloorMesh(SW::TileSet* ts, SW::AABBi region);
 
 		void ReadSetTilesMessage(NetworkReader* nr, NetworkWriter* nw);

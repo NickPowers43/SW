@@ -23,6 +23,7 @@ typedef uint16_t TileFlag_t;
 typedef uint8_t FloorType_t;
 typedef uint8_t WallType_t;
 typedef uint8_t WallTypeMask_t;
+typedef uint8_t VesselControlMode_t;
 
 typedef uint8_t ObjectType_t;
 
@@ -158,6 +159,7 @@ namespace ClientMessageType
 		FillAt = 2,
 		PingMessageResponse = 3,
 		RequestModule = 4,
+		RequestPlayerInfo = 5
 	};
 }
 
@@ -173,7 +175,8 @@ namespace ServerMessageType
 		MakeVesselActive = 6,
 		PingMessage = 7,
 		SetModule = 8,
-		EndianessCheck = 9
+		EndianessCheck = 9,
+		SetPlayerInfo = 10,
 	};
 }
 
@@ -204,6 +207,15 @@ namespace WallType
 		OneByTwoFlipped = 6,
 		OneByOneFlipped = 7,
 		TwoByOneFlipped = 8
+	};
+}
+
+namespace VesselControlMode
+{
+	enum VesselControlMode : VesselControlMode_t {
+		None = 0,
+		Pilot = 1,
+		Gunner = 2,
 	};
 }
 

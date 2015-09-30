@@ -17,6 +17,7 @@ namespace SW_Client
 	{
 		MCIndex i[3];
 
+		MCTriangle();
 		MCTriangle(MCIndex a, MCIndex b, MCIndex c);
 	};
 	
@@ -26,6 +27,7 @@ namespace SW_Client
 		MeshConstructor();
 		~MeshConstructor();
 
+		void DuplicateVertices();
 		void RecomputeNormals();
 		void SimpleChamferEdges(std::vector<MCIndexPair> edges, float amount);
 

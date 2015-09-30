@@ -34,6 +34,63 @@ namespace SW_Client
 	{
 	}
 
+	void MeshConstructor::DuplicateVertices()
+	{
+		std::vector<MCVertex> nV;
+		nV.reserve(t.size() * 3);
+		for (size_t i = 0; i < t.size();i++)
+		{
+			nV.push_back(MCVertex(v[t[i].i[0]]));
+			nV.push_back(MCVertex(v[t[i].i[1]]));
+			nV.push_back(MCVertex(v[t[i].i[2]]));
+		}
+		v = nV;
+
+		std::vector<MCTriangle> nT;
+		nT.reserve(v.size() / 3);
+		for (MCIndex i = 0; i < v.size();)
+		{
+			MCIndex a = i++;
+			MCIndex b = i++;
+			nT.push_back(MCTriangle(a, b, i++));
+		}
+		t = nT;
+	}
+
+	/*void MeshConstructor::DuplicateVertices()
+	{
+		MCVertex* nV = new MCVertex[t.size() * 3];
+		size_t j = 0;
+		for (size_t i = 0; i < t.size();)
+		{
+			nV[j++] = v[t[i].i[0]];
+			nV[j++] = v[t[i].i[1]];
+			nV[j++] = v[t[i].i[2]];
+		}
+		v.erase(v.begin(), v.end());
+		for (size_t i = 0; t.size() * 3; i++)
+		{
+			v.push_back(nV[i]);
+		}
+
+		delete nV;
+
+		MCTriangle* nT = new MCTriangle[v.size() / 3];
+		j = 0;
+		for (MCIndex i = 0; i < v.size();)
+		{
+			MCIndex a = i++;
+			MCIndex b = i++;
+			nT[j++] = MCTriangle(a, b, i++);
+		}
+		t.erase(t.begin(), t.end());
+		for (size_t i = 0; v.size() / 3; i++)
+		{
+			t.push_back(nT[i]);
+		}
+
+		delete nT;
+	}*/
 	void MeshConstructor::RecomputeNormals()
 	{
 		if (v.size())

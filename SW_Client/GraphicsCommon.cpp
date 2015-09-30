@@ -55,10 +55,18 @@ namespace SW_Client
 
 	void GenerateWallMeshes()
 	{
+
 		std::vector<float> vertices;
 		std::vector<MeshIndex_t> indices;
 
 		glm::vec4 color(1.0f, 1.0f, 1.0f, 1.0f);
+
+		const float WALL_CORNER_OFF = 0.0f;
+		const float WALL_HEIGHT = 1.7f;
+		const float WALL_BACK = 0.01f;
+		const float WALL_BEVEL_X = 0.06f;
+		const float WALL_BEVEL_Y = 0.1f;
+
 
 		for (size_t i = 0; i < 3; i++)
 		{
@@ -78,19 +86,38 @@ namespace SW_Client
 				mag = SW::wallMagnitudes[WallType::TwoByOne];
 			}
 
+			const float KEY_BOT = mag;
+			const float KEY_TOP = mag;
 
+			vector<glm::vec3> keyPoints;
+			keyPoints.push_back(glm::vec3(WALL_CORNER_OFF, 0.0f, -WALL_BEVEL_X - WALL_BACK));
+			keyPoints.push_back(glm::vec3(mag - WALL_CORNER_OFF, 0.0f, -WALL_BEVEL_X - WALL_BACK));
+			keyPoints.push_back(glm::vec3(WALL_CORNER_OFF, WALL_BEVEL_Y, -WALL_BACK));
+			keyPoints.push_back(glm::vec3(mag - WALL_CORNER_OFF, WALL_BEVEL_Y, -WALL_BACK));
+			keyPoints.push_back(glm::vec3(WALL_CORNER_OFF, WALL_HEIGHT - WALL_BEVEL_Y, -WALL_BACK));
+			keyPoints.push_back(glm::vec3(mag - WALL_CORNER_OFF, WALL_HEIGHT - WALL_BEVEL_Y, -WALL_BACK));
+			keyPoints.push_back(glm::vec3(WALL_CORNER_OFF, WALL_HEIGHT, -WALL_BEVEL_X - WALL_BACK));
+			keyPoints.push_back(glm::vec3(mag - WALL_CORNER_OFF, WALL_HEIGHT, -WALL_BEVEL_X - WALL_BACK));
 
 			glm::vec3 zero(0.0f, 0.0f, 0.0f);
 			glm::vec3 up(0.0f, CEILING_HEIGHT, 0.0f);
 			glm::vec3 right(mag, 0.0f, 0.0f);
 
-			mc.v.push_back(MCVertex(zero));
+			for (size_t j = 0; j < keyPoints.size(); j++)
+			{
+				mc.v.push_back(keyPoints[j]);
+			}
+
+			/*mc.v.push_back(MCVertex(zero));
 			mc.v.push_back(MCVertex(up));
 			mc.v.push_back(MCVertex(right));
-			mc.v.push_back(MCVertex(up + right));
+			mc.v.push_back(MCVertex(up + right));*/
 
-			mc.AddQuad(0, 1, 2, 3);
+			mc.AddQuad(0, 2, 1, 3);
+			mc.AddQuad(2, 4, 3, 5);
+			mc.AddQuad(4, 6, 5, 7);
 
+			mc.DuplicateVertices();
 			mc.RecomputeNormals();
 
 			for (size_t i = 0; i < mc.v.size(); i++)
@@ -624,6 +651,7 @@ namespace SW_Client
 		shaderSource = readFile(fs);
 		GLuint fShader = LoadShader(GL_FRAGMENT_SHADER, shaderSource.c_str());
 
+		glFinish();
 		GLuint output = BuildProgram(vShader, fShader);
 
 		GLint linked;
