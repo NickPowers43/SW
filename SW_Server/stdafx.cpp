@@ -6,7 +6,7 @@
 
 namespace SW_Server
 {
-	WorldQTNode* qt = new WorldQTNode(0, VesselVecType(WORLD_SIZE * -0.5, WORLD_SIZE * -0.5), WORLD_SIZE, NULL);
+	WorldQTNode* qt = new WorldQTNode(0, glm::vec2(WORLD_SIZE * -0.5, WORLD_SIZE * -0.5), WORLD_SIZE, NULL);
 	server* myServer;
 	SW::NetworkWriter* nw_main = new SW::NetworkWriter(1 << 14);
 }

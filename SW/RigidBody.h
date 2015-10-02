@@ -4,47 +4,24 @@
 
 namespace SW
 {
-	template<typename value_type>
 	class RigidBody :
-		public GameObject<value_type>
+		public GameObject
 	{
 	public:
-		RigidBody(glm::tvec2<value_type> vel, float m, glm::tvec2<value_type> pos, float rot) : GameObject<value_type>(pos, rot)
-		{
-			RigidBody::vel = vel;
-			RigidBody::m = m;
-			RigidBody::com = glm::vec2(0.0f, 0.0f);
-		}
-		~RigidBody()
-		{
+		RigidBody(glm::vec3 vel, float m, glm::vec3 pos, glm::vec3 com, glm::vec3 rot);
+		~RigidBody();
 
-		}
+		float mass();
+		float massInv();
+		glm::vec3 velocity();
+		void ApplyForceXZ(glm::vec2 f);
+		void ApplyForceXZ(glm::vec2 local, glm::vec2 f);
+		void StepXZ();
 
-		//template<typename value_type>
-		value_type mass()
-		{
-			return m;
-		}
-		//template<typename value_type>
-		value_type massInv()
-		{
-			return m / 1.0;
-		}
-		//template<typename value_type>
-		glm::tvec2<value_type> velocity()
-		{
-			return vel;
-		}
-
-		//template<typename value_type>
-		void ApplyForce(glm::vec2 dir)
-		{
-
-		}
-
-		glm::tvec2<value_type> com;
-		glm::tvec2<value_type> vel;
-		value_type m;
+		glm::vec3 com;
+		glm::vec3 vel;
+		float angular_vel;
+		float m;
 	};
 
 }

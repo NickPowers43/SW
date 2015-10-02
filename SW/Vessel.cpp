@@ -11,7 +11,7 @@
 
 namespace SW
 {
-	Vessel::Vessel(VesselIndex_t index)
+	Vessel::Vessel(VesselIndex_t index, glm::vec3 vel, float m, glm::vec3 pos, glm::vec3 rot) : RigidBody(vel, m, pos, glm::vec3(0.0f, 0.0f, 0.0f), rot)
 	{
 		
 		Vessel::index = index;

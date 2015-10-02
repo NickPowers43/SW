@@ -1,4 +1,5 @@
 #pragma once
+#include "RigidBody.h"
 #include "TileChunks.h"
 #include "VesselModule.h"
 #include "AABBi.h"
@@ -8,11 +9,12 @@ namespace SW
 {
 	static float WALL_RADIUS = 0.15f;
 
-	class Vessel
+	class Vessel :
+		public RigidBody
 	{
 	public:
 
-		Vessel(VesselIndex_t index);
+		Vessel(VesselIndex_t index, glm::vec3 vel, float m, glm::vec3 pos, glm::vec3 rot);
 		~Vessel();
 
 		int ModulesOverlapping(AABBi aabb);

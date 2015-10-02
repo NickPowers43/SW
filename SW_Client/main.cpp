@@ -49,6 +49,9 @@ extern "C" int Initialize(int width, int height)
 		return 0;
 	}
 
+
+
+
 	//SDL initialised successfully, now load shaders and geometry
 
 	cout << "SDL initialised successfully";
@@ -65,6 +68,7 @@ extern "C" int Initialize(int width, int height)
 
 	SW_Client::InitializeClient();
 
+	DisplayMainMenu();
 
 	return 1;
 }

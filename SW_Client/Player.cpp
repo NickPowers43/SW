@@ -2,9 +2,8 @@
 
 namespace SW_Client
 {
-	Player::Player(glm::vec2 vel, float m, glm::vec2 pos, float rot, glm::ivec2 chunkI) : SW::Player(vel, m, pos, rot, chunkI)
+	Player::Player(glm::vec3 vel, float m, glm::vec3 pos, glm::vec3 rot) : SW::Player(vel, m, pos, rot)
 	{
-		facing = glm::vec2(0.0f, 0.0f);
 	}
 
 

@@ -18,6 +18,7 @@
 std::map<VesselIndex_t, SW_Client::Vessel*> vessels;
 SW_Client::Player* myPlayer = NULL;
 SW_Client::Vessel* currentVessel = NULL;
+std::vector<SW_Client::Vessel*> activeVessels;
 bool swapBytes = false;
 SW_Client::NetworkWriter* nw_main = new SW_Client::NetworkWriter(1 << 14, swapBytes);
 
@@ -54,7 +55,7 @@ namespace SW_Client
 		if (!vessels.count(vIndex))
 		{
 			printf("Creating vessel");
-			vessel = new Vessel(vIndex);
+			vessel = new Vessel(vIndex, glm::vec3(0.0f, 0.0f, 0.0f), 1.0f, glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f));
 			vessels[vIndex] = vessel;
 		}
 		else
@@ -82,16 +83,15 @@ namespace SW_Client
 		//add ourselves
 		float x = nr->ReadSingle();
 		float y = nr->ReadSingle();
-		glm::vec2 pos = glm::vec2(x, y);
+		glm::vec3 pos = glm::vec3(x, 0.0f, y);
 
 		if (!myPlayer)
 		{
-			myPlayer = new Player(glm::vec2(0.0f, 0.0f), 1.0f, pos, 0.0f, SW::TileChunks::WorldToChunkI(pos));
+			myPlayer = new Player(glm::vec3(0.0f, 0.0f, 0.0f), 1000.0f, pos, glm::vec3(0.0f, 0.0f, 0.0f));
 		}
 		else
 		{
 			myPlayer->pos = pos;
-			myPlayer->chunkI = SW::TileChunks::WorldToChunkI(pos);
 		}
 
 		currentVessel->AddMyPlayer(myPlayer, nw_main);
@@ -174,6 +174,18 @@ using namespace SW_Client;
 
 Uint32 old_time, current_time;
 
+extern "C" void Login(char* username, char* password)
+{
+	PrintMessage((int)"Logging in as: ");
+	PrintMessage((int)username);
+	PrintMessage((int)password);
+}
+
+extern "C" void LoginAsGuest()
+{
+	PrintMessage((int)"Logging in as guest");
+}
+
 extern "C" void Update()
 {
 	old_time = current_time;
@@ -207,7 +219,12 @@ extern "C" void Update()
 
 	if (currentVessel)
 	{
-		currentVessel->Update(nw_main);
+		currentVessel->Step(nw_main);
+	}
+
+	if (nw_main->Position() > 0)
+	{
+		FlushBuffer(nw_main);
 	}
 
 	SDL_GL_SwapBuffers();

@@ -6,7 +6,7 @@
 
 namespace SW_Server
 {
-	StartingVessel::StartingVessel(VesselIndex_t index, VesselVecType vel, VesselValueType m, VesselVecType pos, VesselValueType rot, Vessel* next) :
+	StartingVessel::StartingVessel(VesselIndex_t index, glm::vec3 vel, float m, glm::vec3 pos, glm::vec3 rot, Vessel* next) :
 		Vessel(index, vel, m, pos, rot, next)
 	{
 		Initialize();

@@ -25,7 +25,7 @@ namespace SW
 		QTNode(QTNode* parent);
 		~QTNode();
 
-		virtual void UpdateSurrounding(QTNode** adjacent);
+		virtual void StepSurrounding(QTNode** adjacent);
 
 		QTNode* parent;
 		QTNode* children [4];

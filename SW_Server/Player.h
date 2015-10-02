@@ -9,13 +9,16 @@ namespace SW_Server
 		public SW::Player
 	{
 	public:
-		Player(websocketpp::connection_hdl hdl, glm::vec2 vel, float m, glm::vec2 pos, float rot, glm::ivec2 chunkI, Vessel* currentVessel);
+		Player(websocketpp::connection_hdl hdl, glm::vec3 vel, float m, glm::vec3 pos, glm::vec3 rot, Vessel* currentVessel);
 		~Player();
 
 		void SendString(const std::string message);
 		void JustSendBuffer(NetworkWriter* nw);
+		void ProcessInputs(NetworkReader* nr);
 		void FlushBuffer(NetworkWriter* nw);
+		void Step();
 
+		InputFlags_t inputs;
 		Vessel* currentVessel;
 		websocketpp::connection_hdl hdl;
 	};

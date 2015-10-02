@@ -32,8 +32,14 @@ typedef uint32_t CompartmentIndex_t;
 
 typedef uint8_t VMFlags_t;
 typedef uint16_t VMType_t;
+typedef uint16_t InputFlags_t;
 
 typedef uint32_t TileChunkVersion_t;
+
+#define INPUT_FLAG_W 1
+#define INPUT_FLAG_A 2
+#define INPUT_FLAG_S 4
+#define INPUT_FLAG_D 8
 
 extern float deltaTime;
 extern float elapsedTime;
@@ -68,8 +74,9 @@ namespace SW
 	class NetworkReader;
 	class NetworkWriter;
 
-	template<typename T>
 	class RigidBody;
+	class GameObject;
+
 	template<typename T>
 	class LinkedListNode;
 	template<typename T>

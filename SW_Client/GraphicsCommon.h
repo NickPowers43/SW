@@ -93,6 +93,18 @@ namespace SW_Client
 		GLuint colorAttrib;
 	};
 
+	struct ModuleProgram
+	{
+		GLuint program;
+
+		int viewMat;
+		int projMat;
+		int objMat;
+
+		GLuint posAttrib;
+		GLuint colorAttrib;
+	};
+
 	extern uint8_t* keyStates;
 
 	extern Camera camera;
@@ -100,6 +112,7 @@ namespace SW_Client
 	extern ShadowProgram shadowProgram;
 	extern ColoredVertexProgram coloredVertexProgram;
 	extern LitColoredVertexProgram litColoredVertexProgram;
+	extern ModuleProgram moduleProgram;
 
 	extern BufferedMeshArray* wallMeshes;
 	extern BufferedMeshArray* cornerFloorMeshes;

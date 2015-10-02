@@ -12,9 +12,8 @@ namespace SW_Server
 {
 	uint32_t Vessel::nextIndex = 0;
 
-	Vessel::Vessel(VesselIndex_t index, VesselVecType vel, VesselValueType m, VesselVecType pos, VesselValueType rot, Vessel* next) :
-		SW::Vessel(index),
-		SW::RigidBody<VesselValueType>(vel, m, pos, rot),
+	Vessel::Vessel(VesselIndex_t index, glm::vec3 vel, float m, glm::vec3 pos, glm::vec3 rot, Vessel* next) :
+		SW::Vessel(index, vel, m, pos, rot),
 		SW::LinkedListNode<Vessel>(next)
 	{
 
@@ -190,7 +189,7 @@ namespace SW_Server
 	}
 	void Vessel::AddPlayerVessel(Player* player, NetworkWriter* nw, glm::vec2 position)
 	{
-		player->pos = position;
+		player->pos = glm::vec3(position.x, 0.0f, position.y);
 		player->currentVessel = this;
 
 		//tell onBoardPlayers to add player
@@ -242,6 +241,13 @@ namespace SW_Server
 
 				return;
 			}
+		}
+	}
+	void Vessel::Step(NetworkWriter* nw)
+	{
+		for (size_t i = 0; i < playersOnBoard.size(); i++)
+		{
+			playersOnBoard[i]->Step();
 		}
 	}
 

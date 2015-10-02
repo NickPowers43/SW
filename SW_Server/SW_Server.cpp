@@ -13,6 +13,7 @@
 #include "Player.h"
 #include <SW\NetworkReader.h>
 #include <SW\NetworkWriter.h>
+#include <algorithm>
 
 using namespace SW_Server;
 
@@ -50,7 +51,7 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 		SW::NetworkReader nr((char*)myMsg.c_str(), myMsg.size());
 		nw_main->Reset();
 
-		std::cout << "Message of size: " << myMsg.size() << " received.";
+		//std::cout << "Message of size: " << myMsg.size() << " received.";
 
 		while (nr.Position() < nr.size)
 		{
@@ -59,6 +60,9 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 				std::string response;
 				switch (mt)
 				{
+				case ClientMessageType::Inputs:
+					player->ProcessInputs(&nr);
+					break;
 				case ClientMessageType::RequestModule:
 					if (player->currentVessel)
 					{
@@ -115,7 +119,7 @@ void on_open(websocketpp::connection_hdl hdl) {
 
 	if (startingVessels.size() < 1)
 	{
-		sV = new StartingVessel(0, VesselVecType(0.0f, 0.0f), 1.0f, VesselVecType(1.0f, 1.0f), 0.0f, NULL);
+		sV = new StartingVessel(0, glm::vec3(0.0f, 0.0f, 0.0f), 1.0f, glm::vec3(1.0f, 1.0f, 0.0f), glm::vec3(0.0f, 0.0f, 0.0f), NULL);
 		startingVessels.push_back(sV);
 		qt->AddVessel(sV, true);
 	}
@@ -128,7 +132,14 @@ void on_open(websocketpp::connection_hdl hdl) {
 	nw_main->Write((MessageType_t)ServerMessageType::EndianessCheck);
 	nw_main->Write((uint32_t)((uint32_t)255 << 16));
 
-	Player* player = new Player(hdl, glm::vec2(0.0f, 0.0f), 1.0f, glm::vec2(0.0f, 0.0f), 0.0f, glm::ivec2(0, 0), NULL);
+	Player* player = new Player(
+		hdl, 
+		glm::vec3(0.0f, 0.0f, 0.0f), 
+		1000.0f,
+		glm::vec3(0.0f, 0.0f, 0.0f), 
+		glm::vec3(0.0f, 0.0f, 0.0f),
+		NULL);
+
 	players[hdl._Get()] = player;
 	sV->AddPlayer(nw_main, player);
 
@@ -154,7 +165,7 @@ BOOL WINAPI OnUserClose(_In_ DWORD dwCtrlType)
 
 
 ULONGLONG prevTickCount;
-void game_thread_run()
+void game_run()
 {
 	while (running)
 	{
@@ -163,24 +174,25 @@ void game_thread_run()
 		prevTickCount = currTickCount;
 
 		SW::QTNode* root_adj[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-		qt->UpdateSurrounding((SW::QTNode**)&root_adj);
+		qt->StepSurrounding((SW::QTNode**)&root_adj);
 
-		int messages_in_size = 0;
-		{
-			/*std::lock_guard<std::mutex> lock(message_in_m);
-			messages_in_size = messages_in.size();*/
-		}
-		while (messages_in_size > 0)
-		{
-			PlayerMessagePair pair;
-			{
-				/*std::lock_guard<std::mutex> lock(message_in_m);
-				pair = messages_in.front();
-				messages_in.pop();*/
-			}
+		//int messages_in_size = 0;
+		//{
+		//	/*std::lock_guard<std::mutex> lock(message_in_m);
+		//	messages_in_size = messages_in.size();*/
+		//}
+		//while (messages_in_size > 0)
+		//{
+		//	PlayerMessagePair pair;
+		//	{
+		//		/*std::lock_guard<std::mutex> lock(message_in_m);
+		//		pair = messages_in.front();
+		//		messages_in.pop();*/
+		//	}
 
-			
-		}
+		//	
+		//}
+
 
 		Sleep(33);
 	}
@@ -197,14 +209,16 @@ int _tmain(int argc, _TCHAR* argv[])
 	SW::Initialize();
 	SetConsoleCtrlHandler(OnUserClose, true);
 
-	std::thread game_thread(game_thread_run);
+	//std::thread game_thread(game_thread_run);
 
 	myServer = new server();
 
 	// Create a server endpoint
 	try {
 		// Set logging settings
-		myServer->set_access_channels(websocketpp::log::alevel::all);
+		myServer->set_access_channels(
+			websocketpp::log::alevel::connect |
+			websocketpp::log::alevel::disconnect);
 		myServer->clear_access_channels(websocketpp::log::alevel::frame_payload);
 
 		// Initialize ASIO
@@ -223,8 +237,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		// Start the server accept loop
 		myServer->start_accept();
 
-		// Start the ASIO io_service run loop
-		myServer->run();
+		game_run();
 	}
 	catch (websocketpp::exception const & e) {
 		std::cout << e.what() << std::endl;

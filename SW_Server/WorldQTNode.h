@@ -10,7 +10,7 @@ namespace SW_Server
 	static int WQT_FLAG_BROKEN = 1;
 
 	class WorldQTNode :
-		public SW::SpacialQTNode<VesselValueType>
+		public SW::SpacialQTNode<float>
 	{
 
 	public:
@@ -30,13 +30,13 @@ namespace SW_Server
 			Vessel* RemoveCurrent();
 		};
 
-		WorldQTNode(int depth, VesselVecType bl, VesselValueType size, QTNode* parent);
+		WorldQTNode(int depth, glm::vec2 bl, float size, QTNode* parent);
 		WorldQTNode(int depth, const SpacialQTNode & org);
 		~WorldQTNode();
 
 		void Break();
 
-		virtual void UpdateSurrounding(QTNode** adjacent) override;
+		virtual void StepSurrounding(QTNode** adjacent) override;
 		void AddVessel(Vessel* vessel, bool force);
 		size_t VesselCount();
 		Vessel* BackVessel();

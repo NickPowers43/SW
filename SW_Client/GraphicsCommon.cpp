@@ -287,6 +287,13 @@ namespace SW_Client
 		litColoredVertexProgram.posAttrib = glGetAttribLocation(litColoredVertexProgram.program, "position");
 		litColoredVertexProgram.normalAttrib = glGetAttribLocation(litColoredVertexProgram.program, "normal");
 		litColoredVertexProgram.colorAttrib = glGetAttribLocation(litColoredVertexProgram.program, "color");
+
+		moduleProgram.program = LoadProgram("data/shaders/module.vs", "data/shaders/module.fs");
+		moduleProgram.viewMat = glGetUniformLocation(moduleProgram.program, "viewMat");
+		moduleProgram.projMat = glGetUniformLocation(moduleProgram.program, "projMat");
+		moduleProgram.objMat = glGetUniformLocation(moduleProgram.program, "objMat");
+		moduleProgram.posAttrib = glGetAttribLocation(moduleProgram.program, "position");
+		moduleProgram.colorAttrib = glGetAttribLocation(moduleProgram.program, "color");
 	}
 
 	void GenerateBaseVertices(SpriteRect rect, PosUVPair* output)
@@ -361,6 +368,7 @@ namespace SW_Client
 	ShadowProgram shadowProgram;
 	ColoredVertexProgram coloredVertexProgram;
 	LitColoredVertexProgram litColoredVertexProgram;
+	ModuleProgram moduleProgram;
 
 	BufferedMeshArray* wallMeshes = NULL;
 	BufferedMeshArray* cornerFloorMeshes = NULL;

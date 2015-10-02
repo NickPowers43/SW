@@ -62,15 +62,17 @@ EM_BOOL myMouseMoveCallback(int eventType, const EmscriptenMouseEvent *mouseEven
 
 	SW_Client::Vessel* v = (SW_Client::Vessel*)userData;
 
-	v->myPlayer->facing.x += (0.006f) * (float)mouseEvent->movementX;
-	v->myPlayer->facing.y += (0.006f) * (float)mouseEvent->movementY;
+	v->myPlayer->rot.x += (0.006f) * (float)mouseEvent->movementX;
+	v->myPlayer->rot.y += (0.006f) * (float)mouseEvent->movementY;
+
+	v->myPlayer->rot.y = glm::clamp(v->myPlayer->rot.y, -glm::half_pi<float>(), glm::half_pi<float>());
 
 	return 0;
 }
 
 namespace SW_Client
 {
-	Vessel::Vessel(VesselIndex_t index) : SW::Vessel(index)
+	Vessel::Vessel(VesselIndex_t index, glm::vec3 vel, float m, glm::vec3 pos, glm::vec3 rot) : SW::Vessel(index, vel, m, pos, rot)
 	{
 		myPlayer = NULL;
 		playerComp = NULL;
@@ -96,7 +98,7 @@ namespace SW_Client
 		if (player)
 		{
 			myPlayer = player;
-			playerComp = tiles.CompartmentAt(myPlayer->pos);
+			playerComp = tiles.CompartmentAt(myPlayer->posXZ());
 
 			nw->WriteMessageType(ClientMessageType::RequestTiles);
 			nw->WriteInt32(0);
@@ -114,33 +116,68 @@ namespace SW_Client
 			PrintMessage((int)"NULL player added");
 		}
 	}
-	void Vessel::Update(NetworkWriter* nw)
+	void Vessel::ProcessInputs(NetworkWriter* nw)
 	{
 		if (myPlayer)
 		{
-			if (keyStates[SDLK_w] || keyStates[SDLK_a] || keyStates[SDLK_s] || keyStates[SDLK_d])
+			if (keyStates[SDLK_i])
 			{
-				glm::vec4 translate(0.0f, 0.0f, 0.0f, 0.0f);
-				if (keyStates[SDLK_w])
-				{
-					translate += glm::vec4(0.0f, 0.0f, 1.0f, 0.0f);
-				}
-				if (keyStates[SDLK_s])
-				{
-					translate += glm::vec4(0.0f, 0.0f, -1.0f, 0.0f);
-				}
-				if (keyStates[SDLK_a])
-				{
-					translate += glm::vec4(-1.0f, 0.0f, 0.0f, 0.0f);
-				}
-				if (keyStates[SDLK_d])
-				{
-					translate += glm::vec4(1.0f, 0.0f, 0.0f, 0.0f);
-				}
-				translate = glm::normalize(translate) * deltaTime;
-				translate = glm::rotate(glm::mat4(1.0f), myPlayer->facing.x, glm::vec3(0.0f, 1.0f, 0.0f)) * translate;
-				myPlayer->pos += glm::vec2(translate.x, translate.z);
+				//command ship
 			}
+			else if (keyStates[SDLK_b])
+			{
+				//build ship
+			}
+			else
+			{
+				InputFlags_t inputs = 0;
+
+				if (keyStates[SDLK_w] || keyStates[SDLK_a] || keyStates[SDLK_s] || keyStates[SDLK_d])
+				{
+					glm::vec2 f(0.0f, 0.0f);
+					if (keyStates[SDLK_w])
+					{
+						inputs |= INPUT_FLAG_W;
+						f += glm::vec2(0.0f, 1.0f);
+					}
+					if (keyStates[SDLK_s])
+					{
+						inputs |= INPUT_FLAG_S;
+						f += glm::vec2(0.0f, -1.0f);
+					}
+					if (keyStates[SDLK_a])
+					{
+						inputs |= INPUT_FLAG_A;
+						f += glm::vec2(-1.0f, 0.0f);
+					}
+					if (keyStates[SDLK_d])
+					{
+						inputs |= INPUT_FLAG_D;
+						f += glm::vec2(1.0f, 0.0f);
+					}
+					f = glm::normalize(f) * deltaTime;
+					float cos = glm::cos(myPlayer->rot.x);
+					float sin = glm::sin(myPlayer->rot.x);
+					f = glm::mat2(cos, -sin, sin, cos) * f;
+					myPlayer->ApplyForceXZ(f);
+
+				}
+
+				nw->WriteMessageType(ClientMessageType::Inputs);
+				nw->WriteUint16(inputs);
+				nw->WriteSingle(myPlayer->rot.x);
+				nw->WriteSingle(myPlayer->rot.y);
+			}
+		}
+	}
+	void Vessel::Step(NetworkWriter* nw)
+	{
+		StepXZ();
+
+		if (myPlayer)
+		{
+			ProcessInputs(nw);
+			myPlayer->StepXZ();
 
 			if (keyStates[SDLK_o])
 			{
@@ -150,11 +187,8 @@ namespace SW_Client
 			{
 				camera.zoom += 0.001f;
 			}
-
-
-
 			//myPlayer->pos = glm::vec2(glm::cos(elapsedTime * 0.25f), glm::sin(elapsedTime * 0.5f)) * 11.0f;
-			//UpdateChunks(false, nw);
+			//StepChunks(false, nw);
 		}
 
 		DrawWorld();
@@ -180,8 +214,8 @@ namespace SW_Client
 			camera.pos *= 14.0f;
 			camera.rot = glm::vec2(-(glm::pi<float>() * 0.5f) - (elapsedTime * 0.5f), glm::pi<float>() * 0.25f);*/
 
-			camera.pos = glm::vec3(myPlayer->pos.x, 1.0f, myPlayer->pos.y);
-			camera.rot = myPlayer->facing;
+			camera.pos = glm::vec3(myPlayer->pos.x, 1.0f, myPlayer->pos.z);
+			camera.rot = glm::vec2(myPlayer->rot.x, myPlayer->rot.y);
 
 			glm::mat4 viewMat(1.0f);
 			camera.GenerateView(viewMat);
@@ -486,6 +520,6 @@ namespace SW_Client
 		//}
 
 		GenerateFloorMesh(dynamic_cast<SW::TileSet*>(&tiles), tiles.GetAABB());
-		playerComp = tiles.CompartmentAt(myPlayer->pos);
+		playerComp = tiles.CompartmentAt(myPlayer->posXZ());
 	}
 }

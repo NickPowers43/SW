@@ -5,13 +5,12 @@
 namespace SW
 {
 	class Player :
-		public RigidBody<float>
+		public RigidBody
 	{
 	public:
-		Player(glm::vec2 vel, float m, glm::vec2 pos, float rot, glm::ivec2 chunkI);
+		Player(glm::vec3 vel, float m, glm::vec3 pos, glm::vec3 rot);
 		~Player();
 
-		glm::ivec2 chunkI;
 	};
 
 }

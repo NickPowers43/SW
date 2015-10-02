@@ -3,22 +3,16 @@
 
 namespace SW
 {
-	template<typename value_type>
 	class GameObject
 	{
 	public:
-		GameObject(glm::tvec2<value_type> pos, value_type rot)
-		{
-			GameObject::pos = pos;
-			GameObject::rot = rot;
-		}
-		~GameObject()
-		{
+		GameObject(glm::vec3 pos, glm::vec3 rot);
+		~GameObject();
 
-		}
+		glm::vec2 posXZ();
 
-		glm::tvec2<value_type> pos;
-		value_type rot;
+		glm::vec3 pos;
+		glm::vec3 rot;
 	};
 
 }

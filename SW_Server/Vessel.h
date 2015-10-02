@@ -15,11 +15,10 @@ namespace SW_Server
 {
 	class Vessel :
 		public SW::Vessel,
-		public SW::RigidBody<VesselValueType>,
 		public SW::LinkedListNode<Vessel>
 	{
 	public:
-		Vessel(VesselIndex_t index, VesselVecType vel, VesselValueType m, VesselVecType pos, VesselValueType rot, Vessel* next);
+		Vessel(VesselIndex_t index, glm::vec3 vel, float m, glm::vec3 pos, glm::vec3 rot, Vessel* next);
 		~Vessel();
 
 		void ReadRequestTilesMessage(Player* player, NetworkWriter* nw, NetworkReader* nr);
@@ -32,6 +31,7 @@ namespace SW_Server
 		void AddPlayerVessel(Player* player, NetworkWriter* nw, glm::vec2 position);
 		void RemovePlayer(Player* player);
 		void BuildModule(VMType_t type, glm::ivec2 position);
+		void Step(NetworkWriter* nw);
 
 		virtual SW::VesselObject* PlaceObject(ObjectType::ObjectType type, glm::vec2 location);
 

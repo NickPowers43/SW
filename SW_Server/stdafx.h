@@ -34,9 +34,6 @@ typedef server::message_ptr message_ptr;
 namespace SW_Server
 {
 
-	typedef double VesselValueType;
-	typedef glm::tvec2<double> VesselVecType;
-
 	//typedef SW::Tile Tile;
 	typedef SW::NetworkReader NetworkReader;
 	typedef SW::NetworkWriter NetworkWriter;
@@ -46,7 +43,7 @@ namespace SW_Server
 	static int QT_WORKING_DEPTH = 10;
 
 
-	static VesselValueType WORLD_SIZE = 10000000000.0;
+	static float WORLD_SIZE = 100000.0;
 
 	class StartingVessel;
 	class WorldQTNode;

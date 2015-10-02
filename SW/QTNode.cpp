@@ -18,7 +18,7 @@ namespace SW
 	{
 	}
 
-	void QTNode::UpdateSurrounding(QTNode** adjacent)
+	void QTNode::StepSurrounding(QTNode** adjacent)
 	{
 		QTNode* child_adj[8];// = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 
@@ -33,7 +33,7 @@ namespace SW
 			child_adj[QT_ARG_BL] = (adjacent[QT_ARG_BL]) ? adjacent[QT_ARG_BL]->children[QT_TR] : NULL;
 			child_adj[QT_ARG_B] = (adjacent[QT_ARG_B]) ? adjacent[QT_ARG_B]->children[QT_TL] : NULL;
 			child_adj[QT_ARG_BR] = (adjacent[QT_ARG_B]) ? adjacent[QT_ARG_B]->children[QT_TR] : NULL;
-			children[QT_BL]->UpdateSurrounding((QTNode**)&child_adj);
+			children[QT_BL]->StepSurrounding((QTNode**)&child_adj);
 		}
 		//update child 1
 		if (children[QT_TL])
@@ -46,7 +46,7 @@ namespace SW
 			child_adj[QT_ARG_BL] = (adjacent[QT_ARG_L]) ? adjacent[QT_ARG_L]->children[QT_BR] : NULL;
 			child_adj[QT_ARG_B] = children[QT_BL];
 			child_adj[QT_ARG_BR] = children[QT_BR];
-			children[QT_TL]->UpdateSurrounding((QTNode**)&child_adj);
+			children[QT_TL]->StepSurrounding((QTNode**)&child_adj);
 		}
 		//update child 2
 		if (children[QT_BR])
@@ -59,7 +59,7 @@ namespace SW
 			child_adj[QT_ARG_BL] = (adjacent[QT_ARG_B]) ? adjacent[QT_ARG_B]->children[QT_TL] : NULL;
 			child_adj[QT_ARG_B] = (adjacent[QT_ARG_B]) ? adjacent[QT_ARG_B]->children[QT_TR] : NULL;
 			child_adj[QT_ARG_BR] = (adjacent[QT_ARG_BR]) ? adjacent[QT_ARG_BR]->children[QT_TL] : NULL;
-			children[QT_BR]->UpdateSurrounding((QTNode**)&child_adj);
+			children[QT_BR]->StepSurrounding((QTNode**)&child_adj);
 		}
 		//update child 3
 		if (children[QT_TR])
@@ -72,7 +72,7 @@ namespace SW
 			child_adj[QT_ARG_BL] = children[QT_BL];
 			child_adj[QT_ARG_B] = children[QT_BR];
 			child_adj[QT_ARG_BR] = (adjacent[QT_ARG_R]) ? adjacent[QT_ARG_R]->children[QT_BL] : NULL;
-			children[QT_TR]->UpdateSurrounding((QTNode**)&child_adj);
+			children[QT_TR]->StepSurrounding((QTNode**)&child_adj);
 		}
 	}
 }

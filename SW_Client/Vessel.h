@@ -13,7 +13,7 @@ namespace SW_Client
 		public SW::Vessel
 	{
 	public:
-		Vessel(VesselIndex_t index);
+		Vessel(VesselIndex_t index, glm::vec3 vel, float m, glm::vec3 pos, glm::vec3 rot);
 		~Vessel();
 
 		SW::Compartment* playerComp;
@@ -26,7 +26,8 @@ namespace SW_Client
 		GLuint floorIBuffer;
 
 		void AddMyPlayer(Player* player, NetworkWriter* nw);
-		void Update(NetworkWriter* nw);
+		void ProcessInputs(NetworkWriter* nw);
+		void Step(NetworkWriter* nw);
 		void Clear();
 
 		void DrawWorld();
