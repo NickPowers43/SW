@@ -153,17 +153,15 @@ namespace SW_Server
 	void Vessel::BroadcastPlayerAddition(Player* player, NetworkWriter* nw)
 	{
 		//flush the current messages and start creating a broadcast message
-		player->FlushBuffer(nw);
-		nw->Write((MessageType_t)ServerMessageType::AddPlayer);
-		nw->Write((float)player->pos.x);
-		nw->Write((float)player->pos.y);
-
-		for (size_t i = 0; i < playersOnBoard.size(); i++)
-		{
-			playersOnBoard[i]->JustSendBuffer(nw);
-		}
-
 		nw->Reset();
+		nw->Write((MessageType_t)ServerMessageType::AddPlayer);
+		nw->Write((PlayerID_t)player->id);
+		nw->Write((float)player->pos.x);
+		nw->Write((float)player->pos.z);
+
+		std::for_each(playersOnBoard.begin(), playersOnBoard.end(), [nw](std::pair<const PlayerID_t, Player*> & pair) {
+			pair.second->JustSendBuffer(nw);
+		});
 	}
 	size_t Vessel::GetOnBoardPlayerInformationMessageSize()
 	{
@@ -171,21 +169,21 @@ namespace SW_Server
 	}
 	void Vessel::SendMakeVesselActive(Player* player, NetworkWriter* nw)
 	{
-		if (nw->Remaining() < GetOnBoardPlayerInformationMessageSize())
-		{
-			player->FlushBuffer(nw);
-		}
+		nw->Reset();
 		nw->Write((MessageType_t)ServerMessageType::MakeVesselActive);
 		nw->Write((VesselIndex_t)index);
 		nw->Write((uint16_t)playersOnBoard.size());
-		for (size_t i = 0; i < playersOnBoard.size(); i++)
-		{
-			nw->Write((float)playersOnBoard[i]->pos.x);
-			nw->Write((float)playersOnBoard[i]->pos.y);
-		}
+		std::for_each(playersOnBoard.begin(), playersOnBoard.end(), [nw](std::pair<const PlayerID_t, Player*> & pair) {
+			nw->Write((PlayerID_t)pair.second->id);
+			nw->Write((float)pair.second->pos.x);
+			nw->Write((float)pair.second->pos.z);
+		});
 		//write information for yourself
+		nw->Write((PlayerID_t)player->id);
 		nw->Write((float)player->pos.x);
-		nw->Write((float)player->pos.y);
+		nw->Write((float)player->pos.z);
+
+		player->FlushBuffer(nw);
 	}
 	void Vessel::AddPlayerVessel(Player* player, NetworkWriter* nw, glm::vec2 position)
 	{
@@ -197,38 +195,47 @@ namespace SW_Server
 
 		SendMakeVesselActive(player, nw);
 		
-		playersOnBoard.push_back(player);
+		playersOnBoard[player->id] = player;
 	}
 	void Vessel::RemovePlayer(Player* player)
 	{
-		uint16_t id = (1 << 17) - 1;
-		for (size_t i = 0; i < playersOnBoard.size(); i++)
+		if (playersOnBoard.count(player->id))
 		{
-			if (player == playersOnBoard[i])
-			{
-				id = i;
-				break;
-			}
-		}
-		if (id != ((1 << 17) - 1))
-		{
-			for (size_t i = id; i < playersOnBoard.size() - 1; i++)
-			{
-				playersOnBoard[i] = playersOnBoard[i + 1];
-			}
-			playersOnBoard.pop_back();
+			playersOnBoard.erase(player->id);
 
-			player->currentVessel = NULL;
-
-			//if (GameManager.Instance.Initialized) {
-			//	nw->SeekZero();
-			//	nw->Write((ushort)ServerMessageType.RemovePlayer);
-			//	nw->Write((ushort)id);
-			//	for (int i = 0; i < playersOnBoard.Count; i++) {
-			//		//send
-			//	}
-			//}
+			//std::for_each(playersOnBoard.begin(), playersOnBoard.end(), [](std::pair<PlayerID_t, Player*> & pair) {
+			//	//tell pair.second player has left vessel
+			//});
 		}
+
+		//uint16_t id = (1 << 17) - 1;
+		//for (size_t i = 0; i < playersOnBoard.size(); i++)
+		//{
+		//	if (player == playersOnBoard[i])
+		//	{
+		//		id = i;
+		//		break;
+		//	}
+		//}
+		//if (id != ((1 << 17) - 1))
+		//{
+		//	for (size_t i = id; i < playersOnBoard.size() - 1; i++)
+		//	{
+		//		playersOnBoard[i] = playersOnBoard[i + 1];
+		//	}
+		//	playersOnBoard.pop_back();
+
+		//	player->currentVessel = NULL;
+
+		//	//if (GameManager.Instance.Initialized) {
+		//	//	nw->SeekZero();
+		//	//	nw->Write((ushort)ServerMessageType.RemovePlayer);
+		//	//	nw->Write((ushort)id);
+		//	//	for (int i = 0; i < playersOnBoard.Count; i++) {
+		//	//		//send
+		//	//	}
+		//	//}
+		//}
 	}
 	void Vessel::BuildModule(VMType_t type, glm::ivec2 position)
 	{
@@ -245,10 +252,13 @@ namespace SW_Server
 	}
 	void Vessel::Step(NetworkWriter* nw)
 	{
-		for (size_t i = 0; i < playersOnBoard.size(); i++)
-		{
-			playersOnBoard[i]->Step();
-		}
+		std::for_each(playersOnBoard.begin(), playersOnBoard.end(), [nw](std::pair<const PlayerID_t, Player*> & pair) {
+			pair.second->Step();
+
+			nw->Reset();
+			pair.second->WriteUpdateMessage(nw);
+			pair.second->FlushBuffer(nw);
+		});
 	}
 
 	void Vessel::PlaceObject(ObjectType_t type, glm::ivec2 location)

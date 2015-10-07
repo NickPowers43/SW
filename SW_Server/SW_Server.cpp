@@ -43,15 +43,8 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 
 		const std::string myMsg = msg->get_payload();
 
-		/*PlayerMessagePair pair;
-		pair.msg = msg->get_payload();
-		pair.player = player;
-		messages_in.push(pair);*/
-
 		SW::NetworkReader nr((char*)myMsg.c_str(), myMsg.size());
 		nw_main->Reset();
-
-		//std::cout << "Message of size: " << myMsg.size() << " received.";
 
 		while (nr.Position() < nr.size)
 		{
@@ -62,7 +55,6 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 				{
 				case ClientMessageType::Inputs:
 					player->ProcessInputs(&nr);
-					player->WriteUpdateMessage(nw_main);
 					break;
 				case ClientMessageType::RequestModule:
 					if (player->currentVessel)
@@ -113,6 +105,8 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 	}
 }
 
+PlayerID_t nextPlayerID = 0;
+
 // Define a callback to handle new connections
 void on_open(websocketpp::connection_hdl hdl) {
 	
@@ -134,9 +128,10 @@ void on_open(websocketpp::connection_hdl hdl) {
 	nw_main->Write((uint32_t)((uint32_t)255 << 16));
 
 	Player* player = new Player(
-		hdl, 
+		hdl,
+		nextPlayerID++,
 		glm::vec3(0.0f, 0.0f, 0.0f), 
-		1000.0f,
+		10.0f,
 		glm::vec3(0.0f, 0.0f, 0.0f), 
 		glm::vec3(0.0f, 0.0f, 0.0f),
 		NULL);
@@ -171,7 +166,7 @@ void game_run()
 	while (running)
 	{
 		ULONGLONG currTickCount = GetTickCount64();
-		elapsedTime = (prevTickCount - currTickCount) / 1000.0f;
+		deltaTime = 0.016f;// (prevTickCount - currTickCount) / 1000.0f;
 		prevTickCount = currTickCount;
 
 		SW::QTNode* root_adj[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
@@ -217,10 +212,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	// Create a server endpoint
 	try {
 		// Set logging settings
-		myServer->set_access_channels(
-			websocketpp::log::alevel::connect |
-			websocketpp::log::alevel::disconnect);
-		myServer->clear_access_channels(websocketpp::log::alevel::frame_payload);
+		//myServer->clear_access_channels(websocketpp::log::alevel::frame_payload);
+		myServer->clear_access_channels(websocketpp::log::alevel::all);
+		myServer->set_access_channels(websocketpp::log::alevel::connect | websocketpp::log::alevel::disconnect);
 
 		// Initialize ASIO
 		myServer->init_asio();

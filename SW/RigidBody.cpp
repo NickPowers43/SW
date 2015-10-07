@@ -1,4 +1,5 @@
 #include "RigidBody.h"
+#include <iostream>
 
 namespace SW
 {
@@ -28,20 +29,21 @@ namespace SW
 	}
 	void RigidBody::ApplyForceXZ(glm::vec2 f)
 	{
-		float scale = (elapsedTime / m);
+		float scale = (deltaTime / m);
+		//std::cout << "RigidBody::ApplyForceXZ. f(" << f.x << ", " << f.y << "), scale:" << scale << "\n";
 		vel += glm::vec3(f.x * scale, 0.0f, f.y * scale);
 	}
 	void RigidBody::ApplyForceXZ(glm::vec2 local, glm::vec2 f)
 	{
-		float scale = (elapsedTime / m);
+		float scale = (deltaTime / m);
 		angular_vel += glm::cross(glm::vec3(local.x, 0.0f, local.y), glm::vec3(f.x, 0.0f, f.y)).y * scale;
 		vel += glm::vec3(f.x * scale, 0.0f, f.y * scale);
 	}
 	void RigidBody::StepXZ()
 	{
-		pos.x += vel.x * elapsedTime;
-		pos.z += vel.z * elapsedTime;
-		rot.x += angular_vel * elapsedTime;
+		pos.x += vel.x * deltaTime;
+		pos.z += vel.z * deltaTime;
+		rot.x += angular_vel * deltaTime;
 	}
 
 }

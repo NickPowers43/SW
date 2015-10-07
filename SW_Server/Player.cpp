@@ -8,8 +8,8 @@ using namespace SW;
 
 namespace SW_Server
 {
-	Player::Player(websocketpp::connection_hdl hdl, glm::vec3 vel, float m, glm::vec3 pos, glm::vec3 rot, Vessel* currentVessel) :
-		SW::Player(vel, m, pos, rot), 
+	Player::Player(websocketpp::connection_hdl hdl, PlayerID_t id, glm::vec3 vel, float m, glm::vec3 pos, glm::vec3 rot, Vessel* currentVessel) :
+		SW::Player(id, vel, m, pos, rot), 
 		hdl(hdl), currentVessel(currentVessel)
 	{
 	}
@@ -53,12 +53,13 @@ namespace SW_Server
 	}
 	void Player::WriteUpdateMessage(NetworkWriter* nw)
 	{
-		if (nw->Remaining() < ((sizeof(float) * 2) + sizeof(MessageType_t)))
+		/*if (nw->Remaining() < ((sizeof(float) * 2) + sizeof(MessageType_t)))
 		{
 			FlushBuffer(nw);
-		}
+		}*/
 
 		nw->Write((MessageType_t)ServerMessageType::UpdatePlayer);
+		nw->Write((PlayerID_t)id);
 		nw->Write((float)pos.x);
 		nw->Write((float)pos.z);
 	}

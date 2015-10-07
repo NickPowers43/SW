@@ -3,6 +3,7 @@
 #include <SW/Vessel.h>
 #include <SW/RigidBody.h>
 #include <SW/LinkedListNode.h>
+#include <map>
 
 #include <SW/VesselObject.h>
 #include <SW/DynamicArray2D.h>
@@ -45,7 +46,7 @@ namespace SW_Server
 
 		TileChunks tiles;
 
-		vector<Player*> playersOnBoard;
+		std::map<PlayerID_t, Player*> playersOnBoard;
 	};
 }
 

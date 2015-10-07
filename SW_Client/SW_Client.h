@@ -1,6 +1,7 @@
 #pragma once
 #include <SW\SW.h>
 #include <vector>
+#include <map>
 
 #define FLOOR_DEPTH 0.0f;
 #define WALL_DEPTH 0.1f;
@@ -16,13 +17,20 @@ namespace SW_Client
 extern uint8_t* keyStates;
 extern SW_Client::Player* myPlayer;
 extern SW_Client::Vessel* currentVessel;
-extern std::vector<SW_Client::Vessel*> activeVessels;
+extern SW::Compartment* playerComp;
+extern std::map<VesselID_t, SW_Client::Vessel*> activeVessels;
+extern std::map<VesselID_t, SW_Client::Vessel*> vessels;
+extern std::map<PlayerID_t, SW_Client::Player*> players;
 extern SW_Client::NetworkWriter* nw_main;
 extern bool swapBytes;
 
 namespace SW_Client
 {
 	void FlushBuffer(NetworkWriter* nw);
+	void StepCurrentVessel();
+	void DrawWorld();
+	void DrawTiles(SW::TileSet* ts, SW::AABBi region);
+	void GenerateFloorMesh(SW::TileSet* ts, SW::AABBi region);
 }
 
 

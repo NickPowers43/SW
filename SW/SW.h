@@ -24,6 +24,8 @@ typedef uint8_t FloorType_t;
 typedef uint8_t WallType_t;
 typedef uint8_t WallTypeMask_t;
 typedef uint8_t VesselControlMode_t;
+typedef uint32_t PlayerID_t;
+typedef uint32_t VesselID_t;
 
 typedef uint8_t ObjectType_t;
 
