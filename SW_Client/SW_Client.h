@@ -13,6 +13,7 @@ namespace SW_Client
 	class Vessel;
 }
 
+extern uint8_t* keyStates;
 extern SW_Client::Player* myPlayer;
 extern SW_Client::Vessel* currentVessel;
 extern std::vector<SW_Client::Vessel*> activeVessels;

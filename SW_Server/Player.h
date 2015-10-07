@@ -15,6 +15,7 @@ namespace SW_Server
 		void SendString(const std::string message);
 		void JustSendBuffer(NetworkWriter* nw);
 		void ProcessInputs(NetworkReader* nr);
+		void WriteUpdateMessage(NetworkWriter* nw);
 		void FlushBuffer(NetworkWriter* nw);
 		void Step();
 

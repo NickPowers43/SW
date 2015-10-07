@@ -10,6 +10,7 @@ namespace SW
 	{
 		flags = 0;
 		wallMask = 0;
+		object = ObjectType::None;
 		floor0 = FloorType::None;
 		floor1 = FloorType::None;
 	}

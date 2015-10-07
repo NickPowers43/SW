@@ -50,7 +50,17 @@ namespace SW_Server
 		inputs = nr->ReadUint16();
 		rot.x = nr->ReadSingle();
 		rot.y = nr->ReadSingle();
+	}
+	void Player::WriteUpdateMessage(NetworkWriter* nw)
+	{
+		if (nw->Remaining() < ((sizeof(float) * 2) + sizeof(MessageType_t)))
+		{
+			FlushBuffer(nw);
+		}
 
+		nw->Write((MessageType_t)ServerMessageType::UpdatePlayer);
+		nw->Write((float)pos.x);
+		nw->Write((float)pos.z);
 	}
 	void Player::FlushBuffer(NetworkWriter* nw)
 	{
@@ -66,39 +76,5 @@ namespace SW_Server
 			std::cout << "Failed to flush buffer because: " << e << "(" << e.message() << ")" << std::endl;
 			throw websocketpp::lib::error_code(e);
 		}
-	}
-	void Player::Step()
-	{
-
-		if (inputs & (INPUT_FLAG_W | INPUT_FLAG_A | INPUT_FLAG_S | INPUT_FLAG_D))
-		{
-			glm::vec2 f(0.0f, 0.0f);
-			if (inputs & INPUT_FLAG_W)
-			{
-				f += glm::vec2(0.0f, 1.0f);
-			}
-			if (inputs & INPUT_FLAG_S)
-			{
-				f += glm::vec2(0.0f, -1.0f);
-			}
-			if (inputs & INPUT_FLAG_A)
-			{
-				f += glm::vec2(-1.0f, 0.0f);
-			}
-			if (inputs & INPUT_FLAG_D)
-			{
-				f += glm::vec2(1.0f, 0.0f);
-			}
-
-			f = glm::normalize(f) * deltaTime;
-			float cos = glm::cos(rot.x);
-			float sin = glm::sin(rot.x);
-			f = glm::mat2(cos, -sin, sin, cos) * f;
-
-			ApplyForceXZ(f);
-			//pos += glm::vec3(translate.x, 0.0f, translate.y);
-		}
-
-		StepXZ();
 	}
 }

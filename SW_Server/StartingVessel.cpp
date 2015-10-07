@@ -96,7 +96,7 @@ namespace SW_Server
 		tiles.BuildWall(&circleOuter, 5, WallType::WallType::OneByZero, true);
 
 		//place spawner for noobs
-		PlaceObject(ObjectType::ObjectType::Spawner, glm::vec2(0.0f, 0.0f));
+		PlaceObject(ObjectType::ObjectType::Spawner, glm::ivec2(0, 0));
 
 		tiles.RebuildCompartments(true);
 
@@ -104,17 +104,16 @@ namespace SW_Server
 		//tiles.SetCompartmentFloorAt(FloorType::Basic, glm::vec2(19.0f, 0.0f));
 		//tiles.SetCompartmentFloorAt(FloorType::Basic, glm::vec2(4.0f, 0.0f));
 	}
-	SW::VesselObject* StartingVessel::PlaceObject(ObjectType::ObjectType type, glm::vec2 location)
+	void StartingVessel::PlaceObject(ObjectType_t type, glm::ivec2 location)
 	{
-		SW::VesselObject* obj = Vessel::PlaceObject(type, location);
+		Vessel::PlaceObject(type, location);
 		if (type == ObjectType::ObjectType::Spawner)
 		{
-			spawnPoints.push_back(obj);
+			spawnPoints.push_back(location);
 		}
-		return obj;
 	}
 	void StartingVessel::AddPlayer(NetworkWriter* nw, Player* player)
 	{
-		Vessel::AddPlayerVessel(player, nw, spawnPoints[0]->pos);
+		Vessel::AddPlayerVessel(player, nw, glm::vec2(spawnPoints[0].x, spawnPoints[0].y) + glm::vec2(0.5f, 0.5f));
 	}
 }

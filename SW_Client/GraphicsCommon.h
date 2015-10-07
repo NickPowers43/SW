@@ -105,7 +105,7 @@ namespace SW_Client
 		GLuint colorAttrib;
 	};
 
-	extern uint8_t* keyStates;
+	
 
 	extern Camera camera;
 	extern FloorProgram floorProgram;

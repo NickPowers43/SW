@@ -12,6 +12,7 @@ namespace SW
 
 		TileFlag_t flags;
 		WallTypeMask_t wallMask;
+		ObjectType_t object;
 		FloorType_t floor0;
 		FloorType_t floor1;
 

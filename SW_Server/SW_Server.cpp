@@ -62,6 +62,7 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 				{
 				case ClientMessageType::Inputs:
 					player->ProcessInputs(&nr);
+					player->WriteUpdateMessage(nw_main);
 					break;
 				case ClientMessageType::RequestModule:
 					if (player->currentVessel)

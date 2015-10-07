@@ -12,6 +12,9 @@ namespace SW_Client
 	public:
 		Player(glm::vec3 vel, float m, glm::vec3 pos, glm::vec3 rot);
 		~Player();
+
+		void ReadUpdateMessage(NetworkReader* nr);
+		void ProcessInputs(NetworkWriter* nw);
 	};
 }
 

@@ -130,43 +130,8 @@ namespace SW_Client
 			}
 			else
 			{
-				InputFlags_t inputs = 0;
 
-				if (keyStates[SDLK_w] || keyStates[SDLK_a] || keyStates[SDLK_s] || keyStates[SDLK_d])
-				{
-					glm::vec2 f(0.0f, 0.0f);
-					if (keyStates[SDLK_w])
-					{
-						inputs |= INPUT_FLAG_W;
-						f += glm::vec2(0.0f, 1.0f);
-					}
-					if (keyStates[SDLK_s])
-					{
-						inputs |= INPUT_FLAG_S;
-						f += glm::vec2(0.0f, -1.0f);
-					}
-					if (keyStates[SDLK_a])
-					{
-						inputs |= INPUT_FLAG_A;
-						f += glm::vec2(-1.0f, 0.0f);
-					}
-					if (keyStates[SDLK_d])
-					{
-						inputs |= INPUT_FLAG_D;
-						f += glm::vec2(1.0f, 0.0f);
-					}
-					f = glm::normalize(f) * deltaTime;
-					float cos = glm::cos(myPlayer->rot.x);
-					float sin = glm::sin(myPlayer->rot.x);
-					f = glm::mat2(cos, -sin, sin, cos) * f;
-					myPlayer->ApplyForceXZ(f);
-
-				}
-
-				nw->WriteMessageType(ClientMessageType::Inputs);
-				nw->WriteUint16(inputs);
-				nw->WriteSingle(myPlayer->rot.x);
-				nw->WriteSingle(myPlayer->rot.y);
+				
 			}
 		}
 	}

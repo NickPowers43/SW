@@ -132,20 +132,12 @@ namespace TileFlag
 	};
 }
 
-namespace ChunkFlag
-{
-	enum ChunkFlag : ChunkFlag_t {
-		None = 0,
-		Seen = 1,
-		Modified = 2
-	};
-}
-
 namespace ObjectType
 {
 	enum ObjectType : ObjectType_t {
-		Spawner = 0,
-		Turret = 1
+		None = 0,
+		Spawner = 1,
+		Turret = 2
 	};
 }
 
@@ -183,7 +175,7 @@ namespace ServerMessageType
 		PingMessage = 7,
 		SetModule = 8,
 		EndianessCheck = 9,
-		SetPlayerInfo = 10,
+		SetPlayerInfo = 10
 	};
 }
 

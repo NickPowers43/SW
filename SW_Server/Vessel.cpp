@@ -251,11 +251,17 @@ namespace SW_Server
 		}
 	}
 
-	VesselObject* Vessel::PlaceObject(ObjectType::ObjectType type, glm::vec2 location)
+	void Vessel::PlaceObject(ObjectType_t type, glm::ivec2 location)
 	{
-		VesselObject* obj = new VesselObject(type, location);
+		SW::Tile* tile = tiles.TryGet(location);
 
-		return obj;
+		if (!tile)
+		{
+			tile = new SW::Tile();
+			tiles.Set(location, tile);
+		}
+
+		tile->object = type;
 	}
 
 	void Vessel::AddModule(SW::VesselModule vm)

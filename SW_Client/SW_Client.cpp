@@ -141,19 +141,18 @@ extern "C" void HandleMessage(int dPtr, int length)
 		MessageType_t messageType = nr.ReadMessageType();
 		switch (messageType) {
 		case ServerMessageType::PingMessage:
-			//PrintMessage((int)"PingMessage message received");
 			SW_Client::RespondToPingMessage(&nr, nw_main);
 			break;
 		case ServerMessageType::SetTiles:
-			//PrintMessage((int)"SetChunk message received");
 			currentVessel->ReadSetTilesMessage(&nr, nw_main);
 			break;
+		case ServerMessageType::UpdatePlayer:
+			myPlayer->ReadUpdateMessage(&nr);
+			break;
 		case ServerMessageType::MakeVesselActive:
-			//PrintMessage((int)"MakeVesselActive message received");
 			ReadMakeVesselActiveMessage(&nr, nw_main);
 			break;
 		case ServerMessageType::EndianessCheck:
-			//PrintMessage((int)"EndianessCheck message received");
 			SW_Client::ReadEndianessCheckMessage(&nr, nw_main);
 			break;
 		default:

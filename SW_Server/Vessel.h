@@ -33,7 +33,7 @@ namespace SW_Server
 		void BuildModule(VMType_t type, glm::ivec2 position);
 		void Step(NetworkWriter* nw);
 
-		virtual SW::VesselObject* PlaceObject(ObjectType::ObjectType type, glm::vec2 location);
+		virtual void PlaceObject(ObjectType_t type, glm::ivec2 location);
 
 		void AddModule(SW::VesselModule vm);
 		void RemoveModuleAt(size_t index);
